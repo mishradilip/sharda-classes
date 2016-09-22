@@ -3,20 +3,380 @@
 
 <head>
   <title></title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/formValidation.css" />
   <!-- Font Awesome -->
-  <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
-  <!-- Optional theme -->
-  <!-- Jquery  -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
-  <!-- Latest compiled and minified JavaScript -->
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-  <!-- Angular Js  -->
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+  <!-- Site Css -->
+  <link rel="stylesheet" type="text/css" href="css/style.css">
 </head>
 
 <body>
+  <div class="body-wrapper">
+    <!-- Header -->
+    <header>
+      <nav role="navigation" class="navbar navbar-default navbar-inverse navbar-fixed-top">
+        <div class="container">
+          <!-- Brand and toggle get grouped for better mobile display -->
+          <div class="navbar-header">
+            <button type="button" data-target="#navbarCollapse" data-toggle="collapse" class="navbar-toggle">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a href="#" class="navbar-brand">Sharda Classes</a>
+          </div>
+          <!-- Collection of nav links and other content for toggling -->
+          <div id="navbarCollapse" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Tution Jobs</a></li>
+              <li><a href="#">Request a Tutor</a></li>
+              <!-- <li class="dropdown">
+                <a href="#" data-toggle="dropdown" class="dropdown-toggle">Register <b class="caret"></b></a>
+                <ul class="dropdown-menu dropdown-content">
+                  <li><a href="#">Need a tuition?</a></li>
+                  <li><a href="#">Need a tutor?</a></li>
+                </ul>
+              </li> -->
+            </ul>
+            <ul class="nav navbar-nav navbar-right navbar-user">
+              <li><a href="#">Login</a></li>
+              <li><a href="#">Signup</a></li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+    <!-- Header End -->
+    <!-- Banner Section -->
+    <section class="banner-section">
+      <div class="img-banner">
+        <img src="img/pencil.jpg" class="img-responsive">
+      </div>
+      <div class="banner-bckdrop"></div>
+      <div class="banner-elements">
+        <h1><strong>What ever you want to learn,</strong></h1>
+        <h1>We have an expert for you.</h1>
+      </div>
+    </section>
+    <!-- Banner Section End -->
+    <!-- Content Section -->
+    <section class="body-content">
+      <section id="top-section-menu-section">
+        <div class="container">
+          <div class="row">
+            <div id="top-section-menu-holder" class="col-sm-10 col-sm-offset-1">
+              <div class="top-section-menu-container row">
+                <div class="col-md-4 col-sm-4">
+                  <div class="top-section-menu-item">
+                    <div class="landingpg-sprite new-icon">New</div>
+                    <a href="javascript:;">
+                      <div class="calen-icon-holder">
+                        <i class="fa fa-search-plus" aria-hidden="true"></i>
+                      </div>
+                      <div class="top-section-menu-text">
+                        <b>FIND YOUR<br>TEACHER</b>
+                      </div>
+                      <hr>
+                      <div class="main-text">Book Session Now
+                        <label class="icon-right-open-big"></label>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-4 col-sm-4">
+                  <div class="top-section-menu-item">
+                    <a href="javascript:;">
+                      <div class="calen-icon-holder">
+                        <i class="fa fa-calendar" aria-hidden="true"></i>
+                      </div>
+                      <div class="top-section-menu-text">
+                        <b>MONTHLY <br>TUITIONS</b>
+                      </div>
+                      <hr>
+                      <div class="main-text">Book Session Now
+                        <label class="icon-right-open-big"></label>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-4 col-sm-4">
+                  <div class="top-section-menu-item">
+                    <a href="javascript:;">
+                      <div class="calen-icon-holder">
+                        <i class="fa fa-file-text-o" aria-hidden="true"></i>
+                      </div>
+                      <div class="top-section-menu-text">
+                        <b>EXAM PREP<br>COURSES</b>
+                      </div>
+                      <hr>
+                      <div class="main-text">Book Session Now
+                        <label class="icon-right-open-big"></label>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+                <div class="cleaner_with_divider">&nbsp;</div>
+                <div class="top-section-menu-exam-holder">
+                  <a href="javascript:;" class="top-section-menu-exam">CBSE</a>
+                  <a href="javascript:;" class="top-section-menu-exam">NTSE</a>
+                  <a href="javascript:;" class="top-section-menu-exam">ANDROID</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="promise-container">
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-6 col-sm-offset-3">
+              <div class="row">
+                <h3 class="col-xs-12 text-center title-border">Teacher's Promise</h3>
+                <div class="col-xs-6 text-right">
+                  <img align="right" src="img/promise-icon.png" class="img-responsive" alt="" />
+                </div>
+                <div class="col-xs-6">
+                  <ul>
+                    <li><b>Personalized learning</b></li>
+                    <li>Regular <b>Tests &amp; Assignments</b></li>
+                    <li>Doubts Busting &amp; <b>Thorough Revision</b></li>
+                    <li><b>Aligned</b> with School Curriculum</li>
+                    <li><b>Reporting</b> to Parents</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- User Story -->
+      <section id="user-stories-section">
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-12">
+              <h3 class="col-xs-12 text-center title-border">User Stories</h3>
+              <h4 class="col-xs-12 text-center">Hear what our users have to say</h4>
+              <div id="userStoryCarousel" class="carousel slide col-sm-10 col-sm-offset-1" data-ride="carousel">
+                <!-- Carousel indicators -->
+                <ol class="carousel-indicators">
+                  <li data-target="#userStoryCarousel" data-slide-to="0" class="active"></li>
+                  <li data-target="#userStoryCarousel" data-slide-to="1"></li>
+                  <li data-target="#userStoryCarousel" data-slide-to="2"></li>
+                  <li data-target="#userStoryCarousel" data-slide-to="3"></li>
+                  <li data-target="#userStoryCarousel" data-slide-to="4"></li>
+                </ol>
+                <!-- Wrapper for carousel items -->
+                <div class="carousel-inner">
+                  <div class="item active">
+                    <blockquote>
+                      <div class="row">
+                        <figure class="col-sm-4 text-center">
+                          <img class="img-circle" alt="Photo" src="img/user1.jpg">
+                          <figcaption class="centerText">
+                            <storytype>Mother</storytype>
+                            <creater class="text-uppercase">Ayushi</creater>
+                          </figcaption>
+                        </figure>
+                        <div class="col-sm-8 user-story">
+                          <storytype>Parent says</storytype>
+                          <p class="testimonial-body" ng-bind-html="item.body">Sharda Classes teachers have helped me clear my concepts and the system has made learning much easier and fun. The teachers are understanding and approachable. My mentor <b>guides me</b> in my <b>future aspirations</b> as well.</p>
+                        </div>
+                      </div>
+                    </blockquote>
+                  </div>
+                  <div class="item">
+                    <blockquote>
+                      <div class="row">
+                        <figure class="col-sm-4 text-center">
+                          <img class="img-circle" alt="Photo" src="img/student.jpg">
+                          <figcaption class="centerText">
+                            <storytype>Student</storytype>
+                            <creater class="fs18 text-upper-case">ASHWINI</creater>
+                          </figcaption>
+                        </figure>
+                        <div class="col-sm-8 user-story">
+                          <storytype>Student says</storytype>
+                          <p class="testimonial-body" ng-bind-html="item.body">Sharda Classes teachers have helped me clear my concepts and the system has made learning much easier and fun. The teachers are understanding and approachable. My mentor <b>guides me</b> in my <b>future aspirations</b> as well.</p>
+                        </div>
+                      </div>
+                    </blockquote>
+                  </div>
+                  <div class="item">
+                    <blockquote>
+                      <div class="row">
+                        <figure class="col-sm-4 text-center">
+                          <img class="img-circle" alt="Photo" src="img/user.jpg">
+                          <figcaption class="centerText">
+                            <storytype>Mother</storytype>
+                            <creater class="fs18 text-upper-case">BHAVANA</creater>
+                          </figcaption>
+                        </figure>
+                        <div class="col-sm-8 user-story">
+                          <storytype>Parent says</storytype>
+                          <p class="testimonial-body" ng-bind-html="item.body">The teachers have not only taken care of my daughter's needs in terms of studies but have also struck a chord with her. She looks forward to the classes and has developed interest in working harder.</p>
+                        </div>
+                      </div>
+                    </blockquote>
+                  </div>
+                  <div class="item">
+                    <blockquote>
+                      <div class="row">
+                        <figure class="col-sm-4 text-center">
+                          <img class="img-circle" alt="Photo" src="img/user2.jpg">
+                          <figcaption class="centerText">
+                            <storytype>Mother</storytype>
+                            <creater class="fs18 text-upper-case">Ayushi</creater>
+                          </figcaption>
+                        </figure>
+                        <div class="col-sm-8 user-story">
+                          <storytype>Parent says</storytype>
+                          <p class="testimonial-body" ng-bind-html="item.body">Sharda Classes a wonderful <b>place</b> to every parent whose child is at the brink of choosing the path which will help them forge their career ahead.Its been an amazing experience for me as a parent to see my daughter at ease with the lessons.The <b>patience</b> and <b>commitment</b> of the faculty members is commendable.</p>
+                        </div>
+                      </div>
+                    </blockquote>
+                  </div>
+                  <div class="item">
+                    <blockquote>
+                      <div class="row">
+                        <figure class="col-sm-4 text-center">
+                          <img class="img-circle" alt="Photo" src="img/student2.jpg">
+                          <figcaption class="centerText">
+                            <storytype>Student</storytype>
+                            <creater class="fs18 text-upper-case">SREELATHA</creater>
+                          </figcaption>
+                        </figure>
+                        <div class="col-sm-8 user-story">
+                          <storytype>Student says</storytype>
+                          <p class="testimonial-body" ng-bind-html="item.body">Sharda Classes teachers have helped me clear my concepts and the system has made learning much easier and fun. The teachers are understanding and approachable. My mentor <b>guides me</b> in my <b>future aspirations</b> as well.</p>
+                        </div>
+                      </div>
+                    </blockquote>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- User Story End -->
+    </section>
+    <!-- Content Section End -->
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-12">
+            Footer
+          </div>
+        </div>
+      </div>
+    </footer>
+    <!-- Footer End -->
+  </div>
+  <!-- Jquery  -->
+  <script src="js/jquery.min.js"></script>
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="js/formValidation.js"></script>
+  <script type="text/javascript" src="js/framework/bootstrap.js"></script>
+  <!-- Angular Js  -->
+  <script src="js/angular.min.js"></script>
+  <script type="text/javascript">
+  $(document).ready(function() {
+    $('#contact-form')
+      .formValidation({
+        message: 'This value is not valid',
+        icon: {
+          valid: 'glyphicon glyphicon-ok',
+          invalid: 'glyphicon glyphicon-remove',
+          validating: 'glyphicon glyphicon-refresh'
+        },
+        fields: {
+
+          first_name: {
+            validators: {
+              stringLength: {
+                min: 2,
+              },
+              notEmpty: {
+                message: 'Please enter your first name'
+              }
+            }
+          },
+          last_name: {
+            validators: {
+              stringLength: {
+                min: 2,
+              },
+              notEmpty: {
+                message: 'Please enter your last name'
+              }
+            }
+          },
+          email: {
+            validators: {
+              notEmpty: {
+                message: 'Please enter your email address'
+              },
+              emailAddress: {
+                message: 'Please enter a valid email address'
+              }
+            }
+          },
+          phone: {
+            validators: {
+              notEmpty: {
+                message: 'Please enter your phone number'
+              },
+              phone: {
+                country: 'IN',
+                message: 'Please enter a vaild phone number with area code'
+              }
+            }
+          },
+          message: {
+            validators: {
+              stringLength: {
+                min: 10,
+                max: 200,
+                message: 'Please enter at least 10 characters and no more than 200'
+              },
+              notEmpty: {
+                message: 'Please enter message'
+              }
+            }
+          }
+        }
+      })
+      .on('success.form.fv', function(e) {
+        // Prevent form submission
+        e.preventDefault();
+
+        // Get the form instance
+        var $form = $(e.target);
+
+        // Get the FormValidation instance
+        var bv = $form.data('formValidation');
+
+        // Use Ajax to submit form data
+        $.post($form.attr('action'), $form.serialize(), function(result) {
+          if (result.status == 'error') {
+
+            $('#error_message').show().html(result.message);
+          } else {
+            $('#success_message').show().html(result.message);
+          }
+        }, 'json');
+      });
+  });
+  </script>
 </body>
 
 </html>
