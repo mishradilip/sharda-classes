@@ -42,6 +42,14 @@ header .navbar-inverse {
   font-size: 30px;
 }
 
+.navbar-inverse .navbar-nav li.active >a,
+.navbar-inverse .navbar-nav li:hover >a {
+  background-color: #000;
+  color: #fff;
+}
+
+.sub-menu {}
+
 #navbarCollapse {
   position: relative;
 }
@@ -51,6 +59,7 @@ header .navbar-inverse {
   bottom: -43px;
   right: 0;
 }
+
 .navbar-inverse .navbar-user li {
   background-color: #e59517;
   border-bottom-left-radius: 4px;
@@ -78,9 +87,10 @@ header .navbar-inverse {
 }
 
 .img-banner {
-  max-height: 650px;
+  min-height: 650px;
   position: relative;
   overflow: hidden;
+  background: url(../img/study-pen.jpeg) no-repeat top center / cover;
 }
 
 .img-banner img {
@@ -105,11 +115,51 @@ header .navbar-inverse {
   width: 100%;
 }
 
+.tutor-btn {
+  margin-top: 50px;
+}
+
+.btn-tutor,
+.btn-tutor:hover,
+.btn-tutor:focus {
+  background-color: #e59517;
+  color: #fff;
+  display: inline-block;
+  text-align: left;
+  font-size: 25px;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 9px #c5c2c2;
+}
+
+.btn-tutor.tutor-link {
+  color: #000;
+}
+
+.btn-tutor i {
+  vertical-align: middle;
+  font-size: 50px;
+}
+
+.btn-tutor span {
+  display: block;
+  font-size: 12px;
+}
+
+.btn-tutor + .btn-tutor {
+  margin-left: 20px;
+}
+
+#top-section-menu-section {
+  display: none;
+}
+
 
 /** Banner Section End **/
 
 #top-section-menu-section,
-#user-stories-section {
+#user-stories-section,
+.promise-container {
   background-color: #F4F0E6;
   height: auto;
   position: relative;
@@ -297,10 +347,89 @@ header .navbar-inverse {
 }
 
 
+/** Contact Info **/
+
+.contact-info .info {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.contact-info .info i {
+  position: relative;
+  background: #fff;
+  font-size: 3rem;
+  color: #181818;
+  display: block;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+  margin-bottom: -40px;
+  line-height: 80px;
+  border-bottom: 4px solid rgba(233, 233, 233, 0.8);
+  border-radius: 0 0 100% 100%;
+}
+
+.contact-info .info .info-content {
+  border: 1px solid #ccc;
+  padding: 40px 0 20px;
+}
+
+.contact-info .info .info-content h3 {
+  color: #181818;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.contact-info .info .info-content span {
+  display: block;
+  color: #555;
+  letter-spacing: 1.5px;
+  margin: 5px auto;
+}
+
+
+/** Contact Info End **/
+
+
 /** User stories section End **/
 
 @media (min-width: 768px) {
   .dropdown:hover .dropdown-content {
     display: block;
+  }
+  .menu-list .sub-menu li {
+    position: relative;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  .sub-menu li > a i {
+    float: right;
+  }
+  .sub-menu li ul {
+    display: none;
+    background-color: #fff;
+    position: absolute;
+    top: 0;
+    left: 98%;
+    min-width: 160px;
+    list-style: none;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .sub-menu li:hover ul {
+    display: block;
+  }
+  .sub-sub-menu li a {
+    width: 100%;
+    display: block;
+    color: #333;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .sub-sub-menu li:hover {
+    background-color: #000;
+  }
+  .sub-sub-menu li:hover a {
+    color: #fff;
   }
 }

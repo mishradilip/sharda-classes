@@ -1,0 +1,42 @@
+{
+  meta: {
+    limit: 500,
+    next: null,
+    offset: 0,
+    previous: null,
+    total_count: 4
+  },
+  objects: [{
+    created: "2016-10-03T23:44:24",
+    feedback: "Step by Step from gathering to assembling, from planning to execution, Countrywide Events Pvt. Ltd. provides multidimensional- event coordination, plan implementation, cost analysis, coordination and control. The company provides a single version of reality and a see-through mirror i.e. spectacular event, inspired audience, worth remembering and cherishing memories. The extremely energetic team has constantly acknowledged our targets as its own. Their innovative loom and enthusiasm to fulfill re",
+    id: 4,
+    image: "http://gmas-core-media.s3.amazonaws.com/testimonials/60/13346408_600798443426309_5172312534942411191_n.jpg",
+    modified: "2017-01-06T13:03:09",
+    name: "Dilip Mishra",
+    publish: true
+  }, {
+    created: "2016-10-03T23:44:52",
+    feedback: "Countrywide Events Pvt. Ltd. is a well-thought-out and well-integrated event Management Company that is flexible enough to raise and transform an event that could deliver cascading benefits to an enterprise with small investment of time and money. Professionals at the company help to achieve unimpeded visibility with agility and more impact. We’re really glad with outcome and the worth we received from our investment, hence we recommend them and looking forward to establish long term association",
+    id: 5,
+    image: "http://gmas-core-media.s3.amazonaws.com/testimonials/60/01.jpg",
+    modified: "2017-01-10T19:55:26",
+    name: "Sri Kant",
+    publish: true
+  }, {
+    created: "2016-12-27T19:26:29",
+    feedback: "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.",
+    id: 19,
+    image: "http://gmas-core-media.s3.amazonaws.com/testimonials/60/13221437_1581115058847494_2729567113621558797_n.jpg",
+    modified: "2017-01-10T19:55:32",
+    name: "Aman",
+    publish: true
+  }, {
+    created: "2017-03-03T16:35:12",
+    feedback: "sdf",
+    id: 30,
+    image: "http://gmas-core-media.s3.amazonaws.com/testimonials/60/image.JPEG",
+    modified: "2017-03-03T16:35:14",
+    name: "ashdb",
+    publish: true
+  }]
+}

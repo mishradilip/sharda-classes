@@ -32,18 +32,42 @@
           </div>
           <!-- Collection of nav links and other content for toggling -->
           <div id="navbarCollapse" class="collapse navbar-collapse">
-            <ul class="nav navbar-nav">
+            <ul class="nav navbar-nav menu-list">
               <li class="active"><a href="#">Home</a></li>
               <li><a href="#">About Us</a></li>
               <li><a href="#">Tution Jobs</a></li>
               <li><a href="#">Request a Tutor</a></li>
-              <!-- <li class="dropdown">
-                <a href="#" data-toggle="dropdown" class="dropdown-toggle">Register <b class="caret"></b></a>
-                <ul class="dropdown-menu dropdown-content">
-                  <li><a href="#">Need a tuition?</a></li>
-                  <li><a href="#">Need a tutor?</a></li>
+              <li class="dropdown">
+                <a href="#" data-toggle="dropdown" class="dropdown-toggle">Class <b class="caret"></b></a>
+                <ul class="dropdown-menu dropdown-content sub-menu">
+                  <li>
+                    <a href="#">Class 12<sup>th</sup> <i class="fa fa-caret-right" aria-hidden="true"></i></a>
+                    <ul class="sub-sub-menu">
+                      <li>
+                        <a href="#">Physic</a>
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    <a href="#">Class 11<sup>th</sup></a>
+                  </li>
+                  <li>
+                    <a href="#">Class 10<sup>th</sup></a>
+                  </li>
+                  <li>
+                    <a href="#">Class 9<sup>th</sup></a>
+                  </li>
+                  <li>
+                    <a href="#">Class 8<sup>th</sup></a>
+                  </li>
+                  <li>
+                    <a href="#">Class 7<sup>th</sup></a>
+                  </li>
+                  <li>
+                    <a href="#">Class 6<sup>th</sup></a>
+                  </li>
                 </ul>
-              </li> -->
+              </li>
             </ul>
             <ul class="nav navbar-nav navbar-right navbar-user">
               <li><a href="#">Login</a></li>
@@ -57,18 +81,28 @@
     <!-- Banner Section -->
     <section class="banner-section">
       <div class="img-banner">
-        <img src="img/pencil.jpg" class="img-responsive">
+        <!-- <img src="img/study-pen.jpeg" class="img-responsive"> -->
       </div>
       <div class="banner-bckdrop"></div>
       <div class="banner-elements">
         <h1><strong>What ever you want to learn,</strong></h1>
         <h1>We have an expert for you.</h1>
+        <div class="tutor-btn">
+          <a href="javascript:;" class="btn-tutor tutor-link">
+            <i class="fa fa-user" aria-hidden="true"></i> Become a tutor.
+            <span>Register as a tutor.</span>
+          </a>
+          <a href="javascript:;" class="btn-tutor need-tutor-link">
+            <i class="fa fa-user" aria-hidden="true"></i> Need a tutor.
+            <span>Tell us your requirement.</span>
+          </a>
+        </div>
       </div>
     </section>
     <!-- Banner Section End -->
     <!-- Content Section -->
     <section class="body-content">
-      <section id="top-section-menu-section">
+      <!-- <section id="top-section-menu-section">
         <div class="container">
           <div class="row">
             <div id="top-section-menu-holder" class="col-sm-10 col-sm-offset-1">
@@ -132,7 +166,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </section> -->
       <section class="promise-container">
         <div class="container">
           <div class="row">
@@ -153,6 +187,15 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+      <section class="who-we-are">
+        <div class="container">
+          <div class="row">
+            <h3 class="col-xs-12 text-center title-border">Who we are?</h3>
+            <p>We are a team of highly experienced professionals from the field of education & training , The team members are MBAs, MCAs, MScs, M.Coms, BEs, MAs, CAs ,Journalists, Photographer, Yoga teacher who have been working in Delhi & NCRs to assist students in their studies. We are not limited to education we have trainers for Yoga, Dance ,Musical Instrument ,Photography and other performing arts .</p>
+            <p>NCRtutors brings you the opportunity to find Tutors of your choice from a collection of huge database. Post your tuition requirement by filling up a simple form. NCRtutors aim to help poor and underprivileged Children achieve their potential by giving them encouragement, understanding and attention free of cost.</p>
           </div>
         </div>
       </section>
@@ -266,6 +309,39 @@
         </div>
       </section>
       <!-- User Story End -->
+      <section class="contact-info">
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-12 col-xs-12">
+              <div class="row">
+                <div class="col-md-4 col-sm-4 col-xs-6 info">
+                  <i class="fa fa-phone center"></i>
+                  <div class="info-content">
+                    <h3>call me</h3>
+                    <span>( +91 ) 8802282111</span>
+                    <span>( +91 ) 9015170919</span>
+                  </div>
+                </div>
+                <div class="col-md-4 col-sm-4 col-xs-6 info">
+                  <i class="fa fa-envelope center"></i>
+                  <div class="info-content">
+                    <h3>Send a message</h3>
+                    <span>info@shardaclasses.co.in</span>
+                    <span>physics@shardaclasses.co.in</span>
+                  </div>
+                </div>
+                <div class="col-md-4 col-sm-4 col-xs-6 info">
+                  <i class="fa fa-building center"></i>
+                  <div class="info-content">
+                    <h3>Visit me</h3>
+                    <span>C-118, Shalimar Garden, Sahibabad, Ghaziabad</span><span>India</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </section>
     <!-- Content Section End -->
     <!-- Footer -->
@@ -284,99 +360,9 @@
   <script src="js/jquery.min.js"></script>
   <!-- Latest compiled and minified JavaScript -->
   <script src="js/bootstrap.min.js"></script>
-  <script type="text/javascript" src="js/formValidation.js"></script>
-  <script type="text/javascript" src="js/framework/bootstrap.js"></script>
   <!-- Angular Js  -->
   <script src="js/angular.min.js"></script>
-  <script type="text/javascript">
-  $(document).ready(function() {
-    $('#contact-form')
-      .formValidation({
-        message: 'This value is not valid',
-        icon: {
-          valid: 'glyphicon glyphicon-ok',
-          invalid: 'glyphicon glyphicon-remove',
-          validating: 'glyphicon glyphicon-refresh'
-        },
-        fields: {
-
-          first_name: {
-            validators: {
-              stringLength: {
-                min: 2,
-              },
-              notEmpty: {
-                message: 'Please enter your first name'
-              }
-            }
-          },
-          last_name: {
-            validators: {
-              stringLength: {
-                min: 2,
-              },
-              notEmpty: {
-                message: 'Please enter your last name'
-              }
-            }
-          },
-          email: {
-            validators: {
-              notEmpty: {
-                message: 'Please enter your email address'
-              },
-              emailAddress: {
-                message: 'Please enter a valid email address'
-              }
-            }
-          },
-          phone: {
-            validators: {
-              notEmpty: {
-                message: 'Please enter your phone number'
-              },
-              phone: {
-                country: 'IN',
-                message: 'Please enter a vaild phone number with area code'
-              }
-            }
-          },
-          message: {
-            validators: {
-              stringLength: {
-                min: 10,
-                max: 200,
-                message: 'Please enter at least 10 characters and no more than 200'
-              },
-              notEmpty: {
-                message: 'Please enter message'
-              }
-            }
-          }
-        }
-      })
-      .on('success.form.fv', function(e) {
-        // Prevent form submission
-        e.preventDefault();
-
-        // Get the form instance
-        var $form = $(e.target);
-
-        // Get the FormValidation instance
-        var bv = $form.data('formValidation');
-
-        // Use Ajax to submit form data
-        $.post($form.attr('action'), $form.serialize(), function(result) {
-          if (result.status == 'error') {
-
-            $('#error_message').show().html(result.message);
-          } else {
-            $('#success_message').show().html(result.message);
-          }
-        }, 'json');
-      });
-  });
-  </script>
+  <script src="js/custom.js"></script>
 </body>
 
 </html>
