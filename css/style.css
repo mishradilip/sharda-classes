@@ -38,14 +38,40 @@ header .navbar-inverse {
   border-bottom: 3px solid #e59517;
 }
 
-.navbar-brand {
-  font-size: 30px;
+.navbar-brand.logo {
+  text-align: center;
+  height: auto;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.logo img {
+  max-width: 80px;
+  display: inline-block;
+}
+
+.logo span {
+  display: inline-block;
+  color: #e59517;
+  font-size: 22px;
+  word-break: break-word;
+  max-width: 120px;
+  text-align: left;
+  line-height: 28px;
+  vertical-align: middle;
+  letter-spacing: 1px;
 }
 
 .navbar-inverse .navbar-nav li.active >a,
 .navbar-inverse .navbar-nav li:hover >a {
   background-color: #000;
   color: #fff;
+}
+
+.menu-list > li > a,
+.menu-list > li > a:hover,
+.menu-list > li > a:focus {
+  padding: 43px 20px;
 }
 
 .sub-menu {}
@@ -72,8 +98,11 @@ header .navbar-inverse {
 .navbar-inverse .navbar-user li a:hover,
 .navbar-inverse .navbar-user li a:focus {
   color: #fff;
+  background-color: #e59517;
   padding-top: 10px;
   padding-bottom: 10px;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
 }
 
 
@@ -394,13 +423,19 @@ header .navbar-inverse {
 /** User stories section End **/
 
 @media (min-width: 768px) {
+  .dropdown-menu,
+  .sub-menu li ul {
+    min-width: 210px;
+  }
   .dropdown:hover .dropdown-content {
     display: block;
   }
   .menu-list .sub-menu li {
     position: relative;
-    padding-top: 5px;
-    padding-bottom: 5px;
+  }
+  .menu-list .sub-menu li a {
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
   .sub-menu li > a i {
     float: right;
