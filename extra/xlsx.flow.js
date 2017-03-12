@@ -15,7 +15,7 @@ function reset_cp() { set_cp(1200); }
 var set_cp = function(cp) { current_codepage = cp; };
 
 function char_codes(data) { var o = []; for(var i = 0, len = data.length; i < len; ++i) o[i] = data.charCodeAt(i); return o; }
-var debom = function(data) {
+var debom = function(data/*:string*/)/*:string*/ {
 	var c1 = data.charCodeAt(0), c2 = data.charCodeAt(1);
 	if(c1 == 0xFF && c2 == 0xFE) return data.substr(2);
 	if(c1 == 0xFE && c2 == 0xFF) return data.substr(2);
@@ -38,7 +38,7 @@ if(typeof cptable !== 'undefined') {
 var Base64 = (function make_b64(){
 	var map = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 	return {
-		encode: function(input, utf8) {
+		encode: function(input/*:string*/, utf8)/*:string*/ {
 			var o = "";
 			var c1, c2, c3, e1, e2, e3, e4;
 			for(var i = 0; i < input.length; ) {
@@ -55,7 +55,7 @@ var Base64 = (function make_b64(){
 			}
 			return o;
 		},
-		decode: function b64_decode(input, utf8) {
+		decode: function b64_decode(input/*:string*/, utf8)/*:string*/ {
 			var o = "";
 			var c1, c2, c3;
 			var e1, e2, e3, e4;
@@ -78,13 +78,13 @@ var Base64 = (function make_b64(){
 })();
 var has_buf = (typeof Buffer !== 'undefined');
 
-function new_raw_buf(len) {
+function new_raw_buf(len/*:number*/) {
 	/* jshint -W056 */
 	return new (has_buf ? Buffer : Array)(len);
 	/* jshint +W056 */
 }
 
-function s2a(s) {
+function s2a(s/*:string*/) {
 	if(has_buf) return new Buffer(s, "binary");
 	return s.split("").map(function(x){ return x.charCodeAt(0) & 0xff; });
 }
@@ -92,6 +92,23 @@ function s2a(s) {
 var bconcat = function(bufs) { return [].concat.apply([], bufs); };
 
 var chr0 = /\u0000/g, chr1 = /[\u0001-\u0006]/;
+/*::
+declare type Block = any;
+declare type BufArray = {
+	newblk(sz:number):Block;
+	next(sz:number):Block;
+	end():any;
+	push(buf:Block):void;
+};
+
+type RecordHopperCB = {(d:any, R:any, RT:number):?boolean;};
+
+type EvertType = {[string]:string};
+type EvertNumType = {[string]:number};
+type EvertArrType = {[string]:Array<string>};
+
+type StringConv = {(string):string};
+*/
 /* ssf.js (C) 2013-2014 SheetJS -- http://sheetjs.com */
 /*jshint -W041 */
 var SSF = {};
@@ -875,13 +892,37 @@ var XLMLFormatMap/*{[string]:string}*/ = ({
 	"Yes/No": '"Yes";"Yes";"No";@',
 	"True/False": '"True";"True";"False";@',
 	"On/Off": '"Yes";"Yes";"No";@'
-});
+}/*:any*/);
 
 var DO_NOT_EXPORT_CFB = true;
+/*::
+declare var Base64:any;
+declare var ReadShift:any;
+declare var CheckField:any;
+declare var prep_blob:any;
+declare var __readUInt32LE:any;
+declare var __readInt32LE:any;
+declare var __toBuffer:any;
+declare var __utf16le:any;
+declare var bconcat:any;
+declare var s2a:any;
+declare var chr0:any;
+declare var chr1:any;
+*/
 /* cfb.js (C) 2013-present SheetJS -- http://sheetjs.com */
 /* vim: set ts=2: */
 /*jshint eqnull:true */
 
+/*::
+declare var DO_NOT_EXPORT_CFB:any;
+type SectorEntry = any;
+type SectorList = {
+	(k:string|number):SectorEntry;
+	name:?string;
+	fat_addrs:any;
+	ssz:number;
+}
+*/
 /* [MS-CFB] v20130118 */
 var CFB = (function _CFB(){
 var exports = {};
@@ -898,7 +939,7 @@ var difat_start = 0; // first mini FAT sector location
 var fat_addrs = []; // locations of FAT sectors
 
 /* [MS-CFB] 2.2 Compound File Header */
-var blob = file.slice(0,512);
+var blob/*:any*/ = file.slice(0,512);
 prep_blob(blob, 0);
 
 /* major version */
@@ -958,7 +999,7 @@ var sectors = sectorify(file, ssz);
 sleuth_fat(difat_start, ndfs, sectors, ssz, fat_addrs);
 
 /** Chains */
-var sector_list = make_sector_list(sectors, dir_start, fat_addrs, ssz);
+var sector_list/*:SectorList*/ = make_sector_list(sectors, dir_start, fat_addrs, ssz);
 
 sector_list[dir_start].name = "!Directory";
 if(nmfs > 0 && minifat_start !== ENDOFCHAIN) sector_list[minifat_start].name = "!MiniFAT";
@@ -967,7 +1008,7 @@ sector_list.fat_addrs = fat_addrs;
 sector_list.ssz = ssz;
 
 /* [MS-CFB] 2.6.1 Compound File Directory Entry */
-var files = {}, Paths = [], FileIndex = [], FullPaths = [], FullPathDir = {};
+var files = {}, Paths/*:any*/ = [], FileIndex = [], FullPaths = [], FullPathDir = {};
 read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, FileIndex);
 
 build_full_paths(FileIndex, FullPathDir, FullPaths, Paths);
@@ -1076,7 +1117,7 @@ function make_find_path(FullPaths, Paths, FileIndex, files, root_name) {
 	var UCPaths = new Array(Paths.length), i;
 	for(i = 0; i < FullPaths.length; ++i) UCFullPaths[i] = FullPaths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
 	for(i = 0; i < Paths.length; ++i) UCPaths[i] = Paths[i].toUpperCase().replace(chr0,'').replace(chr1,'!');
-	return function find_path(path) {
+	return function find_path(path/*:string*/) {
 		var k;
 		if(path.charCodeAt(0) === 47 /* "/" */) { k=true; path = root_name + path; }
 		else k = path.indexOf("/") !== -1;
@@ -1126,7 +1167,7 @@ function get_sector_list(sectors, start, fat_addrs, ssz, chkd) {
 }
 
 /** Chase down the sector linked lists */
-function make_sector_list(sectors, dir_start, fat_addrs, ssz) {
+function make_sector_list(sectors, dir_start, fat_addrs, ssz/*:number*/)/*:any*/ {
 	var sl = sectors.length, sector_list = new Array(sl);
 	var chkd = new Array(sl), buf, buf_chain;
 	var modulus = ssz - 1, i, j, k, jj;
@@ -1172,7 +1213,7 @@ function read_directory(dir_start, sector_list, sectors, Paths, nmfs, files, Fil
 			C:     blob.read_shift(4, 'i'),
 			clsid: blob.read_shift(16),
 			state: blob.read_shift(4, 'i')
-		});
+		}/*:any*/);
 		ctime = blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2) + blob.read_shift(2);
 		if(ctime !== 0) {
 			o.ctime = ctime; o.ct = read_date(blob, blob.l-8);
@@ -1210,12 +1251,12 @@ function read_date(blob, offset) {
 }
 
 var fs;
-function readFileSync(filename, options) {
+function readFileSync(filename/*:string*/, options/*:any*/) {
 	if(fs === undefined) fs = require('fs');
 	return parse(fs.readFileSync(filename), options);
 }
 
-function readSync(blob, options) {
+function readSync(blob/*:any*/, options/*:any*/) {
 	switch(options !== undefined && options.type !== undefined ? options.type : "base64") {
 		case "file": return readFileSync(blob, options);
 		case "base64": return parse(s2a(Base64.decode(blob)), options);
@@ -1263,30 +1304,30 @@ return exports;
 })();
 
 if(typeof require !== 'undefined' && typeof module !== 'undefined' && typeof DO_NOT_EXPORT_CFB === 'undefined') { module.exports = CFB; }
-function isval(x) { return x !== undefined && x !== null; }
+function isval(x/*:?any*/)/*:boolean*/ { return x !== undefined && x !== null; }
 
-function keys(o) { return Object.keys(o); }
+function keys(o/*:any*/)/*:Array<any>*/ { return Object.keys(o); }
 
-function evert_key(obj, key) {
-	var o = ([]), K = keys(obj);
+function evert_key(obj/*:any*/, key/*:string*/)/*:EvertType*/ {
+	var o = ([]/*:any*/), K = keys(obj);
 	for(var i = 0; i !== K.length; ++i) o[obj[K[i]][key]] = K[i];
 	return o;
 }
 
-function evert(obj) {
-	var o = ([]), K = keys(obj);
+function evert(obj/*:any*/)/*:EvertType*/ {
+	var o = ([]/*:any*/), K = keys(obj);
 	for(var i = 0; i !== K.length; ++i) o[obj[K[i]]] = K[i];
 	return o;
 }
 
-function evert_num(obj) {
-	var o = ([]), K = keys(obj);
+function evert_num(obj/*:any*/)/*:EvertNumType*/ {
+	var o = ([]/*:any*/), K = keys(obj);
 	for(var i = 0; i !== K.length; ++i) o[obj[K[i]]] = parseInt(K[i],10);
 	return o;
 }
 
-function evert_arr(obj) {
-	var o = ([]), K = keys(obj);
+function evert_arr(obj/*:any*/)/*:EvertArrType*/ {
+	var o/*:EvertArrType*/ = ([]/*:any*/), K = keys(obj);
 	for(var i = 0; i !== K.length; ++i) {
 		if(o[obj[K[i]]] == null) o[obj[K[i]]] = [];
 		o[obj[K[i]]].push(K[i]);
@@ -1294,7 +1335,7 @@ function evert_arr(obj) {
 	return o;
 }
 
-function datenum(v, date1904) {
+function datenum(v/*:Date*/, date1904/*:?boolean*/)/*:number*/ {
 	var epoch = v.getTime();
 	if(date1904) epoch += 1462*24*60*60*1000;
 	return (epoch + 2209161600000) / (24 * 60 * 60 * 1000);
@@ -1327,7 +1368,7 @@ function parse_isodur(s) {
 	return sec;
 }
 
-function cc2str(arr) {
+function cc2str(arr/*:Array<number>*/)/*:string*/ {
 	var o = "";
 	for(var i = 0; i != arr.length; ++i) o += String.fromCharCode(arr[i]);
 	return o;
@@ -1339,7 +1380,7 @@ function str2cc(str) {
 	return o;
 }
 
-function dup(o) {
+function dup(o/*:any*/)/*:any*/ {
 	if(typeof JSON != 'undefined') return JSON.parse(JSON.stringify(o));
 	if(typeof o != 'object' || !o) return o;
 	var out = {};
@@ -1347,8 +1388,8 @@ function dup(o) {
 	return out;
 }
 
-function fill(c,l) { var o = ""; while(o.length < l) o+=c; return o; }
-function getdatastr(data) {
+function fill(c/*:string*/,l/*:number*/)/*:string*/ { var o = ""; while(o.length < l) o+=c; return o; }
+function getdatastr(data)/*:?string*/ {
 	if(!data) return null;
 	if(data.data) return debom(data.data);
 	if(data.asNodeBuffer && has_buf) return debom(data.asNodeBuffer().toString('binary'));
@@ -1373,7 +1414,7 @@ function getdata(data) { return (data && data.name.slice(-4) === ".bin") ? getda
 
 /* Part 2 Section 10.1.2 "Mapping Content Types" Names are case-insensitive */
 /* OASIS does not comment on filename case sensitivity */
-function safegetzipfile(zip, file) {
+function safegetzipfile(zip, file/*:string*/) {
 	var k = keys(zip.files);
 	var f = file.toLowerCase(), g = f.replace(/\//g,'\\');
 	for(var i=0; i<k.length; ++i) {
@@ -1383,25 +1424,26 @@ function safegetzipfile(zip, file) {
 	return null;
 }
 
-function getzipfile(zip, file) {
+function getzipfile(zip, file/*:string*/) {
 	var o = safegetzipfile(zip, file);
 	if(o == null) throw new Error("Cannot find file " + file + " in zip");
 	return o;
 }
 
-function getzipdata(zip, file, safe) {
+function getzipdata(zip, file/*:string*/, safe/*:?boolean*/) {
 	if(!safe) return getdata(getzipfile(zip, file));
 	if(!file) return null;
 	try { return getzipdata(zip, file); } catch(e) { return null; }
 }
 
-function getzipstr(zip, file, safe) {
+function getzipstr(zip, file/*:string*/, safe/*:?boolean*/)/*:?string*/ {
 	if(!safe) return getdatastr(getzipfile(zip, file));
 	if(!file) return null;
 	try { return getzipstr(zip, file); } catch(e) { return null; }
 }
 
 var _fs, jszip;
+/*:: declare var JSZip:any; */
 if(typeof JSZip !== 'undefined') jszip = JSZip;
 if (typeof exports !== 'undefined') {
 	if (typeof module !== 'undefined' && module.exports) {
@@ -1412,8 +1454,8 @@ if (typeof exports !== 'undefined') {
 var attregexg=/([^\s?>\/]+)=((?:")([^"]*)(?:")|(?:')([^']*)(?:'))/g;
 var tagregex=/<[^>]*>/g;
 var nsregex=/<\w*:/, nsregex2 = /<(\/?)\w+:/;
-function parsexmltag(tag, skip_root) {
-	var z = ([]);
+function parsexmltag(tag/*:string*/, skip_root/*:?boolean*/)/*:any*/ {
+	var z = ([]/*:any*/);
 	var eq = 0, c = 0;
 	for(; eq !== tag.length; ++eq) if((c = tag.charCodeAt(eq)) === 32 || c === 10 || c === 13) break;
 	if(!skip_root) z[0] = tag.substr(0, eq);
@@ -1436,7 +1478,7 @@ function parsexmltag(tag, skip_root) {
 	}
 	return z;
 }
-function strip_ns(x) { return x.replace(nsregex2, "<$1"); }
+function strip_ns(x/*:string*/)/*:string*/ { return x.replace(nsregex2, "<$1"); }
 
 var encodings = {
 	'&quot;': '"',
@@ -1449,29 +1491,29 @@ var rencoding = evert(encodings);
 var rencstr = "&<>'\"".split("");
 
 // TODO: CP remap (need to read file version to determine OS)
-var unescapexml = (function() {
+var unescapexml/*:StringConv*/ = (function() {
 	/* 22.4.2.4 bstr (Basic String) */
 	var encregex = /&[a-z]*;/g, coderegex = /_x([\da-fA-F]{4})_/g;
-	return function unescapexml(text) {
+	return function unescapexml(text/*:string*/)/*:string*/ {
 		var s = text + '';
 		return s.replace(encregex, function($$) { return encodings[$$]; }).replace(coderegex,function(m,c) {return String.fromCharCode(parseInt(c,16));});
 	};
 })();
 
 var decregex=/[&<>'"]/g, charegex = /[\u0000-\u0008\u000b-\u001f]/g;
-function escapexml(text){
+function escapexml(text/*:string*/)/*:string*/{
 	var s = text + '';
 	return s.replace(decregex, function(y) { return rencoding[y]; }).replace(charegex,function(s) { return "_x" + ("000"+s.charCodeAt(0).toString(16)).slice(-4) + "_";});
 }
 
 /* TODO: handle codepages */
-var xlml_fixstr = (function() {
+var xlml_fixstr/*:StringConv*/ = (function() {
 	var entregex = /&#(\d+);/g;
-	function entrepl($$,$1) { return String.fromCharCode(parseInt($1,10)); }
-	return function xlml_fixstr(str) { return str.replace(entregex,entrepl); };
+	function entrepl($$/*:string*/,$1/*:string*/)/*:string*/ { return String.fromCharCode(parseInt($1,10)); }
+	return function xlml_fixstr(str/*:string*/)/*:string*/ { return str.replace(entregex,entrepl); };
 })();
 
-function parsexmlbool(value, tag) {
+function parsexmlbool(value/*:any*/, tag/*:?string*/)/*:boolean*/ {
 	switch(value) {
 		case '1': case 'true': case 'TRUE': return true;
 		/* case '0': case 'false': case 'FALSE':*/
@@ -1479,7 +1521,7 @@ function parsexmlbool(value, tag) {
 	}
 }
 
-var utf8read = function utf8reada(orig) {
+var utf8read/*:StringConv*/ = function utf8reada(orig) {
 	var out = "", i = 0, c = 0, d = 0, e = 0, f = 0, w = 0;
 	while (i < orig.length) {
 		c = orig.charCodeAt(i++);
@@ -1553,10 +1595,10 @@ function parseVector(data) {
 var wtregex = /(^\s|\s$|\n)/;
 function writetag(f,g) {return '<' + f + (g.match(wtregex)?' xml:space="preserve"' : "") + '>' + g + '</' + f + '>';}
 
-function wxt_helper(h) { return keys(h).map(function(k) { return " " + k + '="' + h[k] + '"';}).join(""); }
-function writextag(f,g,h) { return '<' + f + (isval(h) ? wxt_helper(h) : "") + (isval(g) ? (g.match(wtregex)?' xml:space="preserve"' : "") + '>' + g + '</' + f : "/") + '>';}
+function wxt_helper(h)/*:string*/ { return keys(h).map(function(k) { return " " + k + '="' + h[k] + '"';}).join(""); }
+function writextag(f,g,h) { return '<' + f + (isval(h) /*:: && h */? wxt_helper(h) : "") + (isval(g) /*:: && g */? (g.match(wtregex)?' xml:space="preserve"' : "") + '>' + g + '</' + f : "/") + '>';}
 
-function write_w3cdtf(d, t) { try { return d.toISOString().replace(/\.\d*/,""); } catch(e) { if(t) throw e; } return ""; }
+function write_w3cdtf(d/*:Date*/, t/*:?boolean*/)/*:string*/ { try { return d.toISOString().replace(/\.\d*/,""); } catch(e) { if(t) throw e; } return ""; }
 
 function write_vt(s) {
 	switch(typeof s) {
@@ -1579,7 +1621,7 @@ var XMLNS = ({
 	'vt': 'http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes',
 	'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
 	'xsd': 'http://www.w3.org/2001/XMLSchema'
-});
+}/*:any*/);
 
 XMLNS.main = [
 	'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
@@ -1588,7 +1630,7 @@ XMLNS.main = [
 	'http://schemas.microsoft.com/office/excel/2006/2'
 ];
 
-function read_double_le(b, idx) {
+function read_double_le(b, idx/*:number*/)/*:number*/ {
 	var s = 1 - 2 * (b[idx + 7] >>> 7);
 	var e = ((b[idx + 7] & 0x7f) << 4) + ((b[idx + 6] >>> 4) & 0x0f);
 	var m = (b[idx+6]&0x0f);
@@ -1599,7 +1641,7 @@ function read_double_le(b, idx) {
 	return s * Math.pow(2, e - 52) * m;
 }
 
-function write_double_le(b, v, idx) {
+function write_double_le(b, v/*:number*/, idx/*:number*/) {
 	var bs = ((v < 0 || 1/v == -Infinity) ? 1 : 0) << 7, e = 0, m = 0;
 	var av = bs ? -v : v;
 	if(!isFinite(av)) { e = 0x7ff; m = isNaN(v) ? 0x6969 : 0; }
@@ -1630,7 +1672,7 @@ var __double, ___double;
 __double = ___double = function(b, idx) { return read_double_le(b, idx);};
 
 var is_buf = function is_buf_a(a) { return Array.isArray(a); };
-if(has_buf) {
+if(has_buf/*:: && typeof Buffer != 'undefined'*/) {
 	__utf16le = function utf16le_b(b,s,e) { if(!Buffer.isBuffer(b)) return ___utf16le(b,s,e); return b.toString('utf16le',s,e); };
 	__hexlify = function(b,s,l) { return Buffer.isBuffer(b) ? b.toString('hex',s,s+l) : ___hexlify(b,s,l); };
 	__lpstr = function lpstr_b(b,i) { if(!Buffer.isBuffer(b)) return ___lpstr(b, i); var len = b.readUInt32LE(i); return len > 0 ? b.toString('utf8',i+4,i+4+len-1) : "";};
@@ -1638,7 +1680,7 @@ if(has_buf) {
 	__utf8 = function utf8_b(b, s,e) { return b.toString('utf8',s,e); };
 	__toBuffer = function(bufs) { return (bufs[0].length > 0 && Buffer.isBuffer(bufs[0][0])) ? Buffer.concat(bufs[0]) : ___toBuffer(bufs);};
 	bconcat = function(bufs) { return Buffer.isBuffer(bufs[0]) ? Buffer.concat(bufs) : [].concat.apply([], bufs); };
-	__double = function double_(b,i) { if(Buffer.isBuffer(b)) return b.readDoubleLE(i); return ___double(b,i); };
+	__double = function double_(b,i) { if(Buffer.isBuffer(b)/*::&& b instanceof Buffer*/) return b.readDoubleLE(i); return ___double(b,i); };
 	is_buf = function is_buf_b(a) { return Buffer.isBuffer(a) || Array.isArray(a); };
 }
 
@@ -1759,16 +1801,16 @@ function CheckField(hexstr, fld) {
 	this.l += hexstr.length>>1;
 }
 
-function prep_blob(blob, pos) {
+function prep_blob(blob, pos/*:number*/) {
 	blob.l = pos;
 	blob.read_shift = ReadShift;
 	blob.chk = CheckField;
 	blob.write_shift = WriteShift;
 }
 
-function parsenoop(blob, length) { blob.l += length; }
+function parsenoop(blob, length/*:number*/) { blob.l += length; }
 
-function writenoop(blob, length) { blob.l += length; }
+function writenoop(blob, length/*:number*/) { blob.l += length; }
 
 function new_buf(sz) {
 	var o = new_raw_buf(sz);
@@ -1777,7 +1819,7 @@ function new_buf(sz) {
 }
 
 /* [MS-XLSB] 2.1.4 Record */
-function recordhopper(data, cb, opts) {
+function recordhopper(data, cb/*:RecordHopperCB*/, opts/*:?any*/) {
 	if(!data) return;
 	var tmpbyte, cntbyte, length;
 	prep_blob(data, data.l || 0);
@@ -1794,7 +1836,7 @@ function recordhopper(data, cb, opts) {
 }
 
 /* control buffer usage for fixed-length buffers */
-function buf_array() {
+function buf_array()/*:BufArray*/ {
 	var bufs = [], blksz = 2048;
 	var newblk = function ba_newblk(sz) {
 		var o = new_buf(sz);
@@ -1824,11 +1866,11 @@ function buf_array() {
 
 	var push = function ba_push(buf) { endbuf(); curbuf = buf; next(blksz); };
 
-	return ({ next:next, push:push, end:end, _bufs:bufs });
+	return ({ next:next, push:push, end:end, _bufs:bufs }/*:any*/);
 }
 
-function write_record(ba, type, payload, length) {
-	var t = Number(evert_RE[type]), l;
+function write_record(ba/*:BufArray*/, type/*:string*/, payload, length/*:?number*/) {
+	var t/*:number*/ = Number(evert_RE[type]), l;
 	if(isNaN(t)) return; // TODO: throw something here?
 	if(!length) length = XLSBRecordEnum[t].p || (payload||[]).length || 0;
 	l = 1 + (t >= 0x80 ? 1 : 0) + 1 + length;
@@ -1843,7 +1885,7 @@ function write_record(ba, type, payload, length) {
 		if(length >= 0x80) { o.write_shift(1, (length & 0x7F)+0x80); length >>= 7; }
 		else { o.write_shift(1, length); break; }
 	}
-	if(length > 0 && is_buf(payload)) ba.push(payload);
+	if(/*:: length != null &&*/length > 0 && is_buf(payload)) ba.push(payload);
 }
 /* XLS ranges enforced */
 function shift_cell_xls(cell, tgt, opts) {
@@ -1869,14 +1911,14 @@ function shift_range_xls(cell, range, opts) {
 	return out;
 }
 
-function encode_cell_xls(c) {
+function encode_cell_xls(c)/*:string*/ {
 	var s = encode_cell(c);
 	if(c.cRel === 0) s = fix_col(s);
 	if(c.rRel === 0) s = fix_row(s);
 	return s;
 }
 
-function encode_range_xls(r, opts) {
+function encode_range_xls(r, opts)/*:string*/ {
 	if(r.s.r == 0 && !r.s.rRel) {
 		if(r.e.r == opts.biff >= 12 ? 0xFFFFF : 0xFFFF && !r.e.rRel) {
 			return (r.s.cRel ? "" : "$") + encode_col(r.s.c) + ":" + (r.e.cRel ? "" : "$") + encode_col(r.e.c);
@@ -1925,17 +1967,17 @@ make_offcrypto(OFFCRYPTO, typeof crypto !== "undefined" ? crypto : undefined);
 
 
 /* [MS-XLSB] 2.5.143 */
-function parse_StrRun(data, length) {
+function parse_StrRun(data, length/*:?number*/) {
 	return { ich: data.read_shift(2), ifnt: data.read_shift(2) };
 }
 
 /* [MS-XLSB] 2.1.7.121 */
-function parse_RichStr(data, length) {
+function parse_RichStr(data, length/*:number*/) {
 	var start = data.l;
 	var flags = data.read_shift(1);
 	var str = parse_XLWideString(data);
 	var rgsStrRun = [];
-	var z = ({ t: str, h: str });
+	var z = ({ t: str, h: str }/*:any*/);
 	if((flags & 1) !== 0) { /* fRichStr */
 		/* TODO: formatted string */
 		var dwSizeStrRun = data.read_shift(4);
@@ -1978,11 +2020,11 @@ function write_XLSBCell(cell, o) {
 function parse_XLSBCodeName (data, length) { return parse_XLWideString(data, length); }
 
 /* [MS-XLSB] 2.5.166 */
-function parse_XLNullableWideString(data) {
+function parse_XLNullableWideString(data)/*:string*/ {
 	var cchCharacters = data.read_shift(4);
 	return cchCharacters === 0 || cchCharacters === 0xFFFFFFFF ? "" : data.read_shift(cchCharacters, 'dbcs');
 }
-function write_XLNullableWideString(data, o) {
+function write_XLNullableWideString(data/*:string*/, o) {
 	if(!o) o = new_buf(127);
 	o.write_shift(4, data.length > 0 ? data.length : 0xFFFFFFFF);
 	if(data.length > 0) o.write_shift(0, data, 'dbcs');
@@ -1990,11 +2032,11 @@ function write_XLNullableWideString(data, o) {
 }
 
 /* [MS-XLSB] 2.5.168 */
-function parse_XLWideString(data) {
+function parse_XLWideString(data)/*:string*/ {
 	var cchCharacters = data.read_shift(4);
 	return cchCharacters === 0 ? "" : data.read_shift(cchCharacters, 'dbcs');
 }
-function write_XLWideString(data, o) {
+function write_XLWideString(data/*:string*/, o) {
 	if(o == null) o = new_buf(4+2*data.length);
 	o.write_shift(4, data.length);
 	if(data.length > 0) o.write_shift(0, data, 'dbcs');
@@ -2012,7 +2054,7 @@ var write_RelID = write_XLNullableWideString;
 
 /* [MS-XLSB] 2.5.122 */
 /* [MS-XLS] 2.5.217 */
-function parse_RkNumber(data) {
+function parse_RkNumber(data)/*:number*/ {
 	var b = data.slice(data.l, data.l+4);
 	var fX100 = b[0] & 1, fInt = b[0] & 2;
 	data.l+=4;
@@ -2020,7 +2062,7 @@ function parse_RkNumber(data) {
 	var RK = fInt === 0 ? __double([0,0,0,0,b[0],b[1],b[2],b[3]],0) : __readInt32LE(b,0)>>2;
 	return fX100 ? RK/100 : RK;
 }
-function write_RkNumber(data, o) {
+function write_RkNumber(data/*:number*/, o) {
 	if(o == null) o = new_buf(4);
 	var fX100 = 0, fInt = 0, d100 = data * 100;
 	if(data == (data | 0) && data >= -(1<<29) && data < (1 << 29)) { fInt = 1; }
@@ -2031,8 +2073,8 @@ function write_RkNumber(data, o) {
 
 
 /* [MS-XLSB] 2.5.117 RfX */
-function parse_RfX(data) {
-	var cell = ({s: {}, e: {}});
+function parse_RfX(data)/*:Range*/ {
+	var cell/*:Range*/ = ({s: {}, e: {}}/*:any*/);
 	cell.s.r = data.read_shift(4);
 	cell.e.r = data.read_shift(4);
 	cell.s.c = data.read_shift(4);
@@ -2040,7 +2082,7 @@ function parse_RfX(data) {
 	return cell;
 }
 
-function write_RfX(r, o) {
+function write_RfX(r/*:Range*/, o) {
 	if(!o) o = new_buf(16);
 	o.write_shift(4, r.s.r);
 	o.write_shift(4, r.e.r);
@@ -2056,25 +2098,25 @@ var write_UncheckedRfX = write_RfX;
 /* [MS-XLSB] 2.5.171 */
 /* [MS-XLS] 2.5.342 */
 /* TODO: error checking, NaN and Infinity values are not valid Xnum */
-function parse_Xnum(data, length) { return data.read_shift(8, 'f'); }
+function parse_Xnum(data, length/*:?number*/) { return data.read_shift(8, 'f'); }
 function write_Xnum(data, o) { return (o || new_buf(8)).write_shift(8, data, 'f'); }
 
 /* [MS-XLSB] 2.5.198.2 */
 var BErr = {
-0x00: "#NULL!",
-0x07: "#DIV/0!",
-0x0F: "#VALUE!",
-0x17: "#REF!",
-0x1D: "#NAME?",
-0x24: "#NUM!",
-0x2A: "#N/A",
-0x2B: "#GETTING_DATA",
-0xFF: "#WTF?"
+	/*::[*/0x00/*::]*/: "#NULL!",
+	/*::[*/0x07/*::]*/: "#DIV/0!",
+	/*::[*/0x0F/*::]*/: "#VALUE!",
+	/*::[*/0x17/*::]*/: "#REF!",
+	/*::[*/0x1D/*::]*/: "#NAME?",
+	/*::[*/0x24/*::]*/: "#NUM!",
+	/*::[*/0x2A/*::]*/: "#N/A",
+	/*::[*/0x2B/*::]*/: "#GETTING_DATA",
+	/*::[*/0xFF/*::]*/: "#WTF?"
 };
 var RBErr = evert_num(BErr);
 
 /* [MS-XLSB] 2.4.321 BrtColor */
-function parse_BrtColor(data, length) {
+function parse_BrtColor(data, length/*:number*/) {
 	var out = {};
 	var d = data.read_shift(1);
 	out.fValidRGB = d & 1;
@@ -2088,7 +2130,7 @@ function parse_BrtColor(data, length) {
 }
 
 /* [MS-XLSB] 2.5.52 */
-function parse_FontFlags(data, length) {
+function parse_FontFlags(data, length/*:number*/) {
 	var d = data.read_shift(1);
 	data.l++;
 	var out = {
@@ -2146,62 +2188,62 @@ function parse_FontFlags(data, length) {
 
 /* [MS-OSHARED] 2.3.3.2.2.1 Document Summary Information PIDDSI */
 var DocSummaryPIDDSI = {
-0x01: { n: 'CodePage', t: VT_I2 },
-0x02: { n: 'Category', t: VT_STRING },
-0x03: { n: 'PresentationFormat', t: VT_STRING },
-0x04: { n: 'ByteCount', t: VT_I4 },
-0x05: { n: 'LineCount', t: VT_I4 },
-0x06: { n: 'ParagraphCount', t: VT_I4 },
-0x07: { n: 'SlideCount', t: VT_I4 },
-0x08: { n: 'NoteCount', t: VT_I4 },
-0x09: { n: 'HiddenCount', t: VT_I4 },
-0x0a: { n: 'MultimediaClipCount', t: VT_I4 },
-0x0b: { n: 'Scale', t: VT_BOOL },
-0x0c: { n: 'HeadingPair', t: VT_VECTOR | VT_VARIANT },
-0x0d: { n: 'DocParts', t: VT_VECTOR | VT_LPSTR },
-0x0e: { n: 'Manager', t: VT_STRING },
-0x0f: { n: 'Company', t: VT_STRING },
-0x10: { n: 'LinksDirty', t: VT_BOOL },
-0x11: { n: 'CharacterCount', t: VT_I4 },
-0x13: { n: 'SharedDoc', t: VT_BOOL },
-0x16: { n: 'HLinksChanged', t: VT_BOOL },
-0x17: { n: 'AppVersion', t: VT_I4, p: 'version' },
-0x1A: { n: 'ContentType', t: VT_STRING },
-0x1B: { n: 'ContentStatus', t: VT_STRING },
-0x1C: { n: 'Language', t: VT_STRING },
-0x1D: { n: 'Version', t: VT_STRING },
-0xFF: {}
+	/*::[*/0x01/*::]*/: { n: 'CodePage', t: VT_I2 },
+	/*::[*/0x02/*::]*/: { n: 'Category', t: VT_STRING },
+	/*::[*/0x03/*::]*/: { n: 'PresentationFormat', t: VT_STRING },
+	/*::[*/0x04/*::]*/: { n: 'ByteCount', t: VT_I4 },
+	/*::[*/0x05/*::]*/: { n: 'LineCount', t: VT_I4 },
+	/*::[*/0x06/*::]*/: { n: 'ParagraphCount', t: VT_I4 },
+	/*::[*/0x07/*::]*/: { n: 'SlideCount', t: VT_I4 },
+	/*::[*/0x08/*::]*/: { n: 'NoteCount', t: VT_I4 },
+	/*::[*/0x09/*::]*/: { n: 'HiddenCount', t: VT_I4 },
+	/*::[*/0x0a/*::]*/: { n: 'MultimediaClipCount', t: VT_I4 },
+	/*::[*/0x0b/*::]*/: { n: 'Scale', t: VT_BOOL },
+	/*::[*/0x0c/*::]*/: { n: 'HeadingPair', t: VT_VECTOR | VT_VARIANT },
+	/*::[*/0x0d/*::]*/: { n: 'DocParts', t: VT_VECTOR | VT_LPSTR },
+	/*::[*/0x0e/*::]*/: { n: 'Manager', t: VT_STRING },
+	/*::[*/0x0f/*::]*/: { n: 'Company', t: VT_STRING },
+	/*::[*/0x10/*::]*/: { n: 'LinksDirty', t: VT_BOOL },
+	/*::[*/0x11/*::]*/: { n: 'CharacterCount', t: VT_I4 },
+	/*::[*/0x13/*::]*/: { n: 'SharedDoc', t: VT_BOOL },
+	/*::[*/0x16/*::]*/: { n: 'HLinksChanged', t: VT_BOOL },
+	/*::[*/0x17/*::]*/: { n: 'AppVersion', t: VT_I4, p: 'version' },
+	/*::[*/0x1A/*::]*/: { n: 'ContentType', t: VT_STRING },
+	/*::[*/0x1B/*::]*/: { n: 'ContentStatus', t: VT_STRING },
+	/*::[*/0x1C/*::]*/: { n: 'Language', t: VT_STRING },
+	/*::[*/0x1D/*::]*/: { n: 'Version', t: VT_STRING },
+	/*::[*/0xFF/*::]*/: {}
 };
 
 /* [MS-OSHARED] 2.3.3.2.1.1 Summary Information Property Set PIDSI */
 var SummaryPIDSI = {
-0x01: { n: 'CodePage', t: VT_I2 },
-0x02: { n: 'Title', t: VT_STRING },
-0x03: { n: 'Subject', t: VT_STRING },
-0x04: { n: 'Author', t: VT_STRING },
-0x05: { n: 'Keywords', t: VT_STRING },
-0x06: { n: 'Comments', t: VT_STRING },
-0x07: { n: 'Template', t: VT_STRING },
-0x08: { n: 'LastAuthor', t: VT_STRING },
-0x09: { n: 'RevNumber', t: VT_STRING },
-0x0A: { n: 'EditTime', t: VT_FILETIME },
-0x0B: { n: 'LastPrinted', t: VT_FILETIME },
-0x0C: { n: 'CreatedDate', t: VT_FILETIME },
-0x0D: { n: 'ModifiedDate', t: VT_FILETIME },
-0x0E: { n: 'PageCount', t: VT_I4 },
-0x0F: { n: 'WordCount', t: VT_I4 },
-0x10: { n: 'CharCount', t: VT_I4 },
-0x11: { n: 'Thumbnail', t: VT_CF },
-0x12: { n: 'ApplicationName', t: VT_LPSTR },
-0x13: { n: 'DocumentSecurity', t: VT_I4 },
-0xFF: {}
+	/*::[*/0x01/*::]*/: { n: 'CodePage', t: VT_I2 },
+	/*::[*/0x02/*::]*/: { n: 'Title', t: VT_STRING },
+	/*::[*/0x03/*::]*/: { n: 'Subject', t: VT_STRING },
+	/*::[*/0x04/*::]*/: { n: 'Author', t: VT_STRING },
+	/*::[*/0x05/*::]*/: { n: 'Keywords', t: VT_STRING },
+	/*::[*/0x06/*::]*/: { n: 'Comments', t: VT_STRING },
+	/*::[*/0x07/*::]*/: { n: 'Template', t: VT_STRING },
+	/*::[*/0x08/*::]*/: { n: 'LastAuthor', t: VT_STRING },
+	/*::[*/0x09/*::]*/: { n: 'RevNumber', t: VT_STRING },
+	/*::[*/0x0A/*::]*/: { n: 'EditTime', t: VT_FILETIME },
+	/*::[*/0x0B/*::]*/: { n: 'LastPrinted', t: VT_FILETIME },
+	/*::[*/0x0C/*::]*/: { n: 'CreatedDate', t: VT_FILETIME },
+	/*::[*/0x0D/*::]*/: { n: 'ModifiedDate', t: VT_FILETIME },
+	/*::[*/0x0E/*::]*/: { n: 'PageCount', t: VT_I4 },
+	/*::[*/0x0F/*::]*/: { n: 'WordCount', t: VT_I4 },
+	/*::[*/0x10/*::]*/: { n: 'CharCount', t: VT_I4 },
+	/*::[*/0x11/*::]*/: { n: 'Thumbnail', t: VT_CF },
+	/*::[*/0x12/*::]*/: { n: 'ApplicationName', t: VT_LPSTR },
+	/*::[*/0x13/*::]*/: { n: 'DocumentSecurity', t: VT_I4 },
+	/*::[*/0xFF/*::]*/: {}
 };
 
 /* [MS-OLEPS] 2.18 */
 var SpecialProperties = {
-0x80000000: { n: 'Locale', t: VT_UI4 },
-0x80000003: { n: 'Behavior', t: VT_UI4 },
-0x72627262: {}
+	/*::[*/0x80000000/*::]*/: { n: 'Locale', t: VT_UI4 },
+	/*::[*/0x80000003/*::]*/: { n: 'Behavior', t: VT_UI4 },
+	/*::[*/0x72627262/*::]*/: {}
 };
 
 (function() {
@@ -2211,56 +2253,56 @@ var SpecialProperties = {
 
 /* [MS-XLS] 2.4.63 Country/Region codes */
 var CountryEnum = {
-0x0001: "US", // United States
-0x0002: "CA", // Canada
-0x0003: "", // Latin America (except Brazil)
-0x0007: "RU", // Russia
-0x0014: "EG", // Egypt
-0x001E: "GR", // Greece
-0x001F: "NL", // Netherlands
-0x0020: "BE", // Belgium
-0x0021: "FR", // France
-0x0022: "ES", // Spain
-0x0024: "HU", // Hungary
-0x0027: "IT", // Italy
-0x0029: "CH", // Switzerland
-0x002B: "AT", // Austria
-0x002C: "GB", // United Kingdom
-0x002D: "DK", // Denmark
-0x002E: "SE", // Sweden
-0x002F: "NO", // Norway
-0x0030: "PL", // Poland
-0x0031: "DE", // Germany
-0x0034: "MX", // Mexico
-0x0037: "BR", // Brazil
-0x003d: "AU", // Australia
-0x0040: "NZ", // New Zealand
-0x0042: "TH", // Thailand
-0x0051: "JP", // Japan
-0x0052: "KR", // Korea
-0x0054: "VN", // Viet Nam
-0x0056: "CN", // China
-0x005A: "TR", // Turkey
-0x0069: "JS", // Ramastan
-0x00D5: "DZ", // Algeria
-0x00D8: "MA", // Morocco
-0x00DA: "LY", // Libya
-0x015F: "PT", // Portugal
-0x0162: "IS", // Iceland
-0x0166: "FI", // Finland
-0x01A4: "CZ", // Czech Republic
-0x0376: "TW", // Taiwan
-0x03C1: "LB", // Lebanon
-0x03C2: "JO", // Jordan
-0x03C3: "SY", // Syria
-0x03C4: "IQ", // Iraq
-0x03C5: "KW", // Kuwait
-0x03C6: "SA", // Saudi Arabia
-0x03CB: "AE", // United Arab Emirates
-0x03CC: "IL", // Israel
-0x03CE: "QA", // Qatar
-0x03D5: "IR", // Iran
-0xFFFF: "US"  // United States
+	/*::[*/0x0001/*::]*/: "US", // United States
+	/*::[*/0x0002/*::]*/: "CA", // Canada
+	/*::[*/0x0003/*::]*/: "", // Latin America (except Brazil)
+	/*::[*/0x0007/*::]*/: "RU", // Russia
+	/*::[*/0x0014/*::]*/: "EG", // Egypt
+	/*::[*/0x001E/*::]*/: "GR", // Greece
+	/*::[*/0x001F/*::]*/: "NL", // Netherlands
+	/*::[*/0x0020/*::]*/: "BE", // Belgium
+	/*::[*/0x0021/*::]*/: "FR", // France
+	/*::[*/0x0022/*::]*/: "ES", // Spain
+	/*::[*/0x0024/*::]*/: "HU", // Hungary
+	/*::[*/0x0027/*::]*/: "IT", // Italy
+	/*::[*/0x0029/*::]*/: "CH", // Switzerland
+	/*::[*/0x002B/*::]*/: "AT", // Austria
+	/*::[*/0x002C/*::]*/: "GB", // United Kingdom
+	/*::[*/0x002D/*::]*/: "DK", // Denmark
+	/*::[*/0x002E/*::]*/: "SE", // Sweden
+	/*::[*/0x002F/*::]*/: "NO", // Norway
+	/*::[*/0x0030/*::]*/: "PL", // Poland
+	/*::[*/0x0031/*::]*/: "DE", // Germany
+	/*::[*/0x0034/*::]*/: "MX", // Mexico
+	/*::[*/0x0037/*::]*/: "BR", // Brazil
+	/*::[*/0x003d/*::]*/: "AU", // Australia
+	/*::[*/0x0040/*::]*/: "NZ", // New Zealand
+	/*::[*/0x0042/*::]*/: "TH", // Thailand
+	/*::[*/0x0051/*::]*/: "JP", // Japan
+	/*::[*/0x0052/*::]*/: "KR", // Korea
+	/*::[*/0x0054/*::]*/: "VN", // Viet Nam
+	/*::[*/0x0056/*::]*/: "CN", // China
+	/*::[*/0x005A/*::]*/: "TR", // Turkey
+	/*::[*/0x0069/*::]*/: "JS", // Ramastan
+	/*::[*/0x00D5/*::]*/: "DZ", // Algeria
+	/*::[*/0x00D8/*::]*/: "MA", // Morocco
+	/*::[*/0x00DA/*::]*/: "LY", // Libya
+	/*::[*/0x015F/*::]*/: "PT", // Portugal
+	/*::[*/0x0162/*::]*/: "IS", // Iceland
+	/*::[*/0x0166/*::]*/: "FI", // Finland
+	/*::[*/0x01A4/*::]*/: "CZ", // Czech Republic
+	/*::[*/0x0376/*::]*/: "TW", // Taiwan
+	/*::[*/0x03C1/*::]*/: "LB", // Lebanon
+	/*::[*/0x03C2/*::]*/: "JO", // Jordan
+	/*::[*/0x03C3/*::]*/: "SY", // Syria
+	/*::[*/0x03C4/*::]*/: "IQ", // Iraq
+	/*::[*/0x03C5/*::]*/: "KW", // Kuwait
+	/*::[*/0x03C6/*::]*/: "SA", // Saudi Arabia
+	/*::[*/0x03CB/*::]*/: "AE", // United Arab Emirates
+	/*::[*/0x03CC/*::]*/: "IL", // Israel
+	/*::[*/0x03CE/*::]*/: "QA", // Qatar
+	/*::[*/0x03D5/*::]*/: "IR", // Iran
+	/*::[*/0xFFFF/*::]*/: "US"  // United States
 };
 
 /* [MS-XLS] 2.5.127 */
@@ -2515,7 +2557,7 @@ var ct2type/*{[string]:string}*/ = ({
 	"application/vnd.openxmlformats-officedocument.oleObject": "TODO",
 
 	"sheet": "js"
-});
+}/*:any*/);
 
 var CT_LIST = (function(){
 	var o = {
@@ -2547,10 +2589,10 @@ var type2ct/*{[string]:Array<string>}*/ = evert_arr(ct2type);
 
 XMLNS.CT = 'http://schemas.openxmlformats.org/package/2006/content-types';
 
-function parse_ct(data, opts) {
+function parse_ct(data/*:?string*/, opts) {
 	var ct = ({ workbooks: [], sheets: [], calcchains: [], themes: [], styles: [],
 		coreprops: [], extprops: [], custprops: [], strs:[], comments: [], vba: [],
-		TODO:[], rels:[], xmlns: "" });
+		TODO:[], rels:[], xmlns: "" }/*:any*/);
 	if(!data || !data.match) return ct;
 	var ctext = {};
 	(data.match(tagregex)||[]).forEach(function(x) {
@@ -2588,8 +2630,8 @@ var CTYPE_DEFAULTS = [
 	return writextag('Default', null, {'Extension':x[0], 'ContentType': x[1]});
 });
 
-function write_ct(ct, opts) {
-	var o = [], v;
+function write_ct(ct, opts)/*:string*/ {
+	var o/*:Array<string>*/ = [], v;
 	o[o.length] = (XML_HEADER);
 	o[o.length] = (CTYPE_XML_ROOT);
 	o = o.concat(CTYPE_DEFAULTS);
@@ -2630,9 +2672,9 @@ function write_ct(ct, opts) {
 var RELS = ({
 	WB: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument",
 	SHEET: "http://sheetjs.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
-});
+}/*:any*/);
 
-function parse_rels(data, currentFilePath) {
+function parse_rels(data/*:?string*/, currentFilePath/*:string*/) {
 	if (!data) return data;
 	if (currentFilePath.charAt(0) !== '/') {
 		currentFilePath = '/'+currentFilePath;
@@ -2677,7 +2719,7 @@ var RELS_ROOT = writextag('Relationships', null, {
 });
 
 /* TODO */
-function write_rels(rels) {
+function write_rels(rels)/*:string*/ {
 	var o = [];
 	o[o.length] = (XML_HEADER);
 	o[o.length] = (RELS_ROOT);
@@ -2709,7 +2751,7 @@ function parse_manifest(d, opts) {
 	}
 }
 
-function write_manifest(manifest, opts) {
+function write_manifest(manifest/*:Array<Array<string> >*/, opts)/*:string*/ {
 	var o = [XML_HEADER];
 	o.push('<manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">\n');
 	o.push('  <manifest:file-entry manifest:full-path="/" manifest:version="1.2" manifest:media-type="application/vnd.oasis.opendocument.spreadsheet"/>\n');
@@ -2719,14 +2761,14 @@ function write_manifest(manifest, opts) {
 }
 
 /* Part 3 Section 6 Metadata Manifest File */
-function write_rdf_type(file, res, tag) {
+function write_rdf_type(file/*:string*/, res/*:string*/, tag/*:?string*/) {
 	return [
 		'  <rdf:Description rdf:about="' + file + '">\n',
 		'    <rdf:type rdf:resource="http://docs.oasis-open.org/ns/office/1.2/meta/' + (tag || "odf") + '#' + res + '"/>\n',
 		'  </rdf:Description>\n'
 	].join("");
 }
-function write_rdf_has(base, file) {
+function write_rdf_has(base/*:string*/, file/*:string*/) {
 	return [
 		'  <rdf:Description rdf:about="' + base + '">\n',
 		'    <ns0:hasPart xmlns:ns0="http://docs.oasis-open.org/ns/office/1.2/meta/pkg#" rdf:resource="' + file + '"/>\n',
@@ -2746,7 +2788,7 @@ function write_rdf(rdf, opts) {
 }
 /* ECMA-376 Part II 11.1 Core Properties Part */
 /* [MS-OSHARED] 2.3.3.2.[1-2].1 (PIDSI/PIDDSI) */
-var CORE_PROPS = [
+var CORE_PROPS/*:Array<Array<string> >*/ = [
 	["cp:category", "Category"],
 	["cp:contentStatus", "ContentStatus"],
 	["cp:keywords", "Keywords"],
@@ -2767,7 +2809,7 @@ var CORE_PROPS = [
 XMLNS.CORE_PROPS = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties";
 RELS.CORE_PROPS  = 'http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties';
 
-var CORE_PROPS_REGEX = (function() {
+var CORE_PROPS_REGEX/*:Array<RegEx>*/ = (function() {
 	var r = new Array(CORE_PROPS.length);
 	for(var i = 0; i < CORE_PROPS.length; ++i) {
 		var f = CORE_PROPS[i];
@@ -2818,7 +2860,7 @@ function write_core_props(cp, opts) {
 }
 /* 15.2.12.3 Extended File Properties Part */
 /* [MS-OSHARED] 2.3.3.2.[1-2].1 (PIDSI/PIDDSI) */
-var EXT_PROPS = [
+var EXT_PROPS/*:Array<Array<string> >*/ = [
 	["Application", "Application", "string"],
 	["AppVersion", "AppVersion", "string"],
 	["Company", "Company", "string"],
@@ -2869,7 +2911,7 @@ var EXT_PROPS_XML_ROOT = writextag('Properties', null, {
 	'xmlns:vt': XMLNS.vt
 });
 
-function write_ext_props(cp, opts) {
+function write_ext_props(cp, opts)/*:string*/ {
 	var o = [], p = {}, W = writextag;
 	if(!cp) cp = {};
 	cp.Application = "SheetJS";
@@ -2897,7 +2939,7 @@ XMLNS.CUST_PROPS = "http://schemas.openxmlformats.org/officeDocument/2006/custom
 RELS.CUST_PROPS  = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties';
 
 var custregex = /<[^>]+>[^<]*/g;
-function parse_cust_props(data, opts) {
+function parse_cust_props(data/*:string*/, opts) {
 	var p = {}, name = "";
 	var m = data.match(custregex);
 	if(m) for(var i = 0; i != m.length; ++i) {
@@ -2945,7 +2987,7 @@ var CUST_PROPS_XML_ROOT = writextag('Properties', null, {
 	'xmlns:vt': XMLNS.vt
 });
 
-function write_cust_props(cp, opts) {
+function write_cust_props(cp, opts)/*:string*/ {
 	var o = [XML_HEADER, CUST_PROPS_XML_ROOT];
 	if(!cp) return o.join("");
 	var pid = 1;
@@ -2959,7 +3001,7 @@ function write_cust_props(cp, opts) {
 	if(o.length>2){ o[o.length] = '</Properties>'; o[1]=o[1].replace("/>",">"); }
 	return o.join("");
 }
-function xlml_set_prop(Props, tag, val) {
+function xlml_set_prop(Props, tag/*:string*/, val) {
 	/* TODO: Normalize the properties */
 	switch(tag) {
 		case 'Description': tag = 'Comments'; break;
@@ -3037,7 +3079,7 @@ function parse_VtVecHeadingPair(blob) {
 /* [MS-OLEPS] 2.18.1 Dictionary (uses 2.17, 2.16) */
 function parse_dictionary(blob,CodePage) {
 	var cnt = blob.read_shift(4);
-	var dict = ({});
+	var dict/*:{[number]:string}*/ = ({}/*:any*/);
 	for(var j = 0; j != cnt; ++j) {
 		var pid = blob.read_shift(4);
 		var len = blob.read_shift(4);
@@ -3118,7 +3160,7 @@ function parse_PropertySet(blob, PIDSI) {
 	var NumProps = blob.read_shift(4);
 	var Props = [], i = 0;
 	var CodePage = 0;
-	var Dictionary = -1, DictObj = ({});
+	var Dictionary = -1, DictObj/*:{[number]:string}*/ = ({}/*:any*/);
 	for(i = 0; i != NumProps; ++i) {
 		var PropID = blob.read_shift(4);
 		var Offset = blob.read_shift(4);
@@ -3223,7 +3265,7 @@ function parse_PropertySetStream(file, PIDSI) {
 	else if(NumSets === 2) { FMTID1 = blob.read_shift(16); Offset1 = blob.read_shift(4); }
 	var PSet0 = parse_PropertySet(blob, PIDSI);
 
-	var rval = ({ SystemIdentifier: SystemIdentifier });
+	var rval = ({ SystemIdentifier: SystemIdentifier }/*:any*/);
 	for(var y in PSet0) rval[y] = PSet0[y];
 	//rval.blob = blob;
 	rval.FMTID = FMTID0;
@@ -3416,11 +3458,11 @@ function parse_LongRGB(blob, length) { var x = parse_LongRGBA(blob, length); x[3
 /* --- MS-XLS --- */
 
 /* 2.5.19 */
-function parse_XLSCell(blob, length) {
+function parse_XLSCell(blob, length)/*:Cell*/ {
 	var rw = blob.read_shift(2); // 0-indexed
 	var col = blob.read_shift(2);
 	var ixfe = blob.read_shift(2);
-	return ({r:rw, c:col, ixfe:ixfe});
+	return ({r:rw, c:col, ixfe:ixfe}/*:any*/);
 }
 
 /* 2.5.134 */
@@ -3516,22 +3558,22 @@ function parse_FtCf(blob, length) {
 
 /* 2.5.140 - 2.5.154 and friends */
 var FtTab = {
-0x15: parse_FtCmo,
-0x13: parsenoop,                                /* FtLbsData */
-0x12: function(blob, length) { blob.l += 12; }, /* FtCblsData */
-0x11: function(blob, length) { blob.l += 8; },  /* FtRboData */
-0x10: parsenoop,                                /* FtEdoData */
-0x0F: parsenoop,                                /* FtGboData */
-0x0D: parse_FtNts,                              /* FtNts */
-0x0C: function(blob, length) { blob.l += 24; }, /* FtSbs */
-0x0B: function(blob, length) { blob.l += 10; }, /* FtRbo */
-0x0A: function(blob, length) { blob.l += 16; }, /* FtCbls */
-0x09: parsenoop,                                /* FtPictFmla */
-0x08: function(blob, length) { blob.l += 6; },  /* FtPioGrbit */
-0x07: parse_FtCf,                               /* FtCf */
-0x06: function(blob, length) { blob.l += 6; },  /* FtGmo */
-0x04: parsenoop,                                /* FtMacro */
-0x00: function(blob, length) { blob.l += 4; }   /* FtEnding */
+	/*::[*/0x15/*::]*/: parse_FtCmo,
+	/*::[*/0x13/*::]*/: parsenoop,                                /* FtLbsData */
+	/*::[*/0x12/*::]*/: function(blob, length) { blob.l += 12; }, /* FtCblsData */
+	/*::[*/0x11/*::]*/: function(blob, length) { blob.l += 8; },  /* FtRboData */
+	/*::[*/0x10/*::]*/: parsenoop,                                /* FtEdoData */
+	/*::[*/0x0F/*::]*/: parsenoop,                                /* FtGboData */
+	/*::[*/0x0D/*::]*/: parse_FtNts,                              /* FtNts */
+	/*::[*/0x0C/*::]*/: function(blob, length) { blob.l += 24; }, /* FtSbs */
+	/*::[*/0x0B/*::]*/: function(blob, length) { blob.l += 10; }, /* FtRbo */
+	/*::[*/0x0A/*::]*/: function(blob, length) { blob.l += 16; }, /* FtCbls */
+	/*::[*/0x09/*::]*/: parsenoop,                                /* FtPictFmla */
+	/*::[*/0x08/*::]*/: function(blob, length) { blob.l += 6; },  /* FtPioGrbit */
+	/*::[*/0x07/*::]*/: parse_FtCf,                               /* FtCf */
+	/*::[*/0x06/*::]*/: function(blob, length) { blob.l += 6; },  /* FtGmo */
+	/*::[*/0x04/*::]*/: parsenoop,                                /* FtMacro */
+	/*::[*/0x00/*::]*/: function(blob, length) { blob.l += 4; }   /* FtEnding */
 };
 function parse_FtArray(blob, length, ot) {
 	var s = blob.l;
@@ -3809,7 +3851,7 @@ function parse_ExternName(blob, length, opts) {
 		fOleLink: (flags >>> 4) & 0x01,
 		cf: (flags >>> 5) & 0x3FF,
 		fIcon: flags >>> 15 & 0x01
-	});
+	}/*:any*/);
 	if(opts.sbcch === 0x3A01) body = parse_AddinUdf(blob, length-2, opts);
 	//else throw new Error("unsupported SupBook cch: " + opts.sbcch);
 	o.body = body || blob.read_shift(length-2);
@@ -4382,27 +4424,27 @@ function parse_RString(blob, length, opts) {
 }
 /* 18.4.1 charset to codepage mapping */
 var CS2CP = ({
-0:    1252, /* ANSI */
-1:   65001, /* DEFAULT */
-2:   65001, /* SYMBOL */
-77:  10000, /* MAC */
-128:   932, /* SHIFTJIS */
-129:   949, /* HANGUL */
-130:  1361, /* JOHAB */
-134:   936, /* GB2312 */
-136:   950, /* CHINESEBIG5 */
-161:  1253, /* GREEK */
-162:  1254, /* TURKISH */
-163:  1258, /* VIETNAMESE */
-177:  1255, /* HEBREW */
-178:  1256, /* ARABIC */
-186:  1257, /* BALTIC */
-204:  1251, /* RUSSIAN */
-222:   874, /* THAI */
-238:  1250, /* EASTEUROPE */
-255:  1252, /* OEM */
-69:   6969  /* MISC */
-});
+	/*::[*/0/*::]*/:    1252, /* ANSI */
+	/*::[*/1/*::]*/:   65001, /* DEFAULT */
+	/*::[*/2/*::]*/:   65001, /* SYMBOL */
+	/*::[*/77/*::]*/:  10000, /* MAC */
+	/*::[*/128/*::]*/:   932, /* SHIFTJIS */
+	/*::[*/129/*::]*/:   949, /* HANGUL */
+	/*::[*/130/*::]*/:  1361, /* JOHAB */
+	/*::[*/134/*::]*/:   936, /* GB2312 */
+	/*::[*/136/*::]*/:   950, /* CHINESEBIG5 */
+	/*::[*/161/*::]*/:  1253, /* GREEK */
+	/*::[*/162/*::]*/:  1254, /* TURKISH */
+	/*::[*/163/*::]*/:  1258, /* VIETNAMESE */
+	/*::[*/177/*::]*/:  1255, /* HEBREW */
+	/*::[*/178/*::]*/:  1256, /* ARABIC */
+	/*::[*/186/*::]*/:  1257, /* BALTIC */
+	/*::[*/204/*::]*/:  1251, /* RUSSIAN */
+	/*::[*/222/*::]*/:   874, /* THAI */
+	/*::[*/238/*::]*/:  1250, /* EASTEUROPE */
+	/*::[*/255/*::]*/:  1252, /* OEM */
+	/*::[*/69/*::]*/:   6969  /* MISC */
+}/*:any*/);
 
 /* Parse a list of <r> tags */
 var parse_rs = (function parse_rs_factory() {
@@ -4509,11 +4551,11 @@ var parse_rs = (function parse_rs_factory() {
 		var terms = [[],"",[]];
 		/* 18.4.12 t ST_Xstring */
 		var t = r.match(tregex), cp = 65001;
-		if(!isval(t)) return "";
+		if(!isval(t)/*:: || !t*/) return "";
 		terms[1] = t[1];
 
 		var rpr = r.match(rpregex);
-		if(isval(rpr)) cp = parse_rpr(rpr[1], terms[0], terms[2]);
+		if(isval(rpr)/*:: && rpr*/) cp = parse_rpr(rpr[1], terms[0], terms[2]);
 
 		return terms[0].join("") + terms[1].replace(nlregex,'<br/>') + terms[2].join("");
 	}
@@ -4552,12 +4594,12 @@ function parse_si(x, opts) {
 var sstr0 = /<(?:\w+:)?sst([^>]*)>([\s\S]*)<\/(?:\w+:)?sst>/;
 var sstr1 = /<(?:\w+:)?(?:si|sstItem)>/g;
 var sstr2 = /<\/(?:\w+:)?(?:si|sstItem)>/;
-function parse_sst_xml(data, opts) {
-	var s = ([]), ss = "";
+function parse_sst_xml(data/*:string*/, opts)/*:SST*/ {
+	var s/*:SST*/ = ([]/*:any*/), ss = "";
 	if(!data) return s;
 	/* 18.4.9 sst CT_Sst */
 	var sst = data.match(sstr0);
-	if(isval(sst)) {
+	if(isval(sst)/*:: && sst*/) {
 		ss = sst[2].replace(sstr1,"").split(sstr2);
 		for(var i = 0; i != ss.length; ++i) {
 			var o = parse_si(ss[i].trim(), opts);
@@ -4570,7 +4612,7 @@ function parse_sst_xml(data, opts) {
 
 RELS.SST = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings";
 var straywsregex = /^\s|\s$|[\t\n\r]/;
-function write_sst_xml(sst, opts) {
+function write_sst_xml(sst/*:SST*/, opts)/*:string*/ {
 	if(!opts.bookSST) return "";
 	var o = [XML_HEADER];
 	o[o.length] = (writextag('sst', null, {
@@ -4632,7 +4674,7 @@ function write_sst_bin(sst, opts) {
 	write_record(ba, "BrtEndSst");
 	return ba.end();
 }
-function _JS2ANSI(str) {
+function _JS2ANSI(str/*:string*/)/*:Array<number>*/ {
 	if(typeof cptable !== 'undefined') return cptable.utils.encode(1252, str);
 	var o = [], oo = str.split("");
 	for(var i = 0; i < oo.length; ++i) o[i] = oo[i].charCodeAt(0);
@@ -4640,14 +4682,14 @@ function _JS2ANSI(str) {
 }
 
 /* [MS-OFFCRYPTO] 2.1.4 Version */
-function parse_Version(blob, length) {
+function parse_Version(blob, length/*:number*/) {
 	var o = {};
 	o.Major = blob.read_shift(2);
 	o.Minor = blob.read_shift(2);
 	return o;
 }
 /* [MS-OFFCRYPTO] 2.3.2 Encryption Header */
-function parse_EncryptionHeader(blob, length) {
+function parse_EncryptionHeader(blob, length/*:number*/) {
 	var o = {};
 	o.Flags = blob.read_shift(4);
 
@@ -4665,11 +4707,11 @@ function parse_EncryptionHeader(blob, length) {
 }
 
 /* [MS-OFFCRYPTO] 2.3.3 Encryption Verifier */
-function parse_EncryptionVerifier(blob, length) {
+function parse_EncryptionVerifier(blob, length/*:number*/) {
 	return parsenoop(blob, length);
 }
 /* [MS-OFFCRYPTO] 2.3.5.1 RC4 CryptoAPI Encryption Header */
-function parse_RC4CryptoHeader(blob, length) {
+function parse_RC4CryptoHeader(blob, length/*:number*/) {
 	var o = {};
 	var vers = o.EncryptionVersionInfo = parse_Version(blob, 4); length -= 4;
 	if(vers.Minor != 2) throw 'unrecognized minor version code: ' + vers.Minor;
@@ -4681,7 +4723,7 @@ function parse_RC4CryptoHeader(blob, length) {
 	return o;
 }
 /* [MS-OFFCRYPTO] 2.3.6.1 RC4 Encryption Header */
-function parse_RC4Header(blob, length) {
+function parse_RC4Header(blob, length/*:number*/) {
 	var o = {};
 	var vers = o.EncryptionVersionInfo = parse_Version(blob, 4); length -= 4;
 	if(vers.Major != 1 || vers.Minor != 1) throw 'unrecognized version code ' + vers.Major + ' : ' + vers.Minor;
@@ -4692,7 +4734,7 @@ function parse_RC4Header(blob, length) {
 }
 
 /* [MS-OFFCRYPTO] 2.3.7.1 Binary Document Password Verifier Derivation */
-function crypto_CreatePasswordVerifier_Method1(Password) {
+function crypto_CreatePasswordVerifier_Method1(Password/*:string*/) {
 	var Verifier = 0x0000, PasswordArray;
 	var PasswordDecoded = _JS2ANSI(Password);
 	var len = PasswordDecoded.length + 1, i, PasswordByte;
@@ -4729,7 +4771,7 @@ var crypto_CreateXorArray_Method1 = (function() {
 		}
 		return XorKey;
 	};
-	return function(password) {
+	return function(password/*:string*/) {
 		var Password = _JS2ANSI(password);
 		var XorKey = CreateXorKey_Method1(Password);
 		var Index = Password.length;
@@ -4769,7 +4811,7 @@ var crypto_CreateXorArray_Method1 = (function() {
 })();
 
 /* [MS-OFFCRYPTO] 2.3.7.3 Binary Document XOR Data Transformation Method 1 */
-var crypto_DecryptData_Method1 = function(password, Data, XorArrayIndex, XorArray, O) {
+var crypto_DecryptData_Method1 = function(password/*:string*/, Data, XorArrayIndex, XorArray, O) {
 	/* If XorArray is set, use it; if O is not set, make changes in-place */
 	if(!O) O = Data;
 	if(!XorArray) XorArray = crypto_CreateXorArray_Method1(password);
@@ -4784,7 +4826,7 @@ var crypto_DecryptData_Method1 = function(password, Data, XorArrayIndex, XorArra
 	return [O, XorArrayIndex, XorArray];
 };
 
-var crypto_MakeXorDecryptor = function(password) {
+var crypto_MakeXorDecryptor = function(password/*:string*/) {
 	var XorArrayIndex = 0, XorArray = crypto_CreateXorArray_Method1(password);
 	return function(Data) {
 		var O = crypto_DecryptData_Method1("", Data, XorArrayIndex, XorArray);
@@ -4795,7 +4837,7 @@ var crypto_MakeXorDecryptor = function(password) {
 
 /* 2.5.343 */
 function parse_XORObfuscation(blob, length, opts, out) {
-	var o = ({ key: parseuint16(blob), verificationBytes: parseuint16(blob) });
+	var o = ({ key: parseuint16(blob), verificationBytes: parseuint16(blob) }/*:any*/);
 	if(opts.password) o.verifier = crypto_CreatePasswordVerifier_Method1(opts.password);
 	out.valid = o.verificationBytes === o.verifier;
 	if(out.valid) out.insitu_decrypt = crypto_MakeXorDecryptor(opts.password);
@@ -4803,13 +4845,13 @@ function parse_XORObfuscation(blob, length, opts, out) {
 }
 
 /* 2.4.117 */
-function parse_FilePassHeader(blob, length, oo) {
+function parse_FilePassHeader(blob, length/*:number*/, oo) {
 	var o = oo || {}; o.Info = blob.read_shift(2); blob.l -= 2;
 	if(o.Info === 1) o.Data = parse_RC4Header(blob, length);
 	else o.Data = parse_RC4CryptoHeader(blob, length);
 	return o;
 }
-function parse_FilePass(blob, length, opts) {
+function parse_FilePass(blob, length/*:number*/, opts) {
 	var o = { Type: blob.read_shift(2) }; /* wEncryptionType */
 	if(o.Type) parse_FilePassHeader(blob, length-2, o);
 	else parse_XORObfuscation(blob, length-2, opts, o);
@@ -4954,7 +4996,7 @@ function parse_fills(t, opts) {
 /* 18.8.31 numFmts CT_NumFmts */
 function parse_numFmts(t, opts) {
 	styles.NumberFmt = [];
-	var k/*Array<number>*/ = (keys(SSF._table));
+	var k/*Array<number>*/ = (keys(SSF._table)/*:any*/);
 	for(var i=0; i < k.length; ++i) styles.NumberFmt[k[i]] = SSF._table[k[i]];
 	var m = t[0].match(tagregex);
 	if(!m) return;
@@ -5011,7 +5053,7 @@ function parse_cellXfs(t, opts) {
 	});
 }
 
-function write_cellXfs(cellXfs) {
+function write_cellXfs(cellXfs)/*:string*/ {
 	var o = [];
 	o[o.length] = (writextag('cellXfs',null));
 	cellXfs.forEach(function(c) { o[o.length] = (writextag('xf', null, c)); });
@@ -5063,7 +5105,7 @@ var STYLES_XML_ROOT = writextag('styleSheet', null, {
 
 RELS.STY = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles";
 
-function write_sty_xml(wb, opts) {
+function write_sty_xml(wb/*:Workbook*/, opts)/*:string*/ {
 	var o = [XML_HEADER, STYLES_XML_ROOT], w;
 	if((w = write_numFmts(wb.SSF)) != null) o[o.length] = w;
 	o[o.length] = ('<fonts count="1"><font><sz val="12"/><color theme="1"/><name val="Calibri"/><family val="2"/><scheme val="minor"/></font></fonts>');
@@ -5079,15 +5121,15 @@ function write_sty_xml(wb, opts) {
 	return o.join("");
 }
 /* [MS-XLSB] 2.4.651 BrtFmt */
-function parse_BrtFmt(data, length) {
+function parse_BrtFmt(data, length/*:number*/) {
 	var ifmt = data.read_shift(2);
 	var stFmtCode = parse_XLWideString(data,length-2);
 	return [ifmt, stFmtCode];
 }
 
 /* [MS-XLSB] 2.4.653 BrtFont TODO */
-function parse_BrtFont(data, length) {
-	var out = ({flags:{}});
+function parse_BrtFont(data, length/*:number*/) {
+	var out = ({flags:{}}/*:any*/);
 	out.dyHeight = data.read_shift(2);
 	out.grbit = parse_FontFlags(data, 2);
 	out.bls = data.read_shift(2);
@@ -5113,7 +5155,7 @@ function parse_BrtFont(data, length) {
 }
 
 /* [MS-XLSB] 2.4.816 BrtXF */
-function parse_BrtXF(data, length) {
+function parse_BrtXF(data, length/*:number*/) {
 	var ixfeParent = data.read_shift(2);
 	var ifmt = data.read_shift(2);
 	parsenoop(data, length-4);
@@ -5122,7 +5164,7 @@ function parse_BrtXF(data, length) {
 
 /* [MS-XLSB] 2.1.7.50 Styles */
 function parse_sty_bin(data, opts) {
-	styles.NumberFmt = ([]);
+	styles.NumberFmt = ([]/*:any*/);
 	for(var y in SSF._table) styles.NumberFmt[y] = SSF._table[y];
 
 	styles.CellXf = [];
@@ -5654,14 +5696,14 @@ function insertCommentsIntoSheet(sheetName, sheet, comments) {
 		}
 
 		if (!cell.c) cell.c = [];
-		var o = ({a: comment.author, t: comment.t, r: comment.r});
+		var o = ({a: comment.author, t: comment.t, r: comment.r}/*:any*/);
 		if(comment.h) o.h = comment.h;
 		cell.c.push(o);
 	});
 }
 
 /* 18.7.3 CT_Comment */
-function parse_comments_xml(data, opts) {
+function parse_comments_xml(data/*:string*/, opts)/*:Array<Comment>*/ {
 	if(data.match(/<(?:\w+:)?comments *\/>/)) return [];
 	var authors = [];
 	var commentList = [];
@@ -5677,7 +5719,7 @@ function parse_comments_xml(data, opts) {
 		var cm = x.match(/<(?:\w+:)?comment[^>]*>/);
 		if(!cm) return;
 		var y = parsexmltag(cm[0]);
-		var comment = ({ author: y.authorId && authors[y.authorId] ? authors[y.authorId] : undefined, ref: y.ref, guid: y.guid });
+		var comment/*:Comment*/ = ({ author: y.authorId && authors[y.authorId] ? authors[y.authorId] : undefined, ref: y.ref, guid: y.guid }/*:any*/);
 		var cell = decode_cell(y.ref);
 		if(opts.sheetRows && opts.sheetRows <= cell.r) return;
 		var textMatch = x.match(/<(?:\w+:)?text>([^\u2603]*)<\/(?:\w+:)?text>/);
@@ -5758,13 +5800,13 @@ var rc_to_a1 = (function(){
 })();
 
 /* TODO actually parse the formula */
-function shift_formula_str(f, delta) {
+function shift_formula_str(f/*:string*/, delta/*:Cell*/)/*:string*/ {
 	return f.replace(/(^|[^A-Z0-9])([$]?)([A-Z]+)([$]?)(\d+)/g, function($0, $1, $2, $3, $4, $5, off, str) {
 		return $1+($2=="$" ? $2+$3 : encode_col(decode_col($3)+delta.c))+($4=="$" ? $4+$5 : encode_row(decode_row($5) + delta.r));
 	});
 }
 
-function shift_formula_xlsx(f, range, cell) {
+function shift_formula_xlsx(f/*:string*/, range/*:string*/, cell/*:string*/)/*:string*/ {
 	var r = decode_range(range), s = r.s, c = decode_cell(cell);
 	var delta = {r:c.r - s.r, c:c.c - s.c};
 	return shift_formula_str(f, delta);
@@ -6048,7 +6090,7 @@ function parse_PtgStr(blob, length, opts) { blob.l++; return parse_ShortXLUnicod
 
 /* [MS-XLS] 2.5.192.112 + 2.5.192.11{3,4,5,6,7} */
 /* [MS-XLSB] 2.5.97.93 + 2.5.97.9{4,5,6,7} */
-function parse_SerAr(blob, biff) {
+function parse_SerAr(blob, biff/*:number*/) {
 	var val = [blob.read_shift(1)];
 	if(biff == 12) switch(val[0]) {
 		case 0x02: val[0] = 0x04; break; /* SerBool */
@@ -6218,93 +6260,93 @@ var parse_PtgTbl = parsenoop;
 
 /* 2.5.198.25 */
 var PtgTypes = {
-0x01: { n:'PtgExp', f:parse_PtgExp },
-0x02: { n:'PtgTbl', f:parse_PtgTbl },
-0x03: { n:'PtgAdd', f:parse_PtgAdd },
-0x04: { n:'PtgSub', f:parse_PtgSub },
-0x05: { n:'PtgMul', f:parse_PtgMul },
-0x06: { n:'PtgDiv', f:parse_PtgDiv },
-0x07: { n:'PtgPower', f:parse_PtgPower },
-0x08: { n:'PtgConcat', f:parse_PtgConcat },
-0x09: { n:'PtgLt', f:parse_PtgLt },
-0x0A: { n:'PtgLe', f:parse_PtgLe },
-0x0B: { n:'PtgEq', f:parse_PtgEq },
-0x0C: { n:'PtgGe', f:parse_PtgGe },
-0x0D: { n:'PtgGt', f:parse_PtgGt },
-0x0E: { n:'PtgNe', f:parse_PtgNe },
-0x0F: { n:'PtgIsect', f:parse_PtgIsect },
-0x10: { n:'PtgUnion', f:parse_PtgUnion },
-0x11: { n:'PtgRange', f:parse_PtgRange },
-0x12: { n:'PtgUplus', f:parse_PtgUplus },
-0x13: { n:'PtgUminus', f:parse_PtgUminus },
-0x14: { n:'PtgPercent', f:parse_PtgPercent },
-0x15: { n:'PtgParen', f:parse_PtgParen },
-0x16: { n:'PtgMissArg', f:parse_PtgMissArg },
-0x17: { n:'PtgStr', f:parse_PtgStr },
-0x1C: { n:'PtgErr', f:parse_PtgErr },
-0x1D: { n:'PtgBool', f:parse_PtgBool },
-0x1E: { n:'PtgInt', f:parse_PtgInt },
-0x1F: { n:'PtgNum', f:parse_PtgNum },
-0x20: { n:'PtgArray', f:parse_PtgArray },
-0x21: { n:'PtgFunc', f:parse_PtgFunc },
-0x22: { n:'PtgFuncVar', f:parse_PtgFuncVar },
-0x23: { n:'PtgName', f:parse_PtgName },
-0x24: { n:'PtgRef', f:parse_PtgRef },
-0x25: { n:'PtgArea', f:parse_PtgArea },
-0x26: { n:'PtgMemArea', f:parse_PtgMemArea },
-0x27: { n:'PtgMemErr', f:parse_PtgMemErr },
-0x28: { n:'PtgMemNoMem', f:parse_PtgMemNoMem },
-0x29: { n:'PtgMemFunc', f:parse_PtgMemFunc },
-0x2A: { n:'PtgRefErr', f:parse_PtgRefErr },
-0x2B: { n:'PtgAreaErr', f:parse_PtgAreaErr },
-0x2C: { n:'PtgRefN', f:parse_PtgRefN },
-0x2D: { n:'PtgAreaN', f:parse_PtgAreaN },
-0x39: { n:'PtgNameX', f:parse_PtgNameX },
-0x3A: { n:'PtgRef3d', f:parse_PtgRef3d },
-0x3B: { n:'PtgArea3d', f:parse_PtgArea3d },
-0x3C: { n:'PtgRefErr3d', f:parse_PtgRefErr3d },
-0x3D: { n:'PtgAreaErr3d', f:parse_PtgAreaErr3d },
-0xFF: {}
+	/*::[*/0x01/*::]*/: { n:'PtgExp', f:parse_PtgExp },
+	/*::[*/0x02/*::]*/: { n:'PtgTbl', f:parse_PtgTbl },
+	/*::[*/0x03/*::]*/: { n:'PtgAdd', f:parse_PtgAdd },
+	/*::[*/0x04/*::]*/: { n:'PtgSub', f:parse_PtgSub },
+	/*::[*/0x05/*::]*/: { n:'PtgMul', f:parse_PtgMul },
+	/*::[*/0x06/*::]*/: { n:'PtgDiv', f:parse_PtgDiv },
+	/*::[*/0x07/*::]*/: { n:'PtgPower', f:parse_PtgPower },
+	/*::[*/0x08/*::]*/: { n:'PtgConcat', f:parse_PtgConcat },
+	/*::[*/0x09/*::]*/: { n:'PtgLt', f:parse_PtgLt },
+	/*::[*/0x0A/*::]*/: { n:'PtgLe', f:parse_PtgLe },
+	/*::[*/0x0B/*::]*/: { n:'PtgEq', f:parse_PtgEq },
+	/*::[*/0x0C/*::]*/: { n:'PtgGe', f:parse_PtgGe },
+	/*::[*/0x0D/*::]*/: { n:'PtgGt', f:parse_PtgGt },
+	/*::[*/0x0E/*::]*/: { n:'PtgNe', f:parse_PtgNe },
+	/*::[*/0x0F/*::]*/: { n:'PtgIsect', f:parse_PtgIsect },
+	/*::[*/0x10/*::]*/: { n:'PtgUnion', f:parse_PtgUnion },
+	/*::[*/0x11/*::]*/: { n:'PtgRange', f:parse_PtgRange },
+	/*::[*/0x12/*::]*/: { n:'PtgUplus', f:parse_PtgUplus },
+	/*::[*/0x13/*::]*/: { n:'PtgUminus', f:parse_PtgUminus },
+	/*::[*/0x14/*::]*/: { n:'PtgPercent', f:parse_PtgPercent },
+	/*::[*/0x15/*::]*/: { n:'PtgParen', f:parse_PtgParen },
+	/*::[*/0x16/*::]*/: { n:'PtgMissArg', f:parse_PtgMissArg },
+	/*::[*/0x17/*::]*/: { n:'PtgStr', f:parse_PtgStr },
+	/*::[*/0x1C/*::]*/: { n:'PtgErr', f:parse_PtgErr },
+	/*::[*/0x1D/*::]*/: { n:'PtgBool', f:parse_PtgBool },
+	/*::[*/0x1E/*::]*/: { n:'PtgInt', f:parse_PtgInt },
+	/*::[*/0x1F/*::]*/: { n:'PtgNum', f:parse_PtgNum },
+	/*::[*/0x20/*::]*/: { n:'PtgArray', f:parse_PtgArray },
+	/*::[*/0x21/*::]*/: { n:'PtgFunc', f:parse_PtgFunc },
+	/*::[*/0x22/*::]*/: { n:'PtgFuncVar', f:parse_PtgFuncVar },
+	/*::[*/0x23/*::]*/: { n:'PtgName', f:parse_PtgName },
+	/*::[*/0x24/*::]*/: { n:'PtgRef', f:parse_PtgRef },
+	/*::[*/0x25/*::]*/: { n:'PtgArea', f:parse_PtgArea },
+	/*::[*/0x26/*::]*/: { n:'PtgMemArea', f:parse_PtgMemArea },
+	/*::[*/0x27/*::]*/: { n:'PtgMemErr', f:parse_PtgMemErr },
+	/*::[*/0x28/*::]*/: { n:'PtgMemNoMem', f:parse_PtgMemNoMem },
+	/*::[*/0x29/*::]*/: { n:'PtgMemFunc', f:parse_PtgMemFunc },
+	/*::[*/0x2A/*::]*/: { n:'PtgRefErr', f:parse_PtgRefErr },
+	/*::[*/0x2B/*::]*/: { n:'PtgAreaErr', f:parse_PtgAreaErr },
+	/*::[*/0x2C/*::]*/: { n:'PtgRefN', f:parse_PtgRefN },
+	/*::[*/0x2D/*::]*/: { n:'PtgAreaN', f:parse_PtgAreaN },
+	/*::[*/0x39/*::]*/: { n:'PtgNameX', f:parse_PtgNameX },
+	/*::[*/0x3A/*::]*/: { n:'PtgRef3d', f:parse_PtgRef3d },
+	/*::[*/0x3B/*::]*/: { n:'PtgArea3d', f:parse_PtgArea3d },
+	/*::[*/0x3C/*::]*/: { n:'PtgRefErr3d', f:parse_PtgRefErr3d },
+	/*::[*/0x3D/*::]*/: { n:'PtgAreaErr3d', f:parse_PtgAreaErr3d },
+	/*::[*/0xFF/*::]*/: {}
 };
 /* These are duplicated in the PtgTypes table */
 var PtgDupes = {
-0x40: 0x20, 0x60: 0x20,
-0x41: 0x21, 0x61: 0x21,
-0x42: 0x22, 0x62: 0x22,
-0x43: 0x23, 0x63: 0x23,
-0x44: 0x24, 0x64: 0x24,
-0x45: 0x25, 0x65: 0x25,
-0x46: 0x26, 0x66: 0x26,
-0x47: 0x27, 0x67: 0x27,
-0x48: 0x28, 0x68: 0x28,
-0x49: 0x29, 0x69: 0x29,
-0x4A: 0x2A, 0x6A: 0x2A,
-0x4B: 0x2B, 0x6B: 0x2B,
-0x4C: 0x2C, 0x6C: 0x2C,
-0x4D: 0x2D, 0x6D: 0x2D,
-0x59: 0x39, 0x79: 0x39,
-0x5A: 0x3A, 0x7A: 0x3A,
-0x5B: 0x3B, 0x7B: 0x3B,
-0x5C: 0x3C, 0x7C: 0x3C,
-0x5D: 0x3D, 0x7D: 0x3D
+	/*::[*/0x40/*::]*/: 0x20, /*::[*/0x60/*::]*/: 0x20,
+	/*::[*/0x41/*::]*/: 0x21, /*::[*/0x61/*::]*/: 0x21,
+	/*::[*/0x42/*::]*/: 0x22, /*::[*/0x62/*::]*/: 0x22,
+	/*::[*/0x43/*::]*/: 0x23, /*::[*/0x63/*::]*/: 0x23,
+	/*::[*/0x44/*::]*/: 0x24, /*::[*/0x64/*::]*/: 0x24,
+	/*::[*/0x45/*::]*/: 0x25, /*::[*/0x65/*::]*/: 0x25,
+	/*::[*/0x46/*::]*/: 0x26, /*::[*/0x66/*::]*/: 0x26,
+	/*::[*/0x47/*::]*/: 0x27, /*::[*/0x67/*::]*/: 0x27,
+	/*::[*/0x48/*::]*/: 0x28, /*::[*/0x68/*::]*/: 0x28,
+	/*::[*/0x49/*::]*/: 0x29, /*::[*/0x69/*::]*/: 0x29,
+	/*::[*/0x4A/*::]*/: 0x2A, /*::[*/0x6A/*::]*/: 0x2A,
+	/*::[*/0x4B/*::]*/: 0x2B, /*::[*/0x6B/*::]*/: 0x2B,
+	/*::[*/0x4C/*::]*/: 0x2C, /*::[*/0x6C/*::]*/: 0x2C,
+	/*::[*/0x4D/*::]*/: 0x2D, /*::[*/0x6D/*::]*/: 0x2D,
+	/*::[*/0x59/*::]*/: 0x39, /*::[*/0x79/*::]*/: 0x39,
+	/*::[*/0x5A/*::]*/: 0x3A, /*::[*/0x7A/*::]*/: 0x3A,
+	/*::[*/0x5B/*::]*/: 0x3B, /*::[*/0x7B/*::]*/: 0x3B,
+	/*::[*/0x5C/*::]*/: 0x3C, /*::[*/0x7C/*::]*/: 0x3C,
+	/*::[*/0x5D/*::]*/: 0x3D, /*::[*/0x7D/*::]*/: 0x3D
 };
 (function(){for(var y in PtgDupes) PtgTypes[y] = PtgTypes[PtgDupes[y]];})();
 
 var Ptg18 = {
-//	0x19: { n:'PtgList', f:parse_PtgList }, // TODO
-//	0x1D: { n:'PtgSxName', f:parse_PtgSxName }, // TODO
+//	/*::[*/0x19/*::]*/: { n:'PtgList', f:parse_PtgList }, // TODO
+//	/*::[*/0x1D/*::]*/: { n:'PtgSxName', f:parse_PtgSxName }, // TODO
 };
 var Ptg19 = {
-0x01: { n:'PtgAttrSemi', f:parse_PtgAttrSemi },
-0x02: { n:'PtgAttrIf', f:parse_PtgAttrIf },
-0x04: { n:'PtgAttrChoose', f:parse_PtgAttrChoose },
-0x08: { n:'PtgAttrGoto', f:parse_PtgAttrGoto },
-0x10: { n:'PtgAttrSum', f:parse_PtgAttrSum },
-0x20: { n:'PtgAttrBaxcel', f:parse_PtgAttrBaxcel },
-0x40: { n:'PtgAttrSpace', f:parse_PtgAttrSpace },
-0x41: { n:'PtgAttrSpaceSemi', f:parse_PtgAttrSpaceSemi },
-0x80: { n:'PtgAttrIfError', f:parse_PtgAttrIfError },
-0xFF: {}
+	/*::[*/0x01/*::]*/: { n:'PtgAttrSemi', f:parse_PtgAttrSemi },
+	/*::[*/0x02/*::]*/: { n:'PtgAttrIf', f:parse_PtgAttrIf },
+	/*::[*/0x04/*::]*/: { n:'PtgAttrChoose', f:parse_PtgAttrChoose },
+	/*::[*/0x08/*::]*/: { n:'PtgAttrGoto', f:parse_PtgAttrGoto },
+	/*::[*/0x10/*::]*/: { n:'PtgAttrSum', f:parse_PtgAttrSum },
+	/*::[*/0x20/*::]*/: { n:'PtgAttrBaxcel', f:parse_PtgAttrBaxcel },
+	/*::[*/0x40/*::]*/: { n:'PtgAttrSpace', f:parse_PtgAttrSpace },
+	/*::[*/0x41/*::]*/: { n:'PtgAttrSpaceSemi', f:parse_PtgAttrSpaceSemi },
+	/*::[*/0x80/*::]*/: { n:'PtgAttrIfError', f:parse_PtgAttrIfError },
+	/*::[*/0xFF/*::]*/: {}
 };
 
 /* 2.4.127 TODO */
@@ -6746,1135 +6788,1135 @@ var parse_XLSBNameParsedFormula = parse_XLSBParsedFormula;
 var parse_XLSBSharedParsedFormula = parse_XLSBParsedFormula;
 /* [MS-XLS] 2.5.198.44 */
 var PtgDataType = {
-0x1: "REFERENCE", // reference to range
-0x2: "VALUE", // single value
-0x3: "ARRAY" // array of values
+	/*::[*/0x1/*::]*/: "REFERENCE", // reference to range
+	/*::[*/0x2/*::]*/: "VALUE", // single value
+	/*::[*/0x3/*::]*/: "ARRAY" // array of values
 };
 
 /* [MS-XLS] 2.5.198.4 */
 var Cetab = {
-0x0000: 'BEEP',
-0x0001: 'OPEN',
-0x0002: 'OPEN.LINKS',
-0x0003: 'CLOSE.ALL',
-0x0004: 'SAVE',
-0x0005: 'SAVE.AS',
-0x0006: 'FILE.DELETE',
-0x0007: 'PAGE.SETUP',
-0x0008: 'PRINT',
-0x0009: 'PRINTER.SETUP',
-0x000A: 'QUIT',
-0x000B: 'NEW.WINDOW',
-0x000C: 'ARRANGE.ALL',
-0x000D: 'WINDOW.SIZE',
-0x000E: 'WINDOW.MOVE',
-0x000F: 'FULL',
-0x0010: 'CLOSE',
-0x0011: 'RUN',
-0x0016: 'SET.PRINT.AREA',
-0x0017: 'SET.PRINT.TITLES',
-0x0018: 'SET.PAGE.BREAK',
-0x0019: 'REMOVE.PAGE.BREAK',
-0x001A: 'FONT',
-0x001B: 'DISPLAY',
-0x001C: 'PROTECT.DOCUMENT',
-0x001D: 'PRECISION',
-0x001E: 'A1.R1C1',
-0x001F: 'CALCULATE.NOW',
-0x0020: 'CALCULATION',
-0x0022: 'DATA.FIND',
-0x0023: 'EXTRACT',
-0x0024: 'DATA.DELETE',
-0x0025: 'SET.DATABASE',
-0x0026: 'SET.CRITERIA',
-0x0027: 'SORT',
-0x0028: 'DATA.SERIES',
-0x0029: 'TABLE',
-0x002A: 'FORMAT.NUMBER',
-0x002B: 'ALIGNMENT',
-0x002C: 'STYLE',
-0x002D: 'BORDER',
-0x002E: 'CELL.PROTECTION',
-0x002F: 'COLUMN.WIDTH',
-0x0030: 'UNDO',
-0x0031: 'CUT',
-0x0032: 'COPY',
-0x0033: 'PASTE',
-0x0034: 'CLEAR',
-0x0035: 'PASTE.SPECIAL',
-0x0036: 'EDIT.DELETE',
-0x0037: 'INSERT',
-0x0038: 'FILL.RIGHT',
-0x0039: 'FILL.DOWN',
-0x003D: 'DEFINE.NAME',
-0x003E: 'CREATE.NAMES',
-0x003F: 'FORMULA.GOTO',
-0x0040: 'FORMULA.FIND',
-0x0041: 'SELECT.LAST.CELL',
-0x0042: 'SHOW.ACTIVE.CELL',
-0x0043: 'GALLERY.AREA',
-0x0044: 'GALLERY.BAR',
-0x0045: 'GALLERY.COLUMN',
-0x0046: 'GALLERY.LINE',
-0x0047: 'GALLERY.PIE',
-0x0048: 'GALLERY.SCATTER',
-0x0049: 'COMBINATION',
-0x004A: 'PREFERRED',
-0x004B: 'ADD.OVERLAY',
-0x004C: 'GRIDLINES',
-0x004D: 'SET.PREFERRED',
-0x004E: 'AXES',
-0x004F: 'LEGEND',
-0x0050: 'ATTACH.TEXT',
-0x0051: 'ADD.ARROW',
-0x0052: 'SELECT.CHART',
-0x0053: 'SELECT.PLOT.AREA',
-0x0054: 'PATTERNS',
-0x0055: 'MAIN.CHART',
-0x0056: 'OVERLAY',
-0x0057: 'SCALE',
-0x0058: 'FORMAT.LEGEND',
-0x0059: 'FORMAT.TEXT',
-0x005A: 'EDIT.REPEAT',
-0x005B: 'PARSE',
-0x005C: 'JUSTIFY',
-0x005D: 'HIDE',
-0x005E: 'UNHIDE',
-0x005F: 'WORKSPACE',
-0x0060: 'FORMULA',
-0x0061: 'FORMULA.FILL',
-0x0062: 'FORMULA.ARRAY',
-0x0063: 'DATA.FIND.NEXT',
-0x0064: 'DATA.FIND.PREV',
-0x0065: 'FORMULA.FIND.NEXT',
-0x0066: 'FORMULA.FIND.PREV',
-0x0067: 'ACTIVATE',
-0x0068: 'ACTIVATE.NEXT',
-0x0069: 'ACTIVATE.PREV',
-0x006A: 'UNLOCKED.NEXT',
-0x006B: 'UNLOCKED.PREV',
-0x006C: 'COPY.PICTURE',
-0x006D: 'SELECT',
-0x006E: 'DELETE.NAME',
-0x006F: 'DELETE.FORMAT',
-0x0070: 'VLINE',
-0x0071: 'HLINE',
-0x0072: 'VPAGE',
-0x0073: 'HPAGE',
-0x0074: 'VSCROLL',
-0x0075: 'HSCROLL',
-0x0076: 'ALERT',
-0x0077: 'NEW',
-0x0078: 'CANCEL.COPY',
-0x0079: 'SHOW.CLIPBOARD',
-0x007A: 'MESSAGE',
-0x007C: 'PASTE.LINK',
-0x007D: 'APP.ACTIVATE',
-0x007E: 'DELETE.ARROW',
-0x007F: 'ROW.HEIGHT',
-0x0080: 'FORMAT.MOVE',
-0x0081: 'FORMAT.SIZE',
-0x0082: 'FORMULA.REPLACE',
-0x0083: 'SEND.KEYS',
-0x0084: 'SELECT.SPECIAL',
-0x0085: 'APPLY.NAMES',
-0x0086: 'REPLACE.FONT',
-0x0087: 'FREEZE.PANES',
-0x0088: 'SHOW.INFO',
-0x0089: 'SPLIT',
-0x008A: 'ON.WINDOW',
-0x008B: 'ON.DATA',
-0x008C: 'DISABLE.INPUT',
-0x008E: 'OUTLINE',
-0x008F: 'LIST.NAMES',
-0x0090: 'FILE.CLOSE',
-0x0091: 'SAVE.WORKBOOK',
-0x0092: 'DATA.FORM',
-0x0093: 'COPY.CHART',
-0x0094: 'ON.TIME',
-0x0095: 'WAIT',
-0x0096: 'FORMAT.FONT',
-0x0097: 'FILL.UP',
-0x0098: 'FILL.LEFT',
-0x0099: 'DELETE.OVERLAY',
-0x009B: 'SHORT.MENUS',
-0x009F: 'SET.UPDATE.STATUS',
-0x00A1: 'COLOR.PALETTE',
-0x00A2: 'DELETE.STYLE',
-0x00A3: 'WINDOW.RESTORE',
-0x00A4: 'WINDOW.MAXIMIZE',
-0x00A6: 'CHANGE.LINK',
-0x00A7: 'CALCULATE.DOCUMENT',
-0x00A8: 'ON.KEY',
-0x00A9: 'APP.RESTORE',
-0x00AA: 'APP.MOVE',
-0x00AB: 'APP.SIZE',
-0x00AC: 'APP.MINIMIZE',
-0x00AD: 'APP.MAXIMIZE',
-0x00AE: 'BRING.TO.FRONT',
-0x00AF: 'SEND.TO.BACK',
-0x00B9: 'MAIN.CHART.TYPE',
-0x00BA: 'OVERLAY.CHART.TYPE',
-0x00BB: 'SELECT.END',
-0x00BC: 'OPEN.MAIL',
-0x00BD: 'SEND.MAIL',
-0x00BE: 'STANDARD.FONT',
-0x00BF: 'CONSOLIDATE',
-0x00C0: 'SORT.SPECIAL',
-0x00C1: 'GALLERY.3D.AREA',
-0x00C2: 'GALLERY.3D.COLUMN',
-0x00C3: 'GALLERY.3D.LINE',
-0x00C4: 'GALLERY.3D.PIE',
-0x00C5: 'VIEW.3D',
-0x00C6: 'GOAL.SEEK',
-0x00C7: 'WORKGROUP',
-0x00C8: 'FILL.GROUP',
-0x00C9: 'UPDATE.LINK',
-0x00CA: 'PROMOTE',
-0x00CB: 'DEMOTE',
-0x00CC: 'SHOW.DETAIL',
-0x00CE: 'UNGROUP',
-0x00CF: 'OBJECT.PROPERTIES',
-0x00D0: 'SAVE.NEW.OBJECT',
-0x00D1: 'SHARE',
-0x00D2: 'SHARE.NAME',
-0x00D3: 'DUPLICATE',
-0x00D4: 'APPLY.STYLE',
-0x00D5: 'ASSIGN.TO.OBJECT',
-0x00D6: 'OBJECT.PROTECTION',
-0x00D7: 'HIDE.OBJECT',
-0x00D8: 'SET.EXTRACT',
-0x00D9: 'CREATE.PUBLISHER',
-0x00DA: 'SUBSCRIBE.TO',
-0x00DB: 'ATTRIBUTES',
-0x00DC: 'SHOW.TOOLBAR',
-0x00DE: 'PRINT.PREVIEW',
-0x00DF: 'EDIT.COLOR',
-0x00E0: 'SHOW.LEVELS',
-0x00E1: 'FORMAT.MAIN',
-0x00E2: 'FORMAT.OVERLAY',
-0x00E3: 'ON.RECALC',
-0x00E4: 'EDIT.SERIES',
-0x00E5: 'DEFINE.STYLE',
-0x00F0: 'LINE.PRINT',
-0x00F3: 'ENTER.DATA',
-0x00F9: 'GALLERY.RADAR',
-0x00FA: 'MERGE.STYLES',
-0x00FB: 'EDITION.OPTIONS',
-0x00FC: 'PASTE.PICTURE',
-0x00FD: 'PASTE.PICTURE.LINK',
-0x00FE: 'SPELLING',
-0x0100: 'ZOOM',
-0x0103: 'INSERT.OBJECT',
-0x0104: 'WINDOW.MINIMIZE',
-0x0109: 'SOUND.NOTE',
-0x010A: 'SOUND.PLAY',
-0x010B: 'FORMAT.SHAPE',
-0x010C: 'EXTEND.POLYGON',
-0x010D: 'FORMAT.AUTO',
-0x0110: 'GALLERY.3D.BAR',
-0x0111: 'GALLERY.3D.SURFACE',
-0x0112: 'FILL.AUTO',
-0x0114: 'CUSTOMIZE.TOOLBAR',
-0x0115: 'ADD.TOOL',
-0x0116: 'EDIT.OBJECT',
-0x0117: 'ON.DOUBLECLICK',
-0x0118: 'ON.ENTRY',
-0x0119: 'WORKBOOK.ADD',
-0x011A: 'WORKBOOK.MOVE',
-0x011B: 'WORKBOOK.COPY',
-0x011C: 'WORKBOOK.OPTIONS',
-0x011D: 'SAVE.WORKSPACE',
-0x0120: 'CHART.WIZARD',
-0x0121: 'DELETE.TOOL',
-0x0122: 'MOVE.TOOL',
-0x0123: 'WORKBOOK.SELECT',
-0x0124: 'WORKBOOK.ACTIVATE',
-0x0125: 'ASSIGN.TO.TOOL',
-0x0127: 'COPY.TOOL',
-0x0128: 'RESET.TOOL',
-0x0129: 'CONSTRAIN.NUMERIC',
-0x012A: 'PASTE.TOOL',
-0x012E: 'WORKBOOK.NEW',
-0x0131: 'SCENARIO.CELLS',
-0x0132: 'SCENARIO.DELETE',
-0x0133: 'SCENARIO.ADD',
-0x0134: 'SCENARIO.EDIT',
-0x0135: 'SCENARIO.SHOW',
-0x0136: 'SCENARIO.SHOW.NEXT',
-0x0137: 'SCENARIO.SUMMARY',
-0x0138: 'PIVOT.TABLE.WIZARD',
-0x0139: 'PIVOT.FIELD.PROPERTIES',
-0x013A: 'PIVOT.FIELD',
-0x013B: 'PIVOT.ITEM',
-0x013C: 'PIVOT.ADD.FIELDS',
-0x013E: 'OPTIONS.CALCULATION',
-0x013F: 'OPTIONS.EDIT',
-0x0140: 'OPTIONS.VIEW',
-0x0141: 'ADDIN.MANAGER',
-0x0142: 'MENU.EDITOR',
-0x0143: 'ATTACH.TOOLBARS',
-0x0144: 'VBAActivate',
-0x0145: 'OPTIONS.CHART',
-0x0148: 'VBA.INSERT.FILE',
-0x014A: 'VBA.PROCEDURE.DEFINITION',
-0x0150: 'ROUTING.SLIP',
-0x0152: 'ROUTE.DOCUMENT',
-0x0153: 'MAIL.LOGON',
-0x0156: 'INSERT.PICTURE',
-0x0157: 'EDIT.TOOL',
-0x0158: 'GALLERY.DOUGHNUT',
-0x015E: 'CHART.TREND',
-0x0160: 'PIVOT.ITEM.PROPERTIES',
-0x0162: 'WORKBOOK.INSERT',
-0x0163: 'OPTIONS.TRANSITION',
-0x0164: 'OPTIONS.GENERAL',
-0x0172: 'FILTER.ADVANCED',
-0x0175: 'MAIL.ADD.MAILER',
-0x0176: 'MAIL.DELETE.MAILER',
-0x0177: 'MAIL.REPLY',
-0x0178: 'MAIL.REPLY.ALL',
-0x0179: 'MAIL.FORWARD',
-0x017A: 'MAIL.NEXT.LETTER',
-0x017B: 'DATA.LABEL',
-0x017C: 'INSERT.TITLE',
-0x017D: 'FONT.PROPERTIES',
-0x017E: 'MACRO.OPTIONS',
-0x017F: 'WORKBOOK.HIDE',
-0x0180: 'WORKBOOK.UNHIDE',
-0x0181: 'WORKBOOK.DELETE',
-0x0182: 'WORKBOOK.NAME',
-0x0184: 'GALLERY.CUSTOM',
-0x0186: 'ADD.CHART.AUTOFORMAT',
-0x0187: 'DELETE.CHART.AUTOFORMAT',
-0x0188: 'CHART.ADD.DATA',
-0x0189: 'AUTO.OUTLINE',
-0x018A: 'TAB.ORDER',
-0x018B: 'SHOW.DIALOG',
-0x018C: 'SELECT.ALL',
-0x018D: 'UNGROUP.SHEETS',
-0x018E: 'SUBTOTAL.CREATE',
-0x018F: 'SUBTOTAL.REMOVE',
-0x0190: 'RENAME.OBJECT',
-0x019C: 'WORKBOOK.SCROLL',
-0x019D: 'WORKBOOK.NEXT',
-0x019E: 'WORKBOOK.PREV',
-0x019F: 'WORKBOOK.TAB.SPLIT',
-0x01A0: 'FULL.SCREEN',
-0x01A1: 'WORKBOOK.PROTECT',
-0x01A4: 'SCROLLBAR.PROPERTIES',
-0x01A5: 'PIVOT.SHOW.PAGES',
-0x01A6: 'TEXT.TO.COLUMNS',
-0x01A7: 'FORMAT.CHARTTYPE',
-0x01A8: 'LINK.FORMAT',
-0x01A9: 'TRACER.DISPLAY',
-0x01AE: 'TRACER.NAVIGATE',
-0x01AF: 'TRACER.CLEAR',
-0x01B0: 'TRACER.ERROR',
-0x01B1: 'PIVOT.FIELD.GROUP',
-0x01B2: 'PIVOT.FIELD.UNGROUP',
-0x01B3: 'CHECKBOX.PROPERTIES',
-0x01B4: 'LABEL.PROPERTIES',
-0x01B5: 'LISTBOX.PROPERTIES',
-0x01B6: 'EDITBOX.PROPERTIES',
-0x01B7: 'PIVOT.REFRESH',
-0x01B8: 'LINK.COMBO',
-0x01B9: 'OPEN.TEXT',
-0x01BA: 'HIDE.DIALOG',
-0x01BB: 'SET.DIALOG.FOCUS',
-0x01BC: 'ENABLE.OBJECT',
-0x01BD: 'PUSHBUTTON.PROPERTIES',
-0x01BE: 'SET.DIALOG.DEFAULT',
-0x01BF: 'FILTER',
-0x01C0: 'FILTER.SHOW.ALL',
-0x01C1: 'CLEAR.OUTLINE',
-0x01C2: 'FUNCTION.WIZARD',
-0x01C3: 'ADD.LIST.ITEM',
-0x01C4: 'SET.LIST.ITEM',
-0x01C5: 'REMOVE.LIST.ITEM',
-0x01C6: 'SELECT.LIST.ITEM',
-0x01C7: 'SET.CONTROL.VALUE',
-0x01C8: 'SAVE.COPY.AS',
-0x01CA: 'OPTIONS.LISTS.ADD',
-0x01CB: 'OPTIONS.LISTS.DELETE',
-0x01CC: 'SERIES.AXES',
-0x01CD: 'SERIES.X',
-0x01CE: 'SERIES.Y',
-0x01CF: 'ERRORBAR.X',
-0x01D0: 'ERRORBAR.Y',
-0x01D1: 'FORMAT.CHART',
-0x01D2: 'SERIES.ORDER',
-0x01D3: 'MAIL.LOGOFF',
-0x01D4: 'CLEAR.ROUTING.SLIP',
-0x01D5: 'APP.ACTIVATE.MICROSOFT',
-0x01D6: 'MAIL.EDIT.MAILER',
-0x01D7: 'ON.SHEET',
-0x01D8: 'STANDARD.WIDTH',
-0x01D9: 'SCENARIO.MERGE',
-0x01DA: 'SUMMARY.INFO',
-0x01DB: 'FIND.FILE',
-0x01DC: 'ACTIVE.CELL.FONT',
-0x01DD: 'ENABLE.TIPWIZARD',
-0x01DE: 'VBA.MAKE.ADDIN',
-0x01E0: 'INSERTDATATABLE',
-0x01E1: 'WORKGROUP.OPTIONS',
-0x01E2: 'MAIL.SEND.MAILER',
-0x01E5: 'AUTOCORRECT',
-0x01E9: 'POST.DOCUMENT',
-0x01EB: 'PICKLIST',
-0x01ED: 'VIEW.SHOW',
-0x01EE: 'VIEW.DEFINE',
-0x01EF: 'VIEW.DELETE',
-0x01FD: 'SHEET.BACKGROUND',
-0x01FE: 'INSERT.MAP.OBJECT',
-0x01FF: 'OPTIONS.MENONO',
-0x0205: 'MSOCHECKS',
-0x0206: 'NORMAL',
-0x0207: 'LAYOUT',
-0x0208: 'RM.PRINT.AREA',
-0x0209: 'CLEAR.PRINT.AREA',
-0x020A: 'ADD.PRINT.AREA',
-0x020B: 'MOVE.BRK',
-0x0221: 'HIDECURR.NOTE',
-0x0222: 'HIDEALL.NOTES',
-0x0223: 'DELETE.NOTE',
-0x0224: 'TRAVERSE.NOTES',
-0x0225: 'ACTIVATE.NOTES',
-0x026C: 'PROTECT.REVISIONS',
-0x026D: 'UNPROTECT.REVISIONS',
-0x0287: 'OPTIONS.ME',
-0x028D: 'WEB.PUBLISH',
-0x029B: 'NEWWEBQUERY',
-0x02A1: 'PIVOT.TABLE.CHART',
-0x02F1: 'OPTIONS.SAVE',
-0x02F3: 'OPTIONS.SPELL',
-0x0328: 'HIDEALL.INKANNOTS'
+	/*::[*/0x0000/*::]*/: 'BEEP',
+	/*::[*/0x0001/*::]*/: 'OPEN',
+	/*::[*/0x0002/*::]*/: 'OPEN.LINKS',
+	/*::[*/0x0003/*::]*/: 'CLOSE.ALL',
+	/*::[*/0x0004/*::]*/: 'SAVE',
+	/*::[*/0x0005/*::]*/: 'SAVE.AS',
+	/*::[*/0x0006/*::]*/: 'FILE.DELETE',
+	/*::[*/0x0007/*::]*/: 'PAGE.SETUP',
+	/*::[*/0x0008/*::]*/: 'PRINT',
+	/*::[*/0x0009/*::]*/: 'PRINTER.SETUP',
+	/*::[*/0x000A/*::]*/: 'QUIT',
+	/*::[*/0x000B/*::]*/: 'NEW.WINDOW',
+	/*::[*/0x000C/*::]*/: 'ARRANGE.ALL',
+	/*::[*/0x000D/*::]*/: 'WINDOW.SIZE',
+	/*::[*/0x000E/*::]*/: 'WINDOW.MOVE',
+	/*::[*/0x000F/*::]*/: 'FULL',
+	/*::[*/0x0010/*::]*/: 'CLOSE',
+	/*::[*/0x0011/*::]*/: 'RUN',
+	/*::[*/0x0016/*::]*/: 'SET.PRINT.AREA',
+	/*::[*/0x0017/*::]*/: 'SET.PRINT.TITLES',
+	/*::[*/0x0018/*::]*/: 'SET.PAGE.BREAK',
+	/*::[*/0x0019/*::]*/: 'REMOVE.PAGE.BREAK',
+	/*::[*/0x001A/*::]*/: 'FONT',
+	/*::[*/0x001B/*::]*/: 'DISPLAY',
+	/*::[*/0x001C/*::]*/: 'PROTECT.DOCUMENT',
+	/*::[*/0x001D/*::]*/: 'PRECISION',
+	/*::[*/0x001E/*::]*/: 'A1.R1C1',
+	/*::[*/0x001F/*::]*/: 'CALCULATE.NOW',
+	/*::[*/0x0020/*::]*/: 'CALCULATION',
+	/*::[*/0x0022/*::]*/: 'DATA.FIND',
+	/*::[*/0x0023/*::]*/: 'EXTRACT',
+	/*::[*/0x0024/*::]*/: 'DATA.DELETE',
+	/*::[*/0x0025/*::]*/: 'SET.DATABASE',
+	/*::[*/0x0026/*::]*/: 'SET.CRITERIA',
+	/*::[*/0x0027/*::]*/: 'SORT',
+	/*::[*/0x0028/*::]*/: 'DATA.SERIES',
+	/*::[*/0x0029/*::]*/: 'TABLE',
+	/*::[*/0x002A/*::]*/: 'FORMAT.NUMBER',
+	/*::[*/0x002B/*::]*/: 'ALIGNMENT',
+	/*::[*/0x002C/*::]*/: 'STYLE',
+	/*::[*/0x002D/*::]*/: 'BORDER',
+	/*::[*/0x002E/*::]*/: 'CELL.PROTECTION',
+	/*::[*/0x002F/*::]*/: 'COLUMN.WIDTH',
+	/*::[*/0x0030/*::]*/: 'UNDO',
+	/*::[*/0x0031/*::]*/: 'CUT',
+	/*::[*/0x0032/*::]*/: 'COPY',
+	/*::[*/0x0033/*::]*/: 'PASTE',
+	/*::[*/0x0034/*::]*/: 'CLEAR',
+	/*::[*/0x0035/*::]*/: 'PASTE.SPECIAL',
+	/*::[*/0x0036/*::]*/: 'EDIT.DELETE',
+	/*::[*/0x0037/*::]*/: 'INSERT',
+	/*::[*/0x0038/*::]*/: 'FILL.RIGHT',
+	/*::[*/0x0039/*::]*/: 'FILL.DOWN',
+	/*::[*/0x003D/*::]*/: 'DEFINE.NAME',
+	/*::[*/0x003E/*::]*/: 'CREATE.NAMES',
+	/*::[*/0x003F/*::]*/: 'FORMULA.GOTO',
+	/*::[*/0x0040/*::]*/: 'FORMULA.FIND',
+	/*::[*/0x0041/*::]*/: 'SELECT.LAST.CELL',
+	/*::[*/0x0042/*::]*/: 'SHOW.ACTIVE.CELL',
+	/*::[*/0x0043/*::]*/: 'GALLERY.AREA',
+	/*::[*/0x0044/*::]*/: 'GALLERY.BAR',
+	/*::[*/0x0045/*::]*/: 'GALLERY.COLUMN',
+	/*::[*/0x0046/*::]*/: 'GALLERY.LINE',
+	/*::[*/0x0047/*::]*/: 'GALLERY.PIE',
+	/*::[*/0x0048/*::]*/: 'GALLERY.SCATTER',
+	/*::[*/0x0049/*::]*/: 'COMBINATION',
+	/*::[*/0x004A/*::]*/: 'PREFERRED',
+	/*::[*/0x004B/*::]*/: 'ADD.OVERLAY',
+	/*::[*/0x004C/*::]*/: 'GRIDLINES',
+	/*::[*/0x004D/*::]*/: 'SET.PREFERRED',
+	/*::[*/0x004E/*::]*/: 'AXES',
+	/*::[*/0x004F/*::]*/: 'LEGEND',
+	/*::[*/0x0050/*::]*/: 'ATTACH.TEXT',
+	/*::[*/0x0051/*::]*/: 'ADD.ARROW',
+	/*::[*/0x0052/*::]*/: 'SELECT.CHART',
+	/*::[*/0x0053/*::]*/: 'SELECT.PLOT.AREA',
+	/*::[*/0x0054/*::]*/: 'PATTERNS',
+	/*::[*/0x0055/*::]*/: 'MAIN.CHART',
+	/*::[*/0x0056/*::]*/: 'OVERLAY',
+	/*::[*/0x0057/*::]*/: 'SCALE',
+	/*::[*/0x0058/*::]*/: 'FORMAT.LEGEND',
+	/*::[*/0x0059/*::]*/: 'FORMAT.TEXT',
+	/*::[*/0x005A/*::]*/: 'EDIT.REPEAT',
+	/*::[*/0x005B/*::]*/: 'PARSE',
+	/*::[*/0x005C/*::]*/: 'JUSTIFY',
+	/*::[*/0x005D/*::]*/: 'HIDE',
+	/*::[*/0x005E/*::]*/: 'UNHIDE',
+	/*::[*/0x005F/*::]*/: 'WORKSPACE',
+	/*::[*/0x0060/*::]*/: 'FORMULA',
+	/*::[*/0x0061/*::]*/: 'FORMULA.FILL',
+	/*::[*/0x0062/*::]*/: 'FORMULA.ARRAY',
+	/*::[*/0x0063/*::]*/: 'DATA.FIND.NEXT',
+	/*::[*/0x0064/*::]*/: 'DATA.FIND.PREV',
+	/*::[*/0x0065/*::]*/: 'FORMULA.FIND.NEXT',
+	/*::[*/0x0066/*::]*/: 'FORMULA.FIND.PREV',
+	/*::[*/0x0067/*::]*/: 'ACTIVATE',
+	/*::[*/0x0068/*::]*/: 'ACTIVATE.NEXT',
+	/*::[*/0x0069/*::]*/: 'ACTIVATE.PREV',
+	/*::[*/0x006A/*::]*/: 'UNLOCKED.NEXT',
+	/*::[*/0x006B/*::]*/: 'UNLOCKED.PREV',
+	/*::[*/0x006C/*::]*/: 'COPY.PICTURE',
+	/*::[*/0x006D/*::]*/: 'SELECT',
+	/*::[*/0x006E/*::]*/: 'DELETE.NAME',
+	/*::[*/0x006F/*::]*/: 'DELETE.FORMAT',
+	/*::[*/0x0070/*::]*/: 'VLINE',
+	/*::[*/0x0071/*::]*/: 'HLINE',
+	/*::[*/0x0072/*::]*/: 'VPAGE',
+	/*::[*/0x0073/*::]*/: 'HPAGE',
+	/*::[*/0x0074/*::]*/: 'VSCROLL',
+	/*::[*/0x0075/*::]*/: 'HSCROLL',
+	/*::[*/0x0076/*::]*/: 'ALERT',
+	/*::[*/0x0077/*::]*/: 'NEW',
+	/*::[*/0x0078/*::]*/: 'CANCEL.COPY',
+	/*::[*/0x0079/*::]*/: 'SHOW.CLIPBOARD',
+	/*::[*/0x007A/*::]*/: 'MESSAGE',
+	/*::[*/0x007C/*::]*/: 'PASTE.LINK',
+	/*::[*/0x007D/*::]*/: 'APP.ACTIVATE',
+	/*::[*/0x007E/*::]*/: 'DELETE.ARROW',
+	/*::[*/0x007F/*::]*/: 'ROW.HEIGHT',
+	/*::[*/0x0080/*::]*/: 'FORMAT.MOVE',
+	/*::[*/0x0081/*::]*/: 'FORMAT.SIZE',
+	/*::[*/0x0082/*::]*/: 'FORMULA.REPLACE',
+	/*::[*/0x0083/*::]*/: 'SEND.KEYS',
+	/*::[*/0x0084/*::]*/: 'SELECT.SPECIAL',
+	/*::[*/0x0085/*::]*/: 'APPLY.NAMES',
+	/*::[*/0x0086/*::]*/: 'REPLACE.FONT',
+	/*::[*/0x0087/*::]*/: 'FREEZE.PANES',
+	/*::[*/0x0088/*::]*/: 'SHOW.INFO',
+	/*::[*/0x0089/*::]*/: 'SPLIT',
+	/*::[*/0x008A/*::]*/: 'ON.WINDOW',
+	/*::[*/0x008B/*::]*/: 'ON.DATA',
+	/*::[*/0x008C/*::]*/: 'DISABLE.INPUT',
+	/*::[*/0x008E/*::]*/: 'OUTLINE',
+	/*::[*/0x008F/*::]*/: 'LIST.NAMES',
+	/*::[*/0x0090/*::]*/: 'FILE.CLOSE',
+	/*::[*/0x0091/*::]*/: 'SAVE.WORKBOOK',
+	/*::[*/0x0092/*::]*/: 'DATA.FORM',
+	/*::[*/0x0093/*::]*/: 'COPY.CHART',
+	/*::[*/0x0094/*::]*/: 'ON.TIME',
+	/*::[*/0x0095/*::]*/: 'WAIT',
+	/*::[*/0x0096/*::]*/: 'FORMAT.FONT',
+	/*::[*/0x0097/*::]*/: 'FILL.UP',
+	/*::[*/0x0098/*::]*/: 'FILL.LEFT',
+	/*::[*/0x0099/*::]*/: 'DELETE.OVERLAY',
+	/*::[*/0x009B/*::]*/: 'SHORT.MENUS',
+	/*::[*/0x009F/*::]*/: 'SET.UPDATE.STATUS',
+	/*::[*/0x00A1/*::]*/: 'COLOR.PALETTE',
+	/*::[*/0x00A2/*::]*/: 'DELETE.STYLE',
+	/*::[*/0x00A3/*::]*/: 'WINDOW.RESTORE',
+	/*::[*/0x00A4/*::]*/: 'WINDOW.MAXIMIZE',
+	/*::[*/0x00A6/*::]*/: 'CHANGE.LINK',
+	/*::[*/0x00A7/*::]*/: 'CALCULATE.DOCUMENT',
+	/*::[*/0x00A8/*::]*/: 'ON.KEY',
+	/*::[*/0x00A9/*::]*/: 'APP.RESTORE',
+	/*::[*/0x00AA/*::]*/: 'APP.MOVE',
+	/*::[*/0x00AB/*::]*/: 'APP.SIZE',
+	/*::[*/0x00AC/*::]*/: 'APP.MINIMIZE',
+	/*::[*/0x00AD/*::]*/: 'APP.MAXIMIZE',
+	/*::[*/0x00AE/*::]*/: 'BRING.TO.FRONT',
+	/*::[*/0x00AF/*::]*/: 'SEND.TO.BACK',
+	/*::[*/0x00B9/*::]*/: 'MAIN.CHART.TYPE',
+	/*::[*/0x00BA/*::]*/: 'OVERLAY.CHART.TYPE',
+	/*::[*/0x00BB/*::]*/: 'SELECT.END',
+	/*::[*/0x00BC/*::]*/: 'OPEN.MAIL',
+	/*::[*/0x00BD/*::]*/: 'SEND.MAIL',
+	/*::[*/0x00BE/*::]*/: 'STANDARD.FONT',
+	/*::[*/0x00BF/*::]*/: 'CONSOLIDATE',
+	/*::[*/0x00C0/*::]*/: 'SORT.SPECIAL',
+	/*::[*/0x00C1/*::]*/: 'GALLERY.3D.AREA',
+	/*::[*/0x00C2/*::]*/: 'GALLERY.3D.COLUMN',
+	/*::[*/0x00C3/*::]*/: 'GALLERY.3D.LINE',
+	/*::[*/0x00C4/*::]*/: 'GALLERY.3D.PIE',
+	/*::[*/0x00C5/*::]*/: 'VIEW.3D',
+	/*::[*/0x00C6/*::]*/: 'GOAL.SEEK',
+	/*::[*/0x00C7/*::]*/: 'WORKGROUP',
+	/*::[*/0x00C8/*::]*/: 'FILL.GROUP',
+	/*::[*/0x00C9/*::]*/: 'UPDATE.LINK',
+	/*::[*/0x00CA/*::]*/: 'PROMOTE',
+	/*::[*/0x00CB/*::]*/: 'DEMOTE',
+	/*::[*/0x00CC/*::]*/: 'SHOW.DETAIL',
+	/*::[*/0x00CE/*::]*/: 'UNGROUP',
+	/*::[*/0x00CF/*::]*/: 'OBJECT.PROPERTIES',
+	/*::[*/0x00D0/*::]*/: 'SAVE.NEW.OBJECT',
+	/*::[*/0x00D1/*::]*/: 'SHARE',
+	/*::[*/0x00D2/*::]*/: 'SHARE.NAME',
+	/*::[*/0x00D3/*::]*/: 'DUPLICATE',
+	/*::[*/0x00D4/*::]*/: 'APPLY.STYLE',
+	/*::[*/0x00D5/*::]*/: 'ASSIGN.TO.OBJECT',
+	/*::[*/0x00D6/*::]*/: 'OBJECT.PROTECTION',
+	/*::[*/0x00D7/*::]*/: 'HIDE.OBJECT',
+	/*::[*/0x00D8/*::]*/: 'SET.EXTRACT',
+	/*::[*/0x00D9/*::]*/: 'CREATE.PUBLISHER',
+	/*::[*/0x00DA/*::]*/: 'SUBSCRIBE.TO',
+	/*::[*/0x00DB/*::]*/: 'ATTRIBUTES',
+	/*::[*/0x00DC/*::]*/: 'SHOW.TOOLBAR',
+	/*::[*/0x00DE/*::]*/: 'PRINT.PREVIEW',
+	/*::[*/0x00DF/*::]*/: 'EDIT.COLOR',
+	/*::[*/0x00E0/*::]*/: 'SHOW.LEVELS',
+	/*::[*/0x00E1/*::]*/: 'FORMAT.MAIN',
+	/*::[*/0x00E2/*::]*/: 'FORMAT.OVERLAY',
+	/*::[*/0x00E3/*::]*/: 'ON.RECALC',
+	/*::[*/0x00E4/*::]*/: 'EDIT.SERIES',
+	/*::[*/0x00E5/*::]*/: 'DEFINE.STYLE',
+	/*::[*/0x00F0/*::]*/: 'LINE.PRINT',
+	/*::[*/0x00F3/*::]*/: 'ENTER.DATA',
+	/*::[*/0x00F9/*::]*/: 'GALLERY.RADAR',
+	/*::[*/0x00FA/*::]*/: 'MERGE.STYLES',
+	/*::[*/0x00FB/*::]*/: 'EDITION.OPTIONS',
+	/*::[*/0x00FC/*::]*/: 'PASTE.PICTURE',
+	/*::[*/0x00FD/*::]*/: 'PASTE.PICTURE.LINK',
+	/*::[*/0x00FE/*::]*/: 'SPELLING',
+	/*::[*/0x0100/*::]*/: 'ZOOM',
+	/*::[*/0x0103/*::]*/: 'INSERT.OBJECT',
+	/*::[*/0x0104/*::]*/: 'WINDOW.MINIMIZE',
+	/*::[*/0x0109/*::]*/: 'SOUND.NOTE',
+	/*::[*/0x010A/*::]*/: 'SOUND.PLAY',
+	/*::[*/0x010B/*::]*/: 'FORMAT.SHAPE',
+	/*::[*/0x010C/*::]*/: 'EXTEND.POLYGON',
+	/*::[*/0x010D/*::]*/: 'FORMAT.AUTO',
+	/*::[*/0x0110/*::]*/: 'GALLERY.3D.BAR',
+	/*::[*/0x0111/*::]*/: 'GALLERY.3D.SURFACE',
+	/*::[*/0x0112/*::]*/: 'FILL.AUTO',
+	/*::[*/0x0114/*::]*/: 'CUSTOMIZE.TOOLBAR',
+	/*::[*/0x0115/*::]*/: 'ADD.TOOL',
+	/*::[*/0x0116/*::]*/: 'EDIT.OBJECT',
+	/*::[*/0x0117/*::]*/: 'ON.DOUBLECLICK',
+	/*::[*/0x0118/*::]*/: 'ON.ENTRY',
+	/*::[*/0x0119/*::]*/: 'WORKBOOK.ADD',
+	/*::[*/0x011A/*::]*/: 'WORKBOOK.MOVE',
+	/*::[*/0x011B/*::]*/: 'WORKBOOK.COPY',
+	/*::[*/0x011C/*::]*/: 'WORKBOOK.OPTIONS',
+	/*::[*/0x011D/*::]*/: 'SAVE.WORKSPACE',
+	/*::[*/0x0120/*::]*/: 'CHART.WIZARD',
+	/*::[*/0x0121/*::]*/: 'DELETE.TOOL',
+	/*::[*/0x0122/*::]*/: 'MOVE.TOOL',
+	/*::[*/0x0123/*::]*/: 'WORKBOOK.SELECT',
+	/*::[*/0x0124/*::]*/: 'WORKBOOK.ACTIVATE',
+	/*::[*/0x0125/*::]*/: 'ASSIGN.TO.TOOL',
+	/*::[*/0x0127/*::]*/: 'COPY.TOOL',
+	/*::[*/0x0128/*::]*/: 'RESET.TOOL',
+	/*::[*/0x0129/*::]*/: 'CONSTRAIN.NUMERIC',
+	/*::[*/0x012A/*::]*/: 'PASTE.TOOL',
+	/*::[*/0x012E/*::]*/: 'WORKBOOK.NEW',
+	/*::[*/0x0131/*::]*/: 'SCENARIO.CELLS',
+	/*::[*/0x0132/*::]*/: 'SCENARIO.DELETE',
+	/*::[*/0x0133/*::]*/: 'SCENARIO.ADD',
+	/*::[*/0x0134/*::]*/: 'SCENARIO.EDIT',
+	/*::[*/0x0135/*::]*/: 'SCENARIO.SHOW',
+	/*::[*/0x0136/*::]*/: 'SCENARIO.SHOW.NEXT',
+	/*::[*/0x0137/*::]*/: 'SCENARIO.SUMMARY',
+	/*::[*/0x0138/*::]*/: 'PIVOT.TABLE.WIZARD',
+	/*::[*/0x0139/*::]*/: 'PIVOT.FIELD.PROPERTIES',
+	/*::[*/0x013A/*::]*/: 'PIVOT.FIELD',
+	/*::[*/0x013B/*::]*/: 'PIVOT.ITEM',
+	/*::[*/0x013C/*::]*/: 'PIVOT.ADD.FIELDS',
+	/*::[*/0x013E/*::]*/: 'OPTIONS.CALCULATION',
+	/*::[*/0x013F/*::]*/: 'OPTIONS.EDIT',
+	/*::[*/0x0140/*::]*/: 'OPTIONS.VIEW',
+	/*::[*/0x0141/*::]*/: 'ADDIN.MANAGER',
+	/*::[*/0x0142/*::]*/: 'MENU.EDITOR',
+	/*::[*/0x0143/*::]*/: 'ATTACH.TOOLBARS',
+	/*::[*/0x0144/*::]*/: 'VBAActivate',
+	/*::[*/0x0145/*::]*/: 'OPTIONS.CHART',
+	/*::[*/0x0148/*::]*/: 'VBA.INSERT.FILE',
+	/*::[*/0x014A/*::]*/: 'VBA.PROCEDURE.DEFINITION',
+	/*::[*/0x0150/*::]*/: 'ROUTING.SLIP',
+	/*::[*/0x0152/*::]*/: 'ROUTE.DOCUMENT',
+	/*::[*/0x0153/*::]*/: 'MAIL.LOGON',
+	/*::[*/0x0156/*::]*/: 'INSERT.PICTURE',
+	/*::[*/0x0157/*::]*/: 'EDIT.TOOL',
+	/*::[*/0x0158/*::]*/: 'GALLERY.DOUGHNUT',
+	/*::[*/0x015E/*::]*/: 'CHART.TREND',
+	/*::[*/0x0160/*::]*/: 'PIVOT.ITEM.PROPERTIES',
+	/*::[*/0x0162/*::]*/: 'WORKBOOK.INSERT',
+	/*::[*/0x0163/*::]*/: 'OPTIONS.TRANSITION',
+	/*::[*/0x0164/*::]*/: 'OPTIONS.GENERAL',
+	/*::[*/0x0172/*::]*/: 'FILTER.ADVANCED',
+	/*::[*/0x0175/*::]*/: 'MAIL.ADD.MAILER',
+	/*::[*/0x0176/*::]*/: 'MAIL.DELETE.MAILER',
+	/*::[*/0x0177/*::]*/: 'MAIL.REPLY',
+	/*::[*/0x0178/*::]*/: 'MAIL.REPLY.ALL',
+	/*::[*/0x0179/*::]*/: 'MAIL.FORWARD',
+	/*::[*/0x017A/*::]*/: 'MAIL.NEXT.LETTER',
+	/*::[*/0x017B/*::]*/: 'DATA.LABEL',
+	/*::[*/0x017C/*::]*/: 'INSERT.TITLE',
+	/*::[*/0x017D/*::]*/: 'FONT.PROPERTIES',
+	/*::[*/0x017E/*::]*/: 'MACRO.OPTIONS',
+	/*::[*/0x017F/*::]*/: 'WORKBOOK.HIDE',
+	/*::[*/0x0180/*::]*/: 'WORKBOOK.UNHIDE',
+	/*::[*/0x0181/*::]*/: 'WORKBOOK.DELETE',
+	/*::[*/0x0182/*::]*/: 'WORKBOOK.NAME',
+	/*::[*/0x0184/*::]*/: 'GALLERY.CUSTOM',
+	/*::[*/0x0186/*::]*/: 'ADD.CHART.AUTOFORMAT',
+	/*::[*/0x0187/*::]*/: 'DELETE.CHART.AUTOFORMAT',
+	/*::[*/0x0188/*::]*/: 'CHART.ADD.DATA',
+	/*::[*/0x0189/*::]*/: 'AUTO.OUTLINE',
+	/*::[*/0x018A/*::]*/: 'TAB.ORDER',
+	/*::[*/0x018B/*::]*/: 'SHOW.DIALOG',
+	/*::[*/0x018C/*::]*/: 'SELECT.ALL',
+	/*::[*/0x018D/*::]*/: 'UNGROUP.SHEETS',
+	/*::[*/0x018E/*::]*/: 'SUBTOTAL.CREATE',
+	/*::[*/0x018F/*::]*/: 'SUBTOTAL.REMOVE',
+	/*::[*/0x0190/*::]*/: 'RENAME.OBJECT',
+	/*::[*/0x019C/*::]*/: 'WORKBOOK.SCROLL',
+	/*::[*/0x019D/*::]*/: 'WORKBOOK.NEXT',
+	/*::[*/0x019E/*::]*/: 'WORKBOOK.PREV',
+	/*::[*/0x019F/*::]*/: 'WORKBOOK.TAB.SPLIT',
+	/*::[*/0x01A0/*::]*/: 'FULL.SCREEN',
+	/*::[*/0x01A1/*::]*/: 'WORKBOOK.PROTECT',
+	/*::[*/0x01A4/*::]*/: 'SCROLLBAR.PROPERTIES',
+	/*::[*/0x01A5/*::]*/: 'PIVOT.SHOW.PAGES',
+	/*::[*/0x01A6/*::]*/: 'TEXT.TO.COLUMNS',
+	/*::[*/0x01A7/*::]*/: 'FORMAT.CHARTTYPE',
+	/*::[*/0x01A8/*::]*/: 'LINK.FORMAT',
+	/*::[*/0x01A9/*::]*/: 'TRACER.DISPLAY',
+	/*::[*/0x01AE/*::]*/: 'TRACER.NAVIGATE',
+	/*::[*/0x01AF/*::]*/: 'TRACER.CLEAR',
+	/*::[*/0x01B0/*::]*/: 'TRACER.ERROR',
+	/*::[*/0x01B1/*::]*/: 'PIVOT.FIELD.GROUP',
+	/*::[*/0x01B2/*::]*/: 'PIVOT.FIELD.UNGROUP',
+	/*::[*/0x01B3/*::]*/: 'CHECKBOX.PROPERTIES',
+	/*::[*/0x01B4/*::]*/: 'LABEL.PROPERTIES',
+	/*::[*/0x01B5/*::]*/: 'LISTBOX.PROPERTIES',
+	/*::[*/0x01B6/*::]*/: 'EDITBOX.PROPERTIES',
+	/*::[*/0x01B7/*::]*/: 'PIVOT.REFRESH',
+	/*::[*/0x01B8/*::]*/: 'LINK.COMBO',
+	/*::[*/0x01B9/*::]*/: 'OPEN.TEXT',
+	/*::[*/0x01BA/*::]*/: 'HIDE.DIALOG',
+	/*::[*/0x01BB/*::]*/: 'SET.DIALOG.FOCUS',
+	/*::[*/0x01BC/*::]*/: 'ENABLE.OBJECT',
+	/*::[*/0x01BD/*::]*/: 'PUSHBUTTON.PROPERTIES',
+	/*::[*/0x01BE/*::]*/: 'SET.DIALOG.DEFAULT',
+	/*::[*/0x01BF/*::]*/: 'FILTER',
+	/*::[*/0x01C0/*::]*/: 'FILTER.SHOW.ALL',
+	/*::[*/0x01C1/*::]*/: 'CLEAR.OUTLINE',
+	/*::[*/0x01C2/*::]*/: 'FUNCTION.WIZARD',
+	/*::[*/0x01C3/*::]*/: 'ADD.LIST.ITEM',
+	/*::[*/0x01C4/*::]*/: 'SET.LIST.ITEM',
+	/*::[*/0x01C5/*::]*/: 'REMOVE.LIST.ITEM',
+	/*::[*/0x01C6/*::]*/: 'SELECT.LIST.ITEM',
+	/*::[*/0x01C7/*::]*/: 'SET.CONTROL.VALUE',
+	/*::[*/0x01C8/*::]*/: 'SAVE.COPY.AS',
+	/*::[*/0x01CA/*::]*/: 'OPTIONS.LISTS.ADD',
+	/*::[*/0x01CB/*::]*/: 'OPTIONS.LISTS.DELETE',
+	/*::[*/0x01CC/*::]*/: 'SERIES.AXES',
+	/*::[*/0x01CD/*::]*/: 'SERIES.X',
+	/*::[*/0x01CE/*::]*/: 'SERIES.Y',
+	/*::[*/0x01CF/*::]*/: 'ERRORBAR.X',
+	/*::[*/0x01D0/*::]*/: 'ERRORBAR.Y',
+	/*::[*/0x01D1/*::]*/: 'FORMAT.CHART',
+	/*::[*/0x01D2/*::]*/: 'SERIES.ORDER',
+	/*::[*/0x01D3/*::]*/: 'MAIL.LOGOFF',
+	/*::[*/0x01D4/*::]*/: 'CLEAR.ROUTING.SLIP',
+	/*::[*/0x01D5/*::]*/: 'APP.ACTIVATE.MICROSOFT',
+	/*::[*/0x01D6/*::]*/: 'MAIL.EDIT.MAILER',
+	/*::[*/0x01D7/*::]*/: 'ON.SHEET',
+	/*::[*/0x01D8/*::]*/: 'STANDARD.WIDTH',
+	/*::[*/0x01D9/*::]*/: 'SCENARIO.MERGE',
+	/*::[*/0x01DA/*::]*/: 'SUMMARY.INFO',
+	/*::[*/0x01DB/*::]*/: 'FIND.FILE',
+	/*::[*/0x01DC/*::]*/: 'ACTIVE.CELL.FONT',
+	/*::[*/0x01DD/*::]*/: 'ENABLE.TIPWIZARD',
+	/*::[*/0x01DE/*::]*/: 'VBA.MAKE.ADDIN',
+	/*::[*/0x01E0/*::]*/: 'INSERTDATATABLE',
+	/*::[*/0x01E1/*::]*/: 'WORKGROUP.OPTIONS',
+	/*::[*/0x01E2/*::]*/: 'MAIL.SEND.MAILER',
+	/*::[*/0x01E5/*::]*/: 'AUTOCORRECT',
+	/*::[*/0x01E9/*::]*/: 'POST.DOCUMENT',
+	/*::[*/0x01EB/*::]*/: 'PICKLIST',
+	/*::[*/0x01ED/*::]*/: 'VIEW.SHOW',
+	/*::[*/0x01EE/*::]*/: 'VIEW.DEFINE',
+	/*::[*/0x01EF/*::]*/: 'VIEW.DELETE',
+	/*::[*/0x01FD/*::]*/: 'SHEET.BACKGROUND',
+	/*::[*/0x01FE/*::]*/: 'INSERT.MAP.OBJECT',
+	/*::[*/0x01FF/*::]*/: 'OPTIONS.MENONO',
+	/*::[*/0x0205/*::]*/: 'MSOCHECKS',
+	/*::[*/0x0206/*::]*/: 'NORMAL',
+	/*::[*/0x0207/*::]*/: 'LAYOUT',
+	/*::[*/0x0208/*::]*/: 'RM.PRINT.AREA',
+	/*::[*/0x0209/*::]*/: 'CLEAR.PRINT.AREA',
+	/*::[*/0x020A/*::]*/: 'ADD.PRINT.AREA',
+	/*::[*/0x020B/*::]*/: 'MOVE.BRK',
+	/*::[*/0x0221/*::]*/: 'HIDECURR.NOTE',
+	/*::[*/0x0222/*::]*/: 'HIDEALL.NOTES',
+	/*::[*/0x0223/*::]*/: 'DELETE.NOTE',
+	/*::[*/0x0224/*::]*/: 'TRAVERSE.NOTES',
+	/*::[*/0x0225/*::]*/: 'ACTIVATE.NOTES',
+	/*::[*/0x026C/*::]*/: 'PROTECT.REVISIONS',
+	/*::[*/0x026D/*::]*/: 'UNPROTECT.REVISIONS',
+	/*::[*/0x0287/*::]*/: 'OPTIONS.ME',
+	/*::[*/0x028D/*::]*/: 'WEB.PUBLISH',
+	/*::[*/0x029B/*::]*/: 'NEWWEBQUERY',
+	/*::[*/0x02A1/*::]*/: 'PIVOT.TABLE.CHART',
+	/*::[*/0x02F1/*::]*/: 'OPTIONS.SAVE',
+	/*::[*/0x02F3/*::]*/: 'OPTIONS.SPELL',
+	/*::[*/0x0328/*::]*/: 'HIDEALL.INKANNOTS'
 };
 
 /* [MS-XLS] 2.5.198.17 */
 /* [MS-XLSB] 2.5.97.10 */
 var Ftab = {
-0x0000: 'COUNT',
-0x0001: 'IF',
-0x0002: 'ISNA',
-0x0003: 'ISERROR',
-0x0004: 'SUM',
-0x0005: 'AVERAGE',
-0x0006: 'MIN',
-0x0007: 'MAX',
-0x0008: 'ROW',
-0x0009: 'COLUMN',
-0x000A: 'NA',
-0x000B: 'NPV',
-0x000C: 'STDEV',
-0x000D: 'DOLLAR',
-0x000E: 'FIXED',
-0x000F: 'SIN',
-0x0010: 'COS',
-0x0011: 'TAN',
-0x0012: 'ATAN',
-0x0013: 'PI',
-0x0014: 'SQRT',
-0x0015: 'EXP',
-0x0016: 'LN',
-0x0017: 'LOG10',
-0x0018: 'ABS',
-0x0019: 'INT',
-0x001A: 'SIGN',
-0x001B: 'ROUND',
-0x001C: 'LOOKUP',
-0x001D: 'INDEX',
-0x001E: 'REPT',
-0x001F: 'MID',
-0x0020: 'LEN',
-0x0021: 'VALUE',
-0x0022: 'TRUE',
-0x0023: 'FALSE',
-0x0024: 'AND',
-0x0025: 'OR',
-0x0026: 'NOT',
-0x0027: 'MOD',
-0x0028: 'DCOUNT',
-0x0029: 'DSUM',
-0x002A: 'DAVERAGE',
-0x002B: 'DMIN',
-0x002C: 'DMAX',
-0x002D: 'DSTDEV',
-0x002E: 'VAR',
-0x002F: 'DVAR',
-0x0030: 'TEXT',
-0x0031: 'LINEST',
-0x0032: 'TREND',
-0x0033: 'LOGEST',
-0x0034: 'GROWTH',
-0x0035: 'GOTO',
-0x0036: 'HALT',
-0x0037: 'RETURN',
-0x0038: 'PV',
-0x0039: 'FV',
-0x003A: 'NPER',
-0x003B: 'PMT',
-0x003C: 'RATE',
-0x003D: 'MIRR',
-0x003E: 'IRR',
-0x003F: 'RAND',
-0x0040: 'MATCH',
-0x0041: 'DATE',
-0x0042: 'TIME',
-0x0043: 'DAY',
-0x0044: 'MONTH',
-0x0045: 'YEAR',
-0x0046: 'WEEKDAY',
-0x0047: 'HOUR',
-0x0048: 'MINUTE',
-0x0049: 'SECOND',
-0x004A: 'NOW',
-0x004B: 'AREAS',
-0x004C: 'ROWS',
-0x004D: 'COLUMNS',
-0x004E: 'OFFSET',
-0x004F: 'ABSREF',
-0x0050: 'RELREF',
-0x0051: 'ARGUMENT',
-0x0052: 'SEARCH',
-0x0053: 'TRANSPOSE',
-0x0054: 'ERROR',
-0x0055: 'STEP',
-0x0056: 'TYPE',
-0x0057: 'ECHO',
-0x0058: 'SET.NAME',
-0x0059: 'CALLER',
-0x005A: 'DEREF',
-0x005B: 'WINDOWS',
-0x005C: 'SERIES',
-0x005D: 'DOCUMENTS',
-0x005E: 'ACTIVE.CELL',
-0x005F: 'SELECTION',
-0x0060: 'RESULT',
-0x0061: 'ATAN2',
-0x0062: 'ASIN',
-0x0063: 'ACOS',
-0x0064: 'CHOOSE',
-0x0065: 'HLOOKUP',
-0x0066: 'VLOOKUP',
-0x0067: 'LINKS',
-0x0068: 'INPUT',
-0x0069: 'ISREF',
-0x006A: 'GET.FORMULA',
-0x006B: 'GET.NAME',
-0x006C: 'SET.VALUE',
-0x006D: 'LOG',
-0x006E: 'EXEC',
-0x006F: 'CHAR',
-0x0070: 'LOWER',
-0x0071: 'UPPER',
-0x0072: 'PROPER',
-0x0073: 'LEFT',
-0x0074: 'RIGHT',
-0x0075: 'EXACT',
-0x0076: 'TRIM',
-0x0077: 'REPLACE',
-0x0078: 'SUBSTITUTE',
-0x0079: 'CODE',
-0x007A: 'NAMES',
-0x007B: 'DIRECTORY',
-0x007C: 'FIND',
-0x007D: 'CELL',
-0x007E: 'ISERR',
-0x007F: 'ISTEXT',
-0x0080: 'ISNUMBER',
-0x0081: 'ISBLANK',
-0x0082: 'T',
-0x0083: 'N',
-0x0084: 'FOPEN',
-0x0085: 'FCLOSE',
-0x0086: 'FSIZE',
-0x0087: 'FREADLN',
-0x0088: 'FREAD',
-0x0089: 'FWRITELN',
-0x008A: 'FWRITE',
-0x008B: 'FPOS',
-0x008C: 'DATEVALUE',
-0x008D: 'TIMEVALUE',
-0x008E: 'SLN',
-0x008F: 'SYD',
-0x0090: 'DDB',
-0x0091: 'GET.DEF',
-0x0092: 'REFTEXT',
-0x0093: 'TEXTREF',
-0x0094: 'INDIRECT',
-0x0095: 'REGISTER',
-0x0096: 'CALL',
-0x0097: 'ADD.BAR',
-0x0098: 'ADD.MENU',
-0x0099: 'ADD.COMMAND',
-0x009A: 'ENABLE.COMMAND',
-0x009B: 'CHECK.COMMAND',
-0x009C: 'RENAME.COMMAND',
-0x009D: 'SHOW.BAR',
-0x009E: 'DELETE.MENU',
-0x009F: 'DELETE.COMMAND',
-0x00A0: 'GET.CHART.ITEM',
-0x00A1: 'DIALOG.BOX',
-0x00A2: 'CLEAN',
-0x00A3: 'MDETERM',
-0x00A4: 'MINVERSE',
-0x00A5: 'MMULT',
-0x00A6: 'FILES',
-0x00A7: 'IPMT',
-0x00A8: 'PPMT',
-0x00A9: 'COUNTA',
-0x00AA: 'CANCEL.KEY',
-0x00AB: 'FOR',
-0x00AC: 'WHILE',
-0x00AD: 'BREAK',
-0x00AE: 'NEXT',
-0x00AF: 'INITIATE',
-0x00B0: 'REQUEST',
-0x00B1: 'POKE',
-0x00B2: 'EXECUTE',
-0x00B3: 'TERMINATE',
-0x00B4: 'RESTART',
-0x00B5: 'HELP',
-0x00B6: 'GET.BAR',
-0x00B7: 'PRODUCT',
-0x00B8: 'FACT',
-0x00B9: 'GET.CELL',
-0x00BA: 'GET.WORKSPACE',
-0x00BB: 'GET.WINDOW',
-0x00BC: 'GET.DOCUMENT',
-0x00BD: 'DPRODUCT',
-0x00BE: 'ISNONTEXT',
-0x00BF: 'GET.NOTE',
-0x00C0: 'NOTE',
-0x00C1: 'STDEVP',
-0x00C2: 'VARP',
-0x00C3: 'DSTDEVP',
-0x00C4: 'DVARP',
-0x00C5: 'TRUNC',
-0x00C6: 'ISLOGICAL',
-0x00C7: 'DCOUNTA',
-0x00C8: 'DELETE.BAR',
-0x00C9: 'UNREGISTER',
-0x00CC: 'USDOLLAR',
-0x00CD: 'FINDB',
-0x00CE: 'SEARCHB',
-0x00CF: 'REPLACEB',
-0x00D0: 'LEFTB',
-0x00D1: 'RIGHTB',
-0x00D2: 'MIDB',
-0x00D3: 'LENB',
-0x00D4: 'ROUNDUP',
-0x00D5: 'ROUNDDOWN',
-0x00D6: 'ASC',
-0x00D7: 'DBCS',
-0x00D8: 'RANK',
-0x00DB: 'ADDRESS',
-0x00DC: 'DAYS360',
-0x00DD: 'TODAY',
-0x00DE: 'VDB',
-0x00DF: 'ELSE',
-0x00E0: 'ELSE.IF',
-0x00E1: 'END.IF',
-0x00E2: 'FOR.CELL',
-0x00E3: 'MEDIAN',
-0x00E4: 'SUMPRODUCT',
-0x00E5: 'SINH',
-0x00E6: 'COSH',
-0x00E7: 'TANH',
-0x00E8: 'ASINH',
-0x00E9: 'ACOSH',
-0x00EA: 'ATANH',
-0x00EB: 'DGET',
-0x00EC: 'CREATE.OBJECT',
-0x00ED: 'VOLATILE',
-0x00EE: 'LAST.ERROR',
-0x00EF: 'CUSTOM.UNDO',
-0x00F0: 'CUSTOM.REPEAT',
-0x00F1: 'FORMULA.CONVERT',
-0x00F2: 'GET.LINK.INFO',
-0x00F3: 'TEXT.BOX',
-0x00F4: 'INFO',
-0x00F5: 'GROUP',
-0x00F6: 'GET.OBJECT',
-0x00F7: 'DB',
-0x00F8: 'PAUSE',
-0x00FB: 'RESUME',
-0x00FC: 'FREQUENCY',
-0x00FD: 'ADD.TOOLBAR',
-0x00FE: 'DELETE.TOOLBAR',
-0x00FF: 'User',
-0x0100: 'RESET.TOOLBAR',
-0x0101: 'EVALUATE',
-0x0102: 'GET.TOOLBAR',
-0x0103: 'GET.TOOL',
-0x0104: 'SPELLING.CHECK',
-0x0105: 'ERROR.TYPE',
-0x0106: 'APP.TITLE',
-0x0107: 'WINDOW.TITLE',
-0x0108: 'SAVE.TOOLBAR',
-0x0109: 'ENABLE.TOOL',
-0x010A: 'PRESS.TOOL',
-0x010B: 'REGISTER.ID',
-0x010C: 'GET.WORKBOOK',
-0x010D: 'AVEDEV',
-0x010E: 'BETADIST',
-0x010F: 'GAMMALN',
-0x0110: 'BETAINV',
-0x0111: 'BINOMDIST',
-0x0112: 'CHIDIST',
-0x0113: 'CHIINV',
-0x0114: 'COMBIN',
-0x0115: 'CONFIDENCE',
-0x0116: 'CRITBINOM',
-0x0117: 'EVEN',
-0x0118: 'EXPONDIST',
-0x0119: 'FDIST',
-0x011A: 'FINV',
-0x011B: 'FISHER',
-0x011C: 'FISHERINV',
-0x011D: 'FLOOR',
-0x011E: 'GAMMADIST',
-0x011F: 'GAMMAINV',
-0x0120: 'CEILING',
-0x0121: 'HYPGEOMDIST',
-0x0122: 'LOGNORMDIST',
-0x0123: 'LOGINV',
-0x0124: 'NEGBINOMDIST',
-0x0125: 'NORMDIST',
-0x0126: 'NORMSDIST',
-0x0127: 'NORMINV',
-0x0128: 'NORMSINV',
-0x0129: 'STANDARDIZE',
-0x012A: 'ODD',
-0x012B: 'PERMUT',
-0x012C: 'POISSON',
-0x012D: 'TDIST',
-0x012E: 'WEIBULL',
-0x012F: 'SUMXMY2',
-0x0130: 'SUMX2MY2',
-0x0131: 'SUMX2PY2',
-0x0132: 'CHITEST',
-0x0133: 'CORREL',
-0x0134: 'COVAR',
-0x0135: 'FORECAST',
-0x0136: 'FTEST',
-0x0137: 'INTERCEPT',
-0x0138: 'PEARSON',
-0x0139: 'RSQ',
-0x013A: 'STEYX',
-0x013B: 'SLOPE',
-0x013C: 'TTEST',
-0x013D: 'PROB',
-0x013E: 'DEVSQ',
-0x013F: 'GEOMEAN',
-0x0140: 'HARMEAN',
-0x0141: 'SUMSQ',
-0x0142: 'KURT',
-0x0143: 'SKEW',
-0x0144: 'ZTEST',
-0x0145: 'LARGE',
-0x0146: 'SMALL',
-0x0147: 'QUARTILE',
-0x0148: 'PERCENTILE',
-0x0149: 'PERCENTRANK',
-0x014A: 'MODE',
-0x014B: 'TRIMMEAN',
-0x014C: 'TINV',
-0x014E: 'MOVIE.COMMAND',
-0x014F: 'GET.MOVIE',
-0x0150: 'CONCATENATE',
-0x0151: 'POWER',
-0x0152: 'PIVOT.ADD.DATA',
-0x0153: 'GET.PIVOT.TABLE',
-0x0154: 'GET.PIVOT.FIELD',
-0x0155: 'GET.PIVOT.ITEM',
-0x0156: 'RADIANS',
-0x0157: 'DEGREES',
-0x0158: 'SUBTOTAL',
-0x0159: 'SUMIF',
-0x015A: 'COUNTIF',
-0x015B: 'COUNTBLANK',
-0x015C: 'SCENARIO.GET',
-0x015D: 'OPTIONS.LISTS.GET',
-0x015E: 'ISPMT',
-0x015F: 'DATEDIF',
-0x0160: 'DATESTRING',
-0x0161: 'NUMBERSTRING',
-0x0162: 'ROMAN',
-0x0163: 'OPEN.DIALOG',
-0x0164: 'SAVE.DIALOG',
-0x0165: 'VIEW.GET',
-0x0166: 'GETPIVOTDATA',
-0x0167: 'HYPERLINK',
-0x0168: 'PHONETIC',
-0x0169: 'AVERAGEA',
-0x016A: 'MAXA',
-0x016B: 'MINA',
-0x016C: 'STDEVPA',
-0x016D: 'VARPA',
-0x016E: 'STDEVA',
-0x016F: 'VARA',
-0x0170: 'BAHTTEXT',
-0x0171: 'THAIDAYOFWEEK',
-0x0172: 'THAIDIGIT',
-0x0173: 'THAIMONTHOFYEAR',
-0x0174: 'THAINUMSOUND',
-0x0175: 'THAINUMSTRING',
-0x0176: 'THAISTRINGLENGTH',
-0x0177: 'ISTHAIDIGIT',
-0x0178: 'ROUNDBAHTDOWN',
-0x0179: 'ROUNDBAHTUP',
-0x017A: 'THAIYEAR',
-0x017B: 'RTD',
+	/*::[*/0x0000/*::]*/: 'COUNT',
+	/*::[*/0x0001/*::]*/: 'IF',
+	/*::[*/0x0002/*::]*/: 'ISNA',
+	/*::[*/0x0003/*::]*/: 'ISERROR',
+	/*::[*/0x0004/*::]*/: 'SUM',
+	/*::[*/0x0005/*::]*/: 'AVERAGE',
+	/*::[*/0x0006/*::]*/: 'MIN',
+	/*::[*/0x0007/*::]*/: 'MAX',
+	/*::[*/0x0008/*::]*/: 'ROW',
+	/*::[*/0x0009/*::]*/: 'COLUMN',
+	/*::[*/0x000A/*::]*/: 'NA',
+	/*::[*/0x000B/*::]*/: 'NPV',
+	/*::[*/0x000C/*::]*/: 'STDEV',
+	/*::[*/0x000D/*::]*/: 'DOLLAR',
+	/*::[*/0x000E/*::]*/: 'FIXED',
+	/*::[*/0x000F/*::]*/: 'SIN',
+	/*::[*/0x0010/*::]*/: 'COS',
+	/*::[*/0x0011/*::]*/: 'TAN',
+	/*::[*/0x0012/*::]*/: 'ATAN',
+	/*::[*/0x0013/*::]*/: 'PI',
+	/*::[*/0x0014/*::]*/: 'SQRT',
+	/*::[*/0x0015/*::]*/: 'EXP',
+	/*::[*/0x0016/*::]*/: 'LN',
+	/*::[*/0x0017/*::]*/: 'LOG10',
+	/*::[*/0x0018/*::]*/: 'ABS',
+	/*::[*/0x0019/*::]*/: 'INT',
+	/*::[*/0x001A/*::]*/: 'SIGN',
+	/*::[*/0x001B/*::]*/: 'ROUND',
+	/*::[*/0x001C/*::]*/: 'LOOKUP',
+	/*::[*/0x001D/*::]*/: 'INDEX',
+	/*::[*/0x001E/*::]*/: 'REPT',
+	/*::[*/0x001F/*::]*/: 'MID',
+	/*::[*/0x0020/*::]*/: 'LEN',
+	/*::[*/0x0021/*::]*/: 'VALUE',
+	/*::[*/0x0022/*::]*/: 'TRUE',
+	/*::[*/0x0023/*::]*/: 'FALSE',
+	/*::[*/0x0024/*::]*/: 'AND',
+	/*::[*/0x0025/*::]*/: 'OR',
+	/*::[*/0x0026/*::]*/: 'NOT',
+	/*::[*/0x0027/*::]*/: 'MOD',
+	/*::[*/0x0028/*::]*/: 'DCOUNT',
+	/*::[*/0x0029/*::]*/: 'DSUM',
+	/*::[*/0x002A/*::]*/: 'DAVERAGE',
+	/*::[*/0x002B/*::]*/: 'DMIN',
+	/*::[*/0x002C/*::]*/: 'DMAX',
+	/*::[*/0x002D/*::]*/: 'DSTDEV',
+	/*::[*/0x002E/*::]*/: 'VAR',
+	/*::[*/0x002F/*::]*/: 'DVAR',
+	/*::[*/0x0030/*::]*/: 'TEXT',
+	/*::[*/0x0031/*::]*/: 'LINEST',
+	/*::[*/0x0032/*::]*/: 'TREND',
+	/*::[*/0x0033/*::]*/: 'LOGEST',
+	/*::[*/0x0034/*::]*/: 'GROWTH',
+	/*::[*/0x0035/*::]*/: 'GOTO',
+	/*::[*/0x0036/*::]*/: 'HALT',
+	/*::[*/0x0037/*::]*/: 'RETURN',
+	/*::[*/0x0038/*::]*/: 'PV',
+	/*::[*/0x0039/*::]*/: 'FV',
+	/*::[*/0x003A/*::]*/: 'NPER',
+	/*::[*/0x003B/*::]*/: 'PMT',
+	/*::[*/0x003C/*::]*/: 'RATE',
+	/*::[*/0x003D/*::]*/: 'MIRR',
+	/*::[*/0x003E/*::]*/: 'IRR',
+	/*::[*/0x003F/*::]*/: 'RAND',
+	/*::[*/0x0040/*::]*/: 'MATCH',
+	/*::[*/0x0041/*::]*/: 'DATE',
+	/*::[*/0x0042/*::]*/: 'TIME',
+	/*::[*/0x0043/*::]*/: 'DAY',
+	/*::[*/0x0044/*::]*/: 'MONTH',
+	/*::[*/0x0045/*::]*/: 'YEAR',
+	/*::[*/0x0046/*::]*/: 'WEEKDAY',
+	/*::[*/0x0047/*::]*/: 'HOUR',
+	/*::[*/0x0048/*::]*/: 'MINUTE',
+	/*::[*/0x0049/*::]*/: 'SECOND',
+	/*::[*/0x004A/*::]*/: 'NOW',
+	/*::[*/0x004B/*::]*/: 'AREAS',
+	/*::[*/0x004C/*::]*/: 'ROWS',
+	/*::[*/0x004D/*::]*/: 'COLUMNS',
+	/*::[*/0x004E/*::]*/: 'OFFSET',
+	/*::[*/0x004F/*::]*/: 'ABSREF',
+	/*::[*/0x0050/*::]*/: 'RELREF',
+	/*::[*/0x0051/*::]*/: 'ARGUMENT',
+	/*::[*/0x0052/*::]*/: 'SEARCH',
+	/*::[*/0x0053/*::]*/: 'TRANSPOSE',
+	/*::[*/0x0054/*::]*/: 'ERROR',
+	/*::[*/0x0055/*::]*/: 'STEP',
+	/*::[*/0x0056/*::]*/: 'TYPE',
+	/*::[*/0x0057/*::]*/: 'ECHO',
+	/*::[*/0x0058/*::]*/: 'SET.NAME',
+	/*::[*/0x0059/*::]*/: 'CALLER',
+	/*::[*/0x005A/*::]*/: 'DEREF',
+	/*::[*/0x005B/*::]*/: 'WINDOWS',
+	/*::[*/0x005C/*::]*/: 'SERIES',
+	/*::[*/0x005D/*::]*/: 'DOCUMENTS',
+	/*::[*/0x005E/*::]*/: 'ACTIVE.CELL',
+	/*::[*/0x005F/*::]*/: 'SELECTION',
+	/*::[*/0x0060/*::]*/: 'RESULT',
+	/*::[*/0x0061/*::]*/: 'ATAN2',
+	/*::[*/0x0062/*::]*/: 'ASIN',
+	/*::[*/0x0063/*::]*/: 'ACOS',
+	/*::[*/0x0064/*::]*/: 'CHOOSE',
+	/*::[*/0x0065/*::]*/: 'HLOOKUP',
+	/*::[*/0x0066/*::]*/: 'VLOOKUP',
+	/*::[*/0x0067/*::]*/: 'LINKS',
+	/*::[*/0x0068/*::]*/: 'INPUT',
+	/*::[*/0x0069/*::]*/: 'ISREF',
+	/*::[*/0x006A/*::]*/: 'GET.FORMULA',
+	/*::[*/0x006B/*::]*/: 'GET.NAME',
+	/*::[*/0x006C/*::]*/: 'SET.VALUE',
+	/*::[*/0x006D/*::]*/: 'LOG',
+	/*::[*/0x006E/*::]*/: 'EXEC',
+	/*::[*/0x006F/*::]*/: 'CHAR',
+	/*::[*/0x0070/*::]*/: 'LOWER',
+	/*::[*/0x0071/*::]*/: 'UPPER',
+	/*::[*/0x0072/*::]*/: 'PROPER',
+	/*::[*/0x0073/*::]*/: 'LEFT',
+	/*::[*/0x0074/*::]*/: 'RIGHT',
+	/*::[*/0x0075/*::]*/: 'EXACT',
+	/*::[*/0x0076/*::]*/: 'TRIM',
+	/*::[*/0x0077/*::]*/: 'REPLACE',
+	/*::[*/0x0078/*::]*/: 'SUBSTITUTE',
+	/*::[*/0x0079/*::]*/: 'CODE',
+	/*::[*/0x007A/*::]*/: 'NAMES',
+	/*::[*/0x007B/*::]*/: 'DIRECTORY',
+	/*::[*/0x007C/*::]*/: 'FIND',
+	/*::[*/0x007D/*::]*/: 'CELL',
+	/*::[*/0x007E/*::]*/: 'ISERR',
+	/*::[*/0x007F/*::]*/: 'ISTEXT',
+	/*::[*/0x0080/*::]*/: 'ISNUMBER',
+	/*::[*/0x0081/*::]*/: 'ISBLANK',
+	/*::[*/0x0082/*::]*/: 'T',
+	/*::[*/0x0083/*::]*/: 'N',
+	/*::[*/0x0084/*::]*/: 'FOPEN',
+	/*::[*/0x0085/*::]*/: 'FCLOSE',
+	/*::[*/0x0086/*::]*/: 'FSIZE',
+	/*::[*/0x0087/*::]*/: 'FREADLN',
+	/*::[*/0x0088/*::]*/: 'FREAD',
+	/*::[*/0x0089/*::]*/: 'FWRITELN',
+	/*::[*/0x008A/*::]*/: 'FWRITE',
+	/*::[*/0x008B/*::]*/: 'FPOS',
+	/*::[*/0x008C/*::]*/: 'DATEVALUE',
+	/*::[*/0x008D/*::]*/: 'TIMEVALUE',
+	/*::[*/0x008E/*::]*/: 'SLN',
+	/*::[*/0x008F/*::]*/: 'SYD',
+	/*::[*/0x0090/*::]*/: 'DDB',
+	/*::[*/0x0091/*::]*/: 'GET.DEF',
+	/*::[*/0x0092/*::]*/: 'REFTEXT',
+	/*::[*/0x0093/*::]*/: 'TEXTREF',
+	/*::[*/0x0094/*::]*/: 'INDIRECT',
+	/*::[*/0x0095/*::]*/: 'REGISTER',
+	/*::[*/0x0096/*::]*/: 'CALL',
+	/*::[*/0x0097/*::]*/: 'ADD.BAR',
+	/*::[*/0x0098/*::]*/: 'ADD.MENU',
+	/*::[*/0x0099/*::]*/: 'ADD.COMMAND',
+	/*::[*/0x009A/*::]*/: 'ENABLE.COMMAND',
+	/*::[*/0x009B/*::]*/: 'CHECK.COMMAND',
+	/*::[*/0x009C/*::]*/: 'RENAME.COMMAND',
+	/*::[*/0x009D/*::]*/: 'SHOW.BAR',
+	/*::[*/0x009E/*::]*/: 'DELETE.MENU',
+	/*::[*/0x009F/*::]*/: 'DELETE.COMMAND',
+	/*::[*/0x00A0/*::]*/: 'GET.CHART.ITEM',
+	/*::[*/0x00A1/*::]*/: 'DIALOG.BOX',
+	/*::[*/0x00A2/*::]*/: 'CLEAN',
+	/*::[*/0x00A3/*::]*/: 'MDETERM',
+	/*::[*/0x00A4/*::]*/: 'MINVERSE',
+	/*::[*/0x00A5/*::]*/: 'MMULT',
+	/*::[*/0x00A6/*::]*/: 'FILES',
+	/*::[*/0x00A7/*::]*/: 'IPMT',
+	/*::[*/0x00A8/*::]*/: 'PPMT',
+	/*::[*/0x00A9/*::]*/: 'COUNTA',
+	/*::[*/0x00AA/*::]*/: 'CANCEL.KEY',
+	/*::[*/0x00AB/*::]*/: 'FOR',
+	/*::[*/0x00AC/*::]*/: 'WHILE',
+	/*::[*/0x00AD/*::]*/: 'BREAK',
+	/*::[*/0x00AE/*::]*/: 'NEXT',
+	/*::[*/0x00AF/*::]*/: 'INITIATE',
+	/*::[*/0x00B0/*::]*/: 'REQUEST',
+	/*::[*/0x00B1/*::]*/: 'POKE',
+	/*::[*/0x00B2/*::]*/: 'EXECUTE',
+	/*::[*/0x00B3/*::]*/: 'TERMINATE',
+	/*::[*/0x00B4/*::]*/: 'RESTART',
+	/*::[*/0x00B5/*::]*/: 'HELP',
+	/*::[*/0x00B6/*::]*/: 'GET.BAR',
+	/*::[*/0x00B7/*::]*/: 'PRODUCT',
+	/*::[*/0x00B8/*::]*/: 'FACT',
+	/*::[*/0x00B9/*::]*/: 'GET.CELL',
+	/*::[*/0x00BA/*::]*/: 'GET.WORKSPACE',
+	/*::[*/0x00BB/*::]*/: 'GET.WINDOW',
+	/*::[*/0x00BC/*::]*/: 'GET.DOCUMENT',
+	/*::[*/0x00BD/*::]*/: 'DPRODUCT',
+	/*::[*/0x00BE/*::]*/: 'ISNONTEXT',
+	/*::[*/0x00BF/*::]*/: 'GET.NOTE',
+	/*::[*/0x00C0/*::]*/: 'NOTE',
+	/*::[*/0x00C1/*::]*/: 'STDEVP',
+	/*::[*/0x00C2/*::]*/: 'VARP',
+	/*::[*/0x00C3/*::]*/: 'DSTDEVP',
+	/*::[*/0x00C4/*::]*/: 'DVARP',
+	/*::[*/0x00C5/*::]*/: 'TRUNC',
+	/*::[*/0x00C6/*::]*/: 'ISLOGICAL',
+	/*::[*/0x00C7/*::]*/: 'DCOUNTA',
+	/*::[*/0x00C8/*::]*/: 'DELETE.BAR',
+	/*::[*/0x00C9/*::]*/: 'UNREGISTER',
+	/*::[*/0x00CC/*::]*/: 'USDOLLAR',
+	/*::[*/0x00CD/*::]*/: 'FINDB',
+	/*::[*/0x00CE/*::]*/: 'SEARCHB',
+	/*::[*/0x00CF/*::]*/: 'REPLACEB',
+	/*::[*/0x00D0/*::]*/: 'LEFTB',
+	/*::[*/0x00D1/*::]*/: 'RIGHTB',
+	/*::[*/0x00D2/*::]*/: 'MIDB',
+	/*::[*/0x00D3/*::]*/: 'LENB',
+	/*::[*/0x00D4/*::]*/: 'ROUNDUP',
+	/*::[*/0x00D5/*::]*/: 'ROUNDDOWN',
+	/*::[*/0x00D6/*::]*/: 'ASC',
+	/*::[*/0x00D7/*::]*/: 'DBCS',
+	/*::[*/0x00D8/*::]*/: 'RANK',
+	/*::[*/0x00DB/*::]*/: 'ADDRESS',
+	/*::[*/0x00DC/*::]*/: 'DAYS360',
+	/*::[*/0x00DD/*::]*/: 'TODAY',
+	/*::[*/0x00DE/*::]*/: 'VDB',
+	/*::[*/0x00DF/*::]*/: 'ELSE',
+	/*::[*/0x00E0/*::]*/: 'ELSE.IF',
+	/*::[*/0x00E1/*::]*/: 'END.IF',
+	/*::[*/0x00E2/*::]*/: 'FOR.CELL',
+	/*::[*/0x00E3/*::]*/: 'MEDIAN',
+	/*::[*/0x00E4/*::]*/: 'SUMPRODUCT',
+	/*::[*/0x00E5/*::]*/: 'SINH',
+	/*::[*/0x00E6/*::]*/: 'COSH',
+	/*::[*/0x00E7/*::]*/: 'TANH',
+	/*::[*/0x00E8/*::]*/: 'ASINH',
+	/*::[*/0x00E9/*::]*/: 'ACOSH',
+	/*::[*/0x00EA/*::]*/: 'ATANH',
+	/*::[*/0x00EB/*::]*/: 'DGET',
+	/*::[*/0x00EC/*::]*/: 'CREATE.OBJECT',
+	/*::[*/0x00ED/*::]*/: 'VOLATILE',
+	/*::[*/0x00EE/*::]*/: 'LAST.ERROR',
+	/*::[*/0x00EF/*::]*/: 'CUSTOM.UNDO',
+	/*::[*/0x00F0/*::]*/: 'CUSTOM.REPEAT',
+	/*::[*/0x00F1/*::]*/: 'FORMULA.CONVERT',
+	/*::[*/0x00F2/*::]*/: 'GET.LINK.INFO',
+	/*::[*/0x00F3/*::]*/: 'TEXT.BOX',
+	/*::[*/0x00F4/*::]*/: 'INFO',
+	/*::[*/0x00F5/*::]*/: 'GROUP',
+	/*::[*/0x00F6/*::]*/: 'GET.OBJECT',
+	/*::[*/0x00F7/*::]*/: 'DB',
+	/*::[*/0x00F8/*::]*/: 'PAUSE',
+	/*::[*/0x00FB/*::]*/: 'RESUME',
+	/*::[*/0x00FC/*::]*/: 'FREQUENCY',
+	/*::[*/0x00FD/*::]*/: 'ADD.TOOLBAR',
+	/*::[*/0x00FE/*::]*/: 'DELETE.TOOLBAR',
+	/*::[*/0x00FF/*::]*/: 'User',
+	/*::[*/0x0100/*::]*/: 'RESET.TOOLBAR',
+	/*::[*/0x0101/*::]*/: 'EVALUATE',
+	/*::[*/0x0102/*::]*/: 'GET.TOOLBAR',
+	/*::[*/0x0103/*::]*/: 'GET.TOOL',
+	/*::[*/0x0104/*::]*/: 'SPELLING.CHECK',
+	/*::[*/0x0105/*::]*/: 'ERROR.TYPE',
+	/*::[*/0x0106/*::]*/: 'APP.TITLE',
+	/*::[*/0x0107/*::]*/: 'WINDOW.TITLE',
+	/*::[*/0x0108/*::]*/: 'SAVE.TOOLBAR',
+	/*::[*/0x0109/*::]*/: 'ENABLE.TOOL',
+	/*::[*/0x010A/*::]*/: 'PRESS.TOOL',
+	/*::[*/0x010B/*::]*/: 'REGISTER.ID',
+	/*::[*/0x010C/*::]*/: 'GET.WORKBOOK',
+	/*::[*/0x010D/*::]*/: 'AVEDEV',
+	/*::[*/0x010E/*::]*/: 'BETADIST',
+	/*::[*/0x010F/*::]*/: 'GAMMALN',
+	/*::[*/0x0110/*::]*/: 'BETAINV',
+	/*::[*/0x0111/*::]*/: 'BINOMDIST',
+	/*::[*/0x0112/*::]*/: 'CHIDIST',
+	/*::[*/0x0113/*::]*/: 'CHIINV',
+	/*::[*/0x0114/*::]*/: 'COMBIN',
+	/*::[*/0x0115/*::]*/: 'CONFIDENCE',
+	/*::[*/0x0116/*::]*/: 'CRITBINOM',
+	/*::[*/0x0117/*::]*/: 'EVEN',
+	/*::[*/0x0118/*::]*/: 'EXPONDIST',
+	/*::[*/0x0119/*::]*/: 'FDIST',
+	/*::[*/0x011A/*::]*/: 'FINV',
+	/*::[*/0x011B/*::]*/: 'FISHER',
+	/*::[*/0x011C/*::]*/: 'FISHERINV',
+	/*::[*/0x011D/*::]*/: 'FLOOR',
+	/*::[*/0x011E/*::]*/: 'GAMMADIST',
+	/*::[*/0x011F/*::]*/: 'GAMMAINV',
+	/*::[*/0x0120/*::]*/: 'CEILING',
+	/*::[*/0x0121/*::]*/: 'HYPGEOMDIST',
+	/*::[*/0x0122/*::]*/: 'LOGNORMDIST',
+	/*::[*/0x0123/*::]*/: 'LOGINV',
+	/*::[*/0x0124/*::]*/: 'NEGBINOMDIST',
+	/*::[*/0x0125/*::]*/: 'NORMDIST',
+	/*::[*/0x0126/*::]*/: 'NORMSDIST',
+	/*::[*/0x0127/*::]*/: 'NORMINV',
+	/*::[*/0x0128/*::]*/: 'NORMSINV',
+	/*::[*/0x0129/*::]*/: 'STANDARDIZE',
+	/*::[*/0x012A/*::]*/: 'ODD',
+	/*::[*/0x012B/*::]*/: 'PERMUT',
+	/*::[*/0x012C/*::]*/: 'POISSON',
+	/*::[*/0x012D/*::]*/: 'TDIST',
+	/*::[*/0x012E/*::]*/: 'WEIBULL',
+	/*::[*/0x012F/*::]*/: 'SUMXMY2',
+	/*::[*/0x0130/*::]*/: 'SUMX2MY2',
+	/*::[*/0x0131/*::]*/: 'SUMX2PY2',
+	/*::[*/0x0132/*::]*/: 'CHITEST',
+	/*::[*/0x0133/*::]*/: 'CORREL',
+	/*::[*/0x0134/*::]*/: 'COVAR',
+	/*::[*/0x0135/*::]*/: 'FORECAST',
+	/*::[*/0x0136/*::]*/: 'FTEST',
+	/*::[*/0x0137/*::]*/: 'INTERCEPT',
+	/*::[*/0x0138/*::]*/: 'PEARSON',
+	/*::[*/0x0139/*::]*/: 'RSQ',
+	/*::[*/0x013A/*::]*/: 'STEYX',
+	/*::[*/0x013B/*::]*/: 'SLOPE',
+	/*::[*/0x013C/*::]*/: 'TTEST',
+	/*::[*/0x013D/*::]*/: 'PROB',
+	/*::[*/0x013E/*::]*/: 'DEVSQ',
+	/*::[*/0x013F/*::]*/: 'GEOMEAN',
+	/*::[*/0x0140/*::]*/: 'HARMEAN',
+	/*::[*/0x0141/*::]*/: 'SUMSQ',
+	/*::[*/0x0142/*::]*/: 'KURT',
+	/*::[*/0x0143/*::]*/: 'SKEW',
+	/*::[*/0x0144/*::]*/: 'ZTEST',
+	/*::[*/0x0145/*::]*/: 'LARGE',
+	/*::[*/0x0146/*::]*/: 'SMALL',
+	/*::[*/0x0147/*::]*/: 'QUARTILE',
+	/*::[*/0x0148/*::]*/: 'PERCENTILE',
+	/*::[*/0x0149/*::]*/: 'PERCENTRANK',
+	/*::[*/0x014A/*::]*/: 'MODE',
+	/*::[*/0x014B/*::]*/: 'TRIMMEAN',
+	/*::[*/0x014C/*::]*/: 'TINV',
+	/*::[*/0x014E/*::]*/: 'MOVIE.COMMAND',
+	/*::[*/0x014F/*::]*/: 'GET.MOVIE',
+	/*::[*/0x0150/*::]*/: 'CONCATENATE',
+	/*::[*/0x0151/*::]*/: 'POWER',
+	/*::[*/0x0152/*::]*/: 'PIVOT.ADD.DATA',
+	/*::[*/0x0153/*::]*/: 'GET.PIVOT.TABLE',
+	/*::[*/0x0154/*::]*/: 'GET.PIVOT.FIELD',
+	/*::[*/0x0155/*::]*/: 'GET.PIVOT.ITEM',
+	/*::[*/0x0156/*::]*/: 'RADIANS',
+	/*::[*/0x0157/*::]*/: 'DEGREES',
+	/*::[*/0x0158/*::]*/: 'SUBTOTAL',
+	/*::[*/0x0159/*::]*/: 'SUMIF',
+	/*::[*/0x015A/*::]*/: 'COUNTIF',
+	/*::[*/0x015B/*::]*/: 'COUNTBLANK',
+	/*::[*/0x015C/*::]*/: 'SCENARIO.GET',
+	/*::[*/0x015D/*::]*/: 'OPTIONS.LISTS.GET',
+	/*::[*/0x015E/*::]*/: 'ISPMT',
+	/*::[*/0x015F/*::]*/: 'DATEDIF',
+	/*::[*/0x0160/*::]*/: 'DATESTRING',
+	/*::[*/0x0161/*::]*/: 'NUMBERSTRING',
+	/*::[*/0x0162/*::]*/: 'ROMAN',
+	/*::[*/0x0163/*::]*/: 'OPEN.DIALOG',
+	/*::[*/0x0164/*::]*/: 'SAVE.DIALOG',
+	/*::[*/0x0165/*::]*/: 'VIEW.GET',
+	/*::[*/0x0166/*::]*/: 'GETPIVOTDATA',
+	/*::[*/0x0167/*::]*/: 'HYPERLINK',
+	/*::[*/0x0168/*::]*/: 'PHONETIC',
+	/*::[*/0x0169/*::]*/: 'AVERAGEA',
+	/*::[*/0x016A/*::]*/: 'MAXA',
+	/*::[*/0x016B/*::]*/: 'MINA',
+	/*::[*/0x016C/*::]*/: 'STDEVPA',
+	/*::[*/0x016D/*::]*/: 'VARPA',
+	/*::[*/0x016E/*::]*/: 'STDEVA',
+	/*::[*/0x016F/*::]*/: 'VARA',
+	/*::[*/0x0170/*::]*/: 'BAHTTEXT',
+	/*::[*/0x0171/*::]*/: 'THAIDAYOFWEEK',
+	/*::[*/0x0172/*::]*/: 'THAIDIGIT',
+	/*::[*/0x0173/*::]*/: 'THAIMONTHOFYEAR',
+	/*::[*/0x0174/*::]*/: 'THAINUMSOUND',
+	/*::[*/0x0175/*::]*/: 'THAINUMSTRING',
+	/*::[*/0x0176/*::]*/: 'THAISTRINGLENGTH',
+	/*::[*/0x0177/*::]*/: 'ISTHAIDIGIT',
+	/*::[*/0x0178/*::]*/: 'ROUNDBAHTDOWN',
+	/*::[*/0x0179/*::]*/: 'ROUNDBAHTUP',
+	/*::[*/0x017A/*::]*/: 'THAIYEAR',
+	/*::[*/0x017B/*::]*/: 'RTD',
 
-0x017C: 'CUBEVALUE',
-0x017D: 'CUBEMEMBER',
-0x017E: 'CUBEMEMBERPROPERTY',
-0x017F: 'CUBERANKEDMEMBER',
-0x0180: 'HEX2BIN',
-0x0181: 'HEX2DEC',
-0x0182: 'HEX2OCT',
-0x0183: 'DEC2BIN',
-0x0184: 'DEC2HEX',
-0x0185: 'DEC2OCT',
-0x0186: 'OCT2BIN',
-0x0187: 'OCT2HEX',
-0x0188: 'OCT2DEC',
-0x0189: 'BIN2DEC',
-0x018A: 'BIN2OCT',
-0x018B: 'BIN2HEX',
-0x018C: 'IMSUB',
-0x018D: 'IMDIV',
-0x018E: 'IMPOWER',
-0x018F: 'IMABS',
-0x0190: 'IMSQRT',
-0x0191: 'IMLN',
-0x0192: 'IMLOG2',
-0x0193: 'IMLOG10',
-0x0194: 'IMSIN',
-0x0195: 'IMCOS',
-0x0196: 'IMEXP',
-0x0197: 'IMARGUMENT',
-0x0198: 'IMCONJUGATE',
-0x0199: 'IMAGINARY',
-0x019A: 'IMREAL',
-0x019B: 'COMPLEX',
-0x019C: 'IMSUM',
-0x019D: 'IMPRODUCT',
-0x019E: 'SERIESSUM',
-0x019F: 'FACTDOUBLE',
-0x01A0: 'SQRTPI',
-0x01A1: 'QUOTIENT',
-0x01A2: 'DELTA',
-0x01A3: 'GESTEP',
-0x01A4: 'ISEVEN',
-0x01A5: 'ISODD',
-0x01A6: 'MROUND',
-0x01A7: 'ERF',
-0x01A8: 'ERFC',
-0x01A9: 'BESSELJ',
-0x01AA: 'BESSELK',
-0x01AB: 'BESSELY',
-0x01AC: 'BESSELI',
-0x01AD: 'XIRR',
-0x01AE: 'XNPV',
-0x01AF: 'PRICEMAT',
-0x01B0: 'YIELDMAT',
-0x01B1: 'INTRATE',
-0x01B2: 'RECEIVED',
-0x01B3: 'DISC',
-0x01B4: 'PRICEDISC',
-0x01B5: 'YIELDDISC',
-0x01B6: 'TBILLEQ',
-0x01B7: 'TBILLPRICE',
-0x01B8: 'TBILLYIELD',
-0x01B9: 'PRICE',
-0x01BA: 'YIELD',
-0x01BB: 'DOLLARDE',
-0x01BC: 'DOLLARFR',
-0x01BD: 'NOMINAL',
-0x01BE: 'EFFECT',
-0x01BF: 'CUMPRINC',
-0x01C0: 'CUMIPMT',
-0x01C1: 'EDATE',
-0x01C2: 'EOMONTH',
-0x01C3: 'YEARFRAC',
-0x01C4: 'COUPDAYBS',
-0x01C5: 'COUPDAYS',
-0x01C6: 'COUPDAYSNC',
-0x01C7: 'COUPNCD',
-0x01C8: 'COUPNUM',
-0x01C9: 'COUPPCD',
-0x01CA: 'DURATION',
-0x01CB: 'MDURATION',
-0x01CC: 'ODDLPRICE',
-0x01CD: 'ODDLYIELD',
-0x01CE: 'ODDFPRICE',
-0x01CF: 'ODDFYIELD',
-0x01D0: 'RANDBETWEEN',
-0x01D1: 'WEEKNUM',
-0x01D2: 'AMORDEGRC',
-0x01D3: 'AMORLINC',
-0x01D4: 'CONVERT',
-0x02D4: 'SHEETJS',
-0x01D5: 'ACCRINT',
-0x01D6: 'ACCRINTM',
-0x01D7: 'WORKDAY',
-0x01D8: 'NETWORKDAYS',
-0x01D9: 'GCD',
-0x01DA: 'MULTINOMIAL',
-0x01DB: 'LCM',
-0x01DC: 'FVSCHEDULE',
-0x01DD: 'CUBEKPIMEMBER',
-0x01DE: 'CUBESET',
-0x01DF: 'CUBESETCOUNT',
-0x01E0: 'IFERROR',
-0x01E1: 'COUNTIFS',
-0x01E2: 'SUMIFS',
-0x01E3: 'AVERAGEIF',
-0x01E4: 'AVERAGEIFS'
+	/*::[*/0x017C/*::]*/: 'CUBEVALUE',
+	/*::[*/0x017D/*::]*/: 'CUBEMEMBER',
+	/*::[*/0x017E/*::]*/: 'CUBEMEMBERPROPERTY',
+	/*::[*/0x017F/*::]*/: 'CUBERANKEDMEMBER',
+	/*::[*/0x0180/*::]*/: 'HEX2BIN',
+	/*::[*/0x0181/*::]*/: 'HEX2DEC',
+	/*::[*/0x0182/*::]*/: 'HEX2OCT',
+	/*::[*/0x0183/*::]*/: 'DEC2BIN',
+	/*::[*/0x0184/*::]*/: 'DEC2HEX',
+	/*::[*/0x0185/*::]*/: 'DEC2OCT',
+	/*::[*/0x0186/*::]*/: 'OCT2BIN',
+	/*::[*/0x0187/*::]*/: 'OCT2HEX',
+	/*::[*/0x0188/*::]*/: 'OCT2DEC',
+	/*::[*/0x0189/*::]*/: 'BIN2DEC',
+	/*::[*/0x018A/*::]*/: 'BIN2OCT',
+	/*::[*/0x018B/*::]*/: 'BIN2HEX',
+	/*::[*/0x018C/*::]*/: 'IMSUB',
+	/*::[*/0x018D/*::]*/: 'IMDIV',
+	/*::[*/0x018E/*::]*/: 'IMPOWER',
+	/*::[*/0x018F/*::]*/: 'IMABS',
+	/*::[*/0x0190/*::]*/: 'IMSQRT',
+	/*::[*/0x0191/*::]*/: 'IMLN',
+	/*::[*/0x0192/*::]*/: 'IMLOG2',
+	/*::[*/0x0193/*::]*/: 'IMLOG10',
+	/*::[*/0x0194/*::]*/: 'IMSIN',
+	/*::[*/0x0195/*::]*/: 'IMCOS',
+	/*::[*/0x0196/*::]*/: 'IMEXP',
+	/*::[*/0x0197/*::]*/: 'IMARGUMENT',
+	/*::[*/0x0198/*::]*/: 'IMCONJUGATE',
+	/*::[*/0x0199/*::]*/: 'IMAGINARY',
+	/*::[*/0x019A/*::]*/: 'IMREAL',
+	/*::[*/0x019B/*::]*/: 'COMPLEX',
+	/*::[*/0x019C/*::]*/: 'IMSUM',
+	/*::[*/0x019D/*::]*/: 'IMPRODUCT',
+	/*::[*/0x019E/*::]*/: 'SERIESSUM',
+	/*::[*/0x019F/*::]*/: 'FACTDOUBLE',
+	/*::[*/0x01A0/*::]*/: 'SQRTPI',
+	/*::[*/0x01A1/*::]*/: 'QUOTIENT',
+	/*::[*/0x01A2/*::]*/: 'DELTA',
+	/*::[*/0x01A3/*::]*/: 'GESTEP',
+	/*::[*/0x01A4/*::]*/: 'ISEVEN',
+	/*::[*/0x01A5/*::]*/: 'ISODD',
+	/*::[*/0x01A6/*::]*/: 'MROUND',
+	/*::[*/0x01A7/*::]*/: 'ERF',
+	/*::[*/0x01A8/*::]*/: 'ERFC',
+	/*::[*/0x01A9/*::]*/: 'BESSELJ',
+	/*::[*/0x01AA/*::]*/: 'BESSELK',
+	/*::[*/0x01AB/*::]*/: 'BESSELY',
+	/*::[*/0x01AC/*::]*/: 'BESSELI',
+	/*::[*/0x01AD/*::]*/: 'XIRR',
+	/*::[*/0x01AE/*::]*/: 'XNPV',
+	/*::[*/0x01AF/*::]*/: 'PRICEMAT',
+	/*::[*/0x01B0/*::]*/: 'YIELDMAT',
+	/*::[*/0x01B1/*::]*/: 'INTRATE',
+	/*::[*/0x01B2/*::]*/: 'RECEIVED',
+	/*::[*/0x01B3/*::]*/: 'DISC',
+	/*::[*/0x01B4/*::]*/: 'PRICEDISC',
+	/*::[*/0x01B5/*::]*/: 'YIELDDISC',
+	/*::[*/0x01B6/*::]*/: 'TBILLEQ',
+	/*::[*/0x01B7/*::]*/: 'TBILLPRICE',
+	/*::[*/0x01B8/*::]*/: 'TBILLYIELD',
+	/*::[*/0x01B9/*::]*/: 'PRICE',
+	/*::[*/0x01BA/*::]*/: 'YIELD',
+	/*::[*/0x01BB/*::]*/: 'DOLLARDE',
+	/*::[*/0x01BC/*::]*/: 'DOLLARFR',
+	/*::[*/0x01BD/*::]*/: 'NOMINAL',
+	/*::[*/0x01BE/*::]*/: 'EFFECT',
+	/*::[*/0x01BF/*::]*/: 'CUMPRINC',
+	/*::[*/0x01C0/*::]*/: 'CUMIPMT',
+	/*::[*/0x01C1/*::]*/: 'EDATE',
+	/*::[*/0x01C2/*::]*/: 'EOMONTH',
+	/*::[*/0x01C3/*::]*/: 'YEARFRAC',
+	/*::[*/0x01C4/*::]*/: 'COUPDAYBS',
+	/*::[*/0x01C5/*::]*/: 'COUPDAYS',
+	/*::[*/0x01C6/*::]*/: 'COUPDAYSNC',
+	/*::[*/0x01C7/*::]*/: 'COUPNCD',
+	/*::[*/0x01C8/*::]*/: 'COUPNUM',
+	/*::[*/0x01C9/*::]*/: 'COUPPCD',
+	/*::[*/0x01CA/*::]*/: 'DURATION',
+	/*::[*/0x01CB/*::]*/: 'MDURATION',
+	/*::[*/0x01CC/*::]*/: 'ODDLPRICE',
+	/*::[*/0x01CD/*::]*/: 'ODDLYIELD',
+	/*::[*/0x01CE/*::]*/: 'ODDFPRICE',
+	/*::[*/0x01CF/*::]*/: 'ODDFYIELD',
+	/*::[*/0x01D0/*::]*/: 'RANDBETWEEN',
+	/*::[*/0x01D1/*::]*/: 'WEEKNUM',
+	/*::[*/0x01D2/*::]*/: 'AMORDEGRC',
+	/*::[*/0x01D3/*::]*/: 'AMORLINC',
+	/*::[*/0x01D4/*::]*/: 'CONVERT',
+	/*::[*/0x02D4/*::]*/: 'SHEETJS',
+	/*::[*/0x01D5/*::]*/: 'ACCRINT',
+	/*::[*/0x01D6/*::]*/: 'ACCRINTM',
+	/*::[*/0x01D7/*::]*/: 'WORKDAY',
+	/*::[*/0x01D8/*::]*/: 'NETWORKDAYS',
+	/*::[*/0x01D9/*::]*/: 'GCD',
+	/*::[*/0x01DA/*::]*/: 'MULTINOMIAL',
+	/*::[*/0x01DB/*::]*/: 'LCM',
+	/*::[*/0x01DC/*::]*/: 'FVSCHEDULE',
+	/*::[*/0x01DD/*::]*/: 'CUBEKPIMEMBER',
+	/*::[*/0x01DE/*::]*/: 'CUBESET',
+	/*::[*/0x01DF/*::]*/: 'CUBESETCOUNT',
+	/*::[*/0x01E0/*::]*/: 'IFERROR',
+	/*::[*/0x01E1/*::]*/: 'COUNTIFS',
+	/*::[*/0x01E2/*::]*/: 'SUMIFS',
+	/*::[*/0x01E3/*::]*/: 'AVERAGEIF',
+	/*::[*/0x01E4/*::]*/: 'AVERAGEIFS'
 };
 var FtabArgc = {
-0x0002: 1, /* ISNA */
-0x0003: 1, /* ISERROR */
-0x000F: 1, /* SIN */
-0x0010: 1, /* COS */
-0x0011: 1, /* TAN */
-0x0012: 1, /* ATAN */
-0x0013: 0, /* PI */
-0x0014: 1, /* SQRT */
-0x0015: 1, /* EXP */
-0x0016: 1, /* LN */
-0x0017: 1, /* LOG10 */
-0x0018: 1, /* ABS */
-0x0019: 1, /* INT */
-0x001A: 1, /* SIGN */
-0x001B: 2, /* ROUND */
-0x001E: 2, /* REPT */
-0x001F: 3, /* MID */
-0x0020: 1, /* LEN */
-0x0021: 1, /* VALUE */
-0x0026: 1, /* NOT */
-0x0027: 2, /* MOD */
-0x0028: 3, /* DCOUNT */
-0x0029: 3, /* DSUM */
-0x002A: 3, /* DAVERAGE */
-0x002B: 3, /* DMIN */
-0x002C: 3, /* DMAX */
-0x002D: 3, /* DSTDEV */
-0x002F: 3, /* DVAR */
-0x0030: 2, /* TEXT */
-0x0035: 1, /* GOTO */
-0x003D: 3, /* MIRR */
-0x0041: 3, /* DATE */
-0x0042: 3, /* TIME */
-0x0043: 1, /* DAY */
-0x0044: 1, /* MONTH */
-0x0045: 1, /* YEAR */
-0x0046: 1, /* WEEKDAY */
-0x0047: 1, /* HOUR */
-0x0048: 1, /* MINUTE */
-0x0049: 1, /* SECOND */
-0x004B: 1, /* AREAS */
-0x004C: 1, /* ROWS */
-0x004D: 1, /* COLUMNS */
-0x004F: 2, /* ABSREF */
-0x0050: 2, /* RELREF */
-0x0053: 1, /* TRANSPOSE */
-0x0055: 0, /* STEP */
-0x0056: 1, /* TYPE */
-0x005A: 1, /* DEREF */
-0x0061: 2, /* ATAN2 */
-0x0062: 1, /* ASIN */
-0x0063: 1, /* ACOS */
-0x0065: 3, /* HLOOKUP */
-0x0066: 3, /* VLOOKUP */
-0x0069: 1, /* ISREF */
-0x006F: 1, /* CHAR */
-0x0070: 1, /* LOWER */
-0x0071: 1, /* UPPER */
-0x0072: 1, /* PROPER */
-0x0075: 2, /* EXACT */
-0x0076: 1, /* TRIM */
-0x0077: 4, /* REPLACE */
-0x0079: 1, /* CODE */
-0x007E: 1, /* ISERR */
-0x007F: 1, /* ISTEXT */
-0x0080: 1, /* ISNUMBER */
-0x0081: 1, /* ISBLANK */
-0x0082: 1, /* T */
-0x0083: 1, /* N */
-0x0085: 1, /* FCLOSE */
-0x0086: 1, /* FSIZE */
-0x0087: 1, /* FREADLN */
-0x0088: 2, /* FREAD */
-0x0089: 2, /* FWRITELN */
-0x008A: 2, /* FWRITE */
-0x008C: 1, /* DATEVALUE */
-0x008D: 1, /* TIMEVALUE */
-0x008E: 3, /* SLN */
-0x008F: 4, /* SYD */
-0x0090: 4, /* DDB */
-0x00A2: 1, /* CLEAN */
-0x00A3: 1, /* MDETERM */
-0x00A4: 1, /* MINVERSE */
-0x00A5: 2, /* MMULT */
-0x00AC: 1, /* WHILE */
-0x00AF: 2, /* INITIATE */
-0x00B0: 2, /* REQUEST */
-0x00B1: 3, /* POKE */
-0x00B2: 2, /* EXECUTE */
-0x00B3: 1, /* TERMINATE */
-0x00B8: 1, /* FACT */
-0x00BD: 3, /* DPRODUCT */
-0x00BE: 1, /* ISNONTEXT */
-0x00C3: 3, /* DSTDEVP */
-0x00C4: 3, /* DVARP */
-0x00C5: 1, /* TRUNC */
-0x00C6: 1, /* ISLOGICAL */
-0x00C7: 3, /* DCOUNTA */
-0x00C9: 1, /* UNREGISTER */
-0x00CF: 4, /* REPLACEB */
-0x00D2: 3, /* MIDB */
-0x00D3: 1, /* LENB */
-0x00D4: 2, /* ROUNDUP */
-0x00D5: 2, /* ROUNDDOWN */
-0x00D6: 1, /* ASC */
-0x00D7: 1, /* DBCS */
-0x00E5: 1, /* SINH */
-0x00E6: 1, /* COSH */
-0x00E7: 1, /* TANH */
-0x00E8: 1, /* ASINH */
-0x00E9: 1, /* ACOSH */
-0x00EA: 1, /* ATANH */
-0x00EB: 3, /* DGET */
-0x00F4: 1, /* INFO */
-0x00F7: 4, /* DB */
-0x00FC: 2, /* FREQUENCY */
-0x0101: 1, /* EVALUATE */
-0x0105: 1, /* ERROR.TYPE */
-0x010F: 1, /* GAMMALN */
-0x0111: 4, /* BINOMDIST */
-0x0112: 2, /* CHIDIST */
-0x0113: 2, /* CHIINV */
-0x0114: 2, /* COMBIN */
-0x0115: 3, /* CONFIDENCE */
-0x0116: 3, /* CRITBINOM */
-0x0117: 1, /* EVEN */
-0x0118: 3, /* EXPONDIST */
-0x0119: 3, /* FDIST */
-0x011A: 3, /* FINV */
-0x011B: 1, /* FISHER */
-0x011C: 1, /* FISHERINV */
-0x011D: 2, /* FLOOR */
-0x011E: 4, /* GAMMADIST */
-0x011F: 3, /* GAMMAINV */
-0x0120: 2, /* CEILING */
-0x0121: 4, /* HYPGEOMDIST */
-0x0122: 3, /* LOGNORMDIST */
-0x0123: 3, /* LOGINV */
-0x0124: 3, /* NEGBINOMDIST */
-0x0125: 4, /* NORMDIST */
-0x0126: 1, /* NORMSDIST */
-0x0127: 3, /* NORMINV */
-0x0128: 1, /* NORMSINV */
-0x0129: 3, /* STANDARDIZE */
-0x012A: 1, /* ODD */
-0x012B: 2, /* PERMUT */
-0x012C: 3, /* POISSON */
-0x012D: 3, /* TDIST */
-0x012E: 4, /* WEIBULL */
-0x012F: 2, /* SUMXMY2 */
-0x0130: 2, /* SUMX2MY2 */
-0x0131: 2, /* SUMX2PY2 */
-0x0132: 2, /* CHITEST */
-0x0133: 2, /* CORREL */
-0x0134: 2, /* COVAR */
-0x0135: 3, /* FORECAST */
-0x0136: 2, /* FTEST */
-0x0137: 2, /* INTERCEPT */
-0x0138: 2, /* PEARSON */
-0x0139: 2, /* RSQ */
-0x013A: 2, /* STEYX */
-0x013B: 2, /* SLOPE */
-0x013C: 4, /* TTEST */
-0x0145: 2, /* LARGE */
-0x0146: 2, /* SMALL */
-0x0147: 2, /* QUARTILE */
-0x0148: 2, /* PERCENTILE */
-0x014B: 2, /* TRIMMEAN */
-0x014C: 2, /* TINV */
-0x0151: 2, /* POWER */
-0x0156: 1, /* RADIANS */
-0x0157: 1, /* DEGREES */
-0x015A: 2, /* COUNTIF */
-0x015B: 1, /* COUNTBLANK */
-0x015E: 4, /* ISPMT */
-0x015F: 3, /* DATEDIF */
-0x0160: 1, /* DATESTRING */
-0x0161: 2, /* NUMBERSTRING */
-0x0168: 1, /* PHONETIC */
-0x0170: 1, /* BAHTTEXT */
-0x0171: 1, /* THAIDAYOFWEEK */
-0x0172: 1, /* THAIDIGIT */
-0x0173: 1, /* THAIMONTHOFYEAR */
-0x0174: 1, /* THAINUMSOUND */
-0x0175: 1, /* THAINUMSTRING */
-0x0176: 1, /* THAISTRINGLENGTH */
-0x0177: 1, /* ISTHAIDIGIT */
-0x0178: 1, /* ROUNDBAHTDOWN */
-0x0179: 1, /* ROUNDBAHTUP */
-0x017A: 1, /* THAIYEAR */
-0x017E: 3, /* CUBEMEMBERPROPERTY */
-0x0181: 1, /* HEX2DEC */
-0x0188: 1, /* OCT2DEC */
-0x0189: 1, /* BIN2DEC */
-0x018C: 2, /* IMSUB */
-0x018D: 2, /* IMDIV */
-0x018E: 2, /* IMPOWER */
-0x018F: 1, /* IMABS */
-0x0190: 1, /* IMSQRT */
-0x0191: 1, /* IMLN */
-0x0192: 1, /* IMLOG2 */
-0x0193: 1, /* IMLOG10 */
-0x0194: 1, /* IMSIN */
-0x0195: 1, /* IMCOS */
-0x0196: 1, /* IMEXP */
-0x0197: 1, /* IMARGUMENT */
-0x0198: 1, /* IMCONJUGATE */
-0x0199: 1, /* IMAGINARY */
-0x019A: 1, /* IMREAL */
-0x019E: 4, /* SERIESSUM */
-0x019F: 1, /* FACTDOUBLE */
-0x01A0: 1, /* SQRTPI */
-0x01A1: 2, /* QUOTIENT */
-0x01A4: 1, /* ISEVEN */
-0x01A5: 1, /* ISODD */
-0x01A6: 2, /* MROUND */
-0x01A8: 1, /* ERFC */
-0x01A9: 2, /* BESSELJ */
-0x01AA: 2, /* BESSELK */
-0x01AB: 2, /* BESSELY */
-0x01AC: 2, /* BESSELI */
-0x01AE: 3, /* XNPV */
-0x01B6: 3, /* TBILLEQ */
-0x01B7: 3, /* TBILLPRICE */
-0x01B8: 3, /* TBILLYIELD */
-0x01BB: 2, /* DOLLARDE */
-0x01BC: 2, /* DOLLARFR */
-0x01BD: 2, /* NOMINAL */
-0x01BE: 2, /* EFFECT */
-0x01BF: 6, /* CUMPRINC */
-0x01C0: 6, /* CUMIPMT */
-0x01C1: 2, /* EDATE */
-0x01C2: 2, /* EOMONTH */
-0x01D0: 2, /* RANDBETWEEN */
-0x01D4: 3, /* CONVERT */
-0x01DC: 2, /* FVSCHEDULE */
-0x01DF: 1, /* CUBESETCOUNT */
-0x01E0: 2, /* IFERROR */
-0xFFFF: 0
+	/*::[*/0x0002/*::]*/: 1, /* ISNA */
+	/*::[*/0x0003/*::]*/: 1, /* ISERROR */
+	/*::[*/0x000F/*::]*/: 1, /* SIN */
+	/*::[*/0x0010/*::]*/: 1, /* COS */
+	/*::[*/0x0011/*::]*/: 1, /* TAN */
+	/*::[*/0x0012/*::]*/: 1, /* ATAN */
+	/*::[*/0x0013/*::]*/: 0, /* PI */
+	/*::[*/0x0014/*::]*/: 1, /* SQRT */
+	/*::[*/0x0015/*::]*/: 1, /* EXP */
+	/*::[*/0x0016/*::]*/: 1, /* LN */
+	/*::[*/0x0017/*::]*/: 1, /* LOG10 */
+	/*::[*/0x0018/*::]*/: 1, /* ABS */
+	/*::[*/0x0019/*::]*/: 1, /* INT */
+	/*::[*/0x001A/*::]*/: 1, /* SIGN */
+	/*::[*/0x001B/*::]*/: 2, /* ROUND */
+	/*::[*/0x001E/*::]*/: 2, /* REPT */
+	/*::[*/0x001F/*::]*/: 3, /* MID */
+	/*::[*/0x0020/*::]*/: 1, /* LEN */
+	/*::[*/0x0021/*::]*/: 1, /* VALUE */
+	/*::[*/0x0026/*::]*/: 1, /* NOT */
+	/*::[*/0x0027/*::]*/: 2, /* MOD */
+	/*::[*/0x0028/*::]*/: 3, /* DCOUNT */
+	/*::[*/0x0029/*::]*/: 3, /* DSUM */
+	/*::[*/0x002A/*::]*/: 3, /* DAVERAGE */
+	/*::[*/0x002B/*::]*/: 3, /* DMIN */
+	/*::[*/0x002C/*::]*/: 3, /* DMAX */
+	/*::[*/0x002D/*::]*/: 3, /* DSTDEV */
+	/*::[*/0x002F/*::]*/: 3, /* DVAR */
+	/*::[*/0x0030/*::]*/: 2, /* TEXT */
+	/*::[*/0x0035/*::]*/: 1, /* GOTO */
+	/*::[*/0x003D/*::]*/: 3, /* MIRR */
+	/*::[*/0x0041/*::]*/: 3, /* DATE */
+	/*::[*/0x0042/*::]*/: 3, /* TIME */
+	/*::[*/0x0043/*::]*/: 1, /* DAY */
+	/*::[*/0x0044/*::]*/: 1, /* MONTH */
+	/*::[*/0x0045/*::]*/: 1, /* YEAR */
+	/*::[*/0x0046/*::]*/: 1, /* WEEKDAY */
+	/*::[*/0x0047/*::]*/: 1, /* HOUR */
+	/*::[*/0x0048/*::]*/: 1, /* MINUTE */
+	/*::[*/0x0049/*::]*/: 1, /* SECOND */
+	/*::[*/0x004B/*::]*/: 1, /* AREAS */
+	/*::[*/0x004C/*::]*/: 1, /* ROWS */
+	/*::[*/0x004D/*::]*/: 1, /* COLUMNS */
+	/*::[*/0x004F/*::]*/: 2, /* ABSREF */
+	/*::[*/0x0050/*::]*/: 2, /* RELREF */
+	/*::[*/0x0053/*::]*/: 1, /* TRANSPOSE */
+	/*::[*/0x0055/*::]*/: 0, /* STEP */
+	/*::[*/0x0056/*::]*/: 1, /* TYPE */
+	/*::[*/0x005A/*::]*/: 1, /* DEREF */
+	/*::[*/0x0061/*::]*/: 2, /* ATAN2 */
+	/*::[*/0x0062/*::]*/: 1, /* ASIN */
+	/*::[*/0x0063/*::]*/: 1, /* ACOS */
+	/*::[*/0x0065/*::]*/: 3, /* HLOOKUP */
+	/*::[*/0x0066/*::]*/: 3, /* VLOOKUP */
+	/*::[*/0x0069/*::]*/: 1, /* ISREF */
+	/*::[*/0x006F/*::]*/: 1, /* CHAR */
+	/*::[*/0x0070/*::]*/: 1, /* LOWER */
+	/*::[*/0x0071/*::]*/: 1, /* UPPER */
+	/*::[*/0x0072/*::]*/: 1, /* PROPER */
+	/*::[*/0x0075/*::]*/: 2, /* EXACT */
+	/*::[*/0x0076/*::]*/: 1, /* TRIM */
+	/*::[*/0x0077/*::]*/: 4, /* REPLACE */
+	/*::[*/0x0079/*::]*/: 1, /* CODE */
+	/*::[*/0x007E/*::]*/: 1, /* ISERR */
+	/*::[*/0x007F/*::]*/: 1, /* ISTEXT */
+	/*::[*/0x0080/*::]*/: 1, /* ISNUMBER */
+	/*::[*/0x0081/*::]*/: 1, /* ISBLANK */
+	/*::[*/0x0082/*::]*/: 1, /* T */
+	/*::[*/0x0083/*::]*/: 1, /* N */
+	/*::[*/0x0085/*::]*/: 1, /* FCLOSE */
+	/*::[*/0x0086/*::]*/: 1, /* FSIZE */
+	/*::[*/0x0087/*::]*/: 1, /* FREADLN */
+	/*::[*/0x0088/*::]*/: 2, /* FREAD */
+	/*::[*/0x0089/*::]*/: 2, /* FWRITELN */
+	/*::[*/0x008A/*::]*/: 2, /* FWRITE */
+	/*::[*/0x008C/*::]*/: 1, /* DATEVALUE */
+	/*::[*/0x008D/*::]*/: 1, /* TIMEVALUE */
+	/*::[*/0x008E/*::]*/: 3, /* SLN */
+	/*::[*/0x008F/*::]*/: 4, /* SYD */
+	/*::[*/0x0090/*::]*/: 4, /* DDB */
+	/*::[*/0x00A2/*::]*/: 1, /* CLEAN */
+	/*::[*/0x00A3/*::]*/: 1, /* MDETERM */
+	/*::[*/0x00A4/*::]*/: 1, /* MINVERSE */
+	/*::[*/0x00A5/*::]*/: 2, /* MMULT */
+	/*::[*/0x00AC/*::]*/: 1, /* WHILE */
+	/*::[*/0x00AF/*::]*/: 2, /* INITIATE */
+	/*::[*/0x00B0/*::]*/: 2, /* REQUEST */
+	/*::[*/0x00B1/*::]*/: 3, /* POKE */
+	/*::[*/0x00B2/*::]*/: 2, /* EXECUTE */
+	/*::[*/0x00B3/*::]*/: 1, /* TERMINATE */
+	/*::[*/0x00B8/*::]*/: 1, /* FACT */
+	/*::[*/0x00BD/*::]*/: 3, /* DPRODUCT */
+	/*::[*/0x00BE/*::]*/: 1, /* ISNONTEXT */
+	/*::[*/0x00C3/*::]*/: 3, /* DSTDEVP */
+	/*::[*/0x00C4/*::]*/: 3, /* DVARP */
+	/*::[*/0x00C5/*::]*/: 1, /* TRUNC */
+	/*::[*/0x00C6/*::]*/: 1, /* ISLOGICAL */
+	/*::[*/0x00C7/*::]*/: 3, /* DCOUNTA */
+	/*::[*/0x00C9/*::]*/: 1, /* UNREGISTER */
+	/*::[*/0x00CF/*::]*/: 4, /* REPLACEB */
+	/*::[*/0x00D2/*::]*/: 3, /* MIDB */
+	/*::[*/0x00D3/*::]*/: 1, /* LENB */
+	/*::[*/0x00D4/*::]*/: 2, /* ROUNDUP */
+	/*::[*/0x00D5/*::]*/: 2, /* ROUNDDOWN */
+	/*::[*/0x00D6/*::]*/: 1, /* ASC */
+	/*::[*/0x00D7/*::]*/: 1, /* DBCS */
+	/*::[*/0x00E5/*::]*/: 1, /* SINH */
+	/*::[*/0x00E6/*::]*/: 1, /* COSH */
+	/*::[*/0x00E7/*::]*/: 1, /* TANH */
+	/*::[*/0x00E8/*::]*/: 1, /* ASINH */
+	/*::[*/0x00E9/*::]*/: 1, /* ACOSH */
+	/*::[*/0x00EA/*::]*/: 1, /* ATANH */
+	/*::[*/0x00EB/*::]*/: 3, /* DGET */
+	/*::[*/0x00F4/*::]*/: 1, /* INFO */
+	/*::[*/0x00F7/*::]*/: 4, /* DB */
+	/*::[*/0x00FC/*::]*/: 2, /* FREQUENCY */
+	/*::[*/0x0101/*::]*/: 1, /* EVALUATE */
+	/*::[*/0x0105/*::]*/: 1, /* ERROR.TYPE */
+	/*::[*/0x010F/*::]*/: 1, /* GAMMALN */
+	/*::[*/0x0111/*::]*/: 4, /* BINOMDIST */
+	/*::[*/0x0112/*::]*/: 2, /* CHIDIST */
+	/*::[*/0x0113/*::]*/: 2, /* CHIINV */
+	/*::[*/0x0114/*::]*/: 2, /* COMBIN */
+	/*::[*/0x0115/*::]*/: 3, /* CONFIDENCE */
+	/*::[*/0x0116/*::]*/: 3, /* CRITBINOM */
+	/*::[*/0x0117/*::]*/: 1, /* EVEN */
+	/*::[*/0x0118/*::]*/: 3, /* EXPONDIST */
+	/*::[*/0x0119/*::]*/: 3, /* FDIST */
+	/*::[*/0x011A/*::]*/: 3, /* FINV */
+	/*::[*/0x011B/*::]*/: 1, /* FISHER */
+	/*::[*/0x011C/*::]*/: 1, /* FISHERINV */
+	/*::[*/0x011D/*::]*/: 2, /* FLOOR */
+	/*::[*/0x011E/*::]*/: 4, /* GAMMADIST */
+	/*::[*/0x011F/*::]*/: 3, /* GAMMAINV */
+	/*::[*/0x0120/*::]*/: 2, /* CEILING */
+	/*::[*/0x0121/*::]*/: 4, /* HYPGEOMDIST */
+	/*::[*/0x0122/*::]*/: 3, /* LOGNORMDIST */
+	/*::[*/0x0123/*::]*/: 3, /* LOGINV */
+	/*::[*/0x0124/*::]*/: 3, /* NEGBINOMDIST */
+	/*::[*/0x0125/*::]*/: 4, /* NORMDIST */
+	/*::[*/0x0126/*::]*/: 1, /* NORMSDIST */
+	/*::[*/0x0127/*::]*/: 3, /* NORMINV */
+	/*::[*/0x0128/*::]*/: 1, /* NORMSINV */
+	/*::[*/0x0129/*::]*/: 3, /* STANDARDIZE */
+	/*::[*/0x012A/*::]*/: 1, /* ODD */
+	/*::[*/0x012B/*::]*/: 2, /* PERMUT */
+	/*::[*/0x012C/*::]*/: 3, /* POISSON */
+	/*::[*/0x012D/*::]*/: 3, /* TDIST */
+	/*::[*/0x012E/*::]*/: 4, /* WEIBULL */
+	/*::[*/0x012F/*::]*/: 2, /* SUMXMY2 */
+	/*::[*/0x0130/*::]*/: 2, /* SUMX2MY2 */
+	/*::[*/0x0131/*::]*/: 2, /* SUMX2PY2 */
+	/*::[*/0x0132/*::]*/: 2, /* CHITEST */
+	/*::[*/0x0133/*::]*/: 2, /* CORREL */
+	/*::[*/0x0134/*::]*/: 2, /* COVAR */
+	/*::[*/0x0135/*::]*/: 3, /* FORECAST */
+	/*::[*/0x0136/*::]*/: 2, /* FTEST */
+	/*::[*/0x0137/*::]*/: 2, /* INTERCEPT */
+	/*::[*/0x0138/*::]*/: 2, /* PEARSON */
+	/*::[*/0x0139/*::]*/: 2, /* RSQ */
+	/*::[*/0x013A/*::]*/: 2, /* STEYX */
+	/*::[*/0x013B/*::]*/: 2, /* SLOPE */
+	/*::[*/0x013C/*::]*/: 4, /* TTEST */
+	/*::[*/0x0145/*::]*/: 2, /* LARGE */
+	/*::[*/0x0146/*::]*/: 2, /* SMALL */
+	/*::[*/0x0147/*::]*/: 2, /* QUARTILE */
+	/*::[*/0x0148/*::]*/: 2, /* PERCENTILE */
+	/*::[*/0x014B/*::]*/: 2, /* TRIMMEAN */
+	/*::[*/0x014C/*::]*/: 2, /* TINV */
+	/*::[*/0x0151/*::]*/: 2, /* POWER */
+	/*::[*/0x0156/*::]*/: 1, /* RADIANS */
+	/*::[*/0x0157/*::]*/: 1, /* DEGREES */
+	/*::[*/0x015A/*::]*/: 2, /* COUNTIF */
+	/*::[*/0x015B/*::]*/: 1, /* COUNTBLANK */
+	/*::[*/0x015E/*::]*/: 4, /* ISPMT */
+	/*::[*/0x015F/*::]*/: 3, /* DATEDIF */
+	/*::[*/0x0160/*::]*/: 1, /* DATESTRING */
+	/*::[*/0x0161/*::]*/: 2, /* NUMBERSTRING */
+	/*::[*/0x0168/*::]*/: 1, /* PHONETIC */
+	/*::[*/0x0170/*::]*/: 1, /* BAHTTEXT */
+	/*::[*/0x0171/*::]*/: 1, /* THAIDAYOFWEEK */
+	/*::[*/0x0172/*::]*/: 1, /* THAIDIGIT */
+	/*::[*/0x0173/*::]*/: 1, /* THAIMONTHOFYEAR */
+	/*::[*/0x0174/*::]*/: 1, /* THAINUMSOUND */
+	/*::[*/0x0175/*::]*/: 1, /* THAINUMSTRING */
+	/*::[*/0x0176/*::]*/: 1, /* THAISTRINGLENGTH */
+	/*::[*/0x0177/*::]*/: 1, /* ISTHAIDIGIT */
+	/*::[*/0x0178/*::]*/: 1, /* ROUNDBAHTDOWN */
+	/*::[*/0x0179/*::]*/: 1, /* ROUNDBAHTUP */
+	/*::[*/0x017A/*::]*/: 1, /* THAIYEAR */
+	/*::[*/0x017E/*::]*/: 3, /* CUBEMEMBERPROPERTY */
+	/*::[*/0x0181/*::]*/: 1, /* HEX2DEC */
+	/*::[*/0x0188/*::]*/: 1, /* OCT2DEC */
+	/*::[*/0x0189/*::]*/: 1, /* BIN2DEC */
+	/*::[*/0x018C/*::]*/: 2, /* IMSUB */
+	/*::[*/0x018D/*::]*/: 2, /* IMDIV */
+	/*::[*/0x018E/*::]*/: 2, /* IMPOWER */
+	/*::[*/0x018F/*::]*/: 1, /* IMABS */
+	/*::[*/0x0190/*::]*/: 1, /* IMSQRT */
+	/*::[*/0x0191/*::]*/: 1, /* IMLN */
+	/*::[*/0x0192/*::]*/: 1, /* IMLOG2 */
+	/*::[*/0x0193/*::]*/: 1, /* IMLOG10 */
+	/*::[*/0x0194/*::]*/: 1, /* IMSIN */
+	/*::[*/0x0195/*::]*/: 1, /* IMCOS */
+	/*::[*/0x0196/*::]*/: 1, /* IMEXP */
+	/*::[*/0x0197/*::]*/: 1, /* IMARGUMENT */
+	/*::[*/0x0198/*::]*/: 1, /* IMCONJUGATE */
+	/*::[*/0x0199/*::]*/: 1, /* IMAGINARY */
+	/*::[*/0x019A/*::]*/: 1, /* IMREAL */
+	/*::[*/0x019E/*::]*/: 4, /* SERIESSUM */
+	/*::[*/0x019F/*::]*/: 1, /* FACTDOUBLE */
+	/*::[*/0x01A0/*::]*/: 1, /* SQRTPI */
+	/*::[*/0x01A1/*::]*/: 2, /* QUOTIENT */
+	/*::[*/0x01A4/*::]*/: 1, /* ISEVEN */
+	/*::[*/0x01A5/*::]*/: 1, /* ISODD */
+	/*::[*/0x01A6/*::]*/: 2, /* MROUND */
+	/*::[*/0x01A8/*::]*/: 1, /* ERFC */
+	/*::[*/0x01A9/*::]*/: 2, /* BESSELJ */
+	/*::[*/0x01AA/*::]*/: 2, /* BESSELK */
+	/*::[*/0x01AB/*::]*/: 2, /* BESSELY */
+	/*::[*/0x01AC/*::]*/: 2, /* BESSELI */
+	/*::[*/0x01AE/*::]*/: 3, /* XNPV */
+	/*::[*/0x01B6/*::]*/: 3, /* TBILLEQ */
+	/*::[*/0x01B7/*::]*/: 3, /* TBILLPRICE */
+	/*::[*/0x01B8/*::]*/: 3, /* TBILLYIELD */
+	/*::[*/0x01BB/*::]*/: 2, /* DOLLARDE */
+	/*::[*/0x01BC/*::]*/: 2, /* DOLLARFR */
+	/*::[*/0x01BD/*::]*/: 2, /* NOMINAL */
+	/*::[*/0x01BE/*::]*/: 2, /* EFFECT */
+	/*::[*/0x01BF/*::]*/: 6, /* CUMPRINC */
+	/*::[*/0x01C0/*::]*/: 6, /* CUMIPMT */
+	/*::[*/0x01C1/*::]*/: 2, /* EDATE */
+	/*::[*/0x01C2/*::]*/: 2, /* EOMONTH */
+	/*::[*/0x01D0/*::]*/: 2, /* RANDBETWEEN */
+	/*::[*/0x01D4/*::]*/: 3, /* CONVERT */
+	/*::[*/0x01DC/*::]*/: 2, /* FVSCHEDULE */
+	/*::[*/0x01DF/*::]*/: 1, /* CUBESETCOUNT */
+	/*::[*/0x01E0/*::]*/: 2, /* IFERROR */
+	/*::[*/0xFFFF/*::]*/: 0
 };
 /* [MS-XLSX] 2.2.3 Functions */
 /* [MS-XLSB] 2.5.97.10 Ftab */
@@ -8000,7 +8042,7 @@ var XLSXFutureFunctions = {
 };
 
 /* Part 3 TODO: actually parse formulae */
-function ods_to_csf_formula(f) {
+function ods_to_csf_formula(f/*:string*/)/*:string*/ {
 	if(f.substr(0,3) == "of:") f = f.substr(3);
 	/* 5.2 Basic Expressions */
 	if(f.charCodeAt(0) == 61) {
@@ -8015,7 +8057,7 @@ var _ssfopts = {}; // spreadsheet formatting options
 
 RELS.WS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet";
 
-function get_sst_id(sst, str) {
+function get_sst_id(sst/*:SST*/, str)/*:number*/ {
 	for(var i = 0, len = sst.length; i < len; ++i) if(sst[i].t === str) { sst.Count ++; return i; }
 	sst[len] = {t:str}; sst.Count ++; sst.Unique ++; return len;
 }
@@ -8077,10 +8119,10 @@ var hlinkregex = /<(?:\w*:)?hyperlink[^>]*\/>/g;
 var dimregex = /"(\w*:\w*)"/;
 var colregex = /<(?:\w*:)?col[^>]*\/>/g;
 /* 18.3 Worksheets */
-function parse_ws_xml(data, opts, rels) {
+function parse_ws_xml(data/*:?string*/, opts, rels)/*:Worksheet*/ {
 	if(!data) return data;
 	/* 18.3.1.99 worksheet CT_Worksheet */
-	var s = ({});
+	var s = ({}/*:any*/);
 
 	/* 18.3.1.35 dimension CT_SheetDimension ? */
 	// $FlowIgnore
@@ -8104,7 +8146,7 @@ function parse_ws_xml(data, opts, rels) {
 		if(cols) parse_ws_xml_cols(columns, cols);
 	}
 
-	var refguess = ({s: {r:2000000, c:2000000}, e: {r:0, c:0} });
+	var refguess/*:Range*/ = ({s: {r:2000000, c:2000000}, e: {r:0, c:0} }/*:any*/);
 
 	/* 18.3.1.80 sheetData CT_SheetData ? */
 	var mtch=data.match(sheetdataregex);
@@ -8178,11 +8220,11 @@ function parse_ws_xml_cols(columns, cols) {
 	}
 }
 
-function write_ws_xml_cols(ws, cols) {
+function write_ws_xml_cols(ws, cols)/*:string*/ {
 	var o = ["<cols>"], col, width;
 	for(var i = 0; i != cols.length; ++i) {
 		if(!(col = cols[i])) continue;
-		var p = ({min:i+1,max:i+1});
+		var p = ({min:i+1,max:i+1}/*:any*/);
 		/* wch (chars), wpx (pixels) */
 		width = -1;
 		if(col.wpx) width = px2char(col.wpx);
@@ -8212,7 +8254,7 @@ function write_ws_xml_cell(cell, ref, ws, opts, idx, wb) {
 			break;
 		default: vv = cell.v; break;
 	}
-	var v = writetag('v', escapexml(vv)), o = ({r:ref});
+	var v = writetag('v', escapexml(vv)), o = ({r:ref}/*:any*/);
 	/* TODO: cell style */
 	var os = get_cell_style(opts.cellXfs, cell, opts);
 	if(os !== 0) o.s = os;
@@ -8239,7 +8281,7 @@ var parse_ws_xml_data = (function parse_ws_xml_data_factory() {
 	var match_v = matchtag("v"), match_f = matchtag("f");
 
 return function parse_ws_xml_data(sdata, s, opts, guess) {
-	var ri = 0, x = "", cells = [], cref = [], idx = 0, i=0, cc=0, d="", p;
+	var ri = 0, x = "", cells = [], cref = [], idx = 0, i=0, cc=0, d="", p/*:any*/;
 	var tag, tagr = 0, tagc = 0;
 	var sstr, ftag;
 	var fmtid = 0, fillid = 0, do_format = Array.isArray(styles.CellXf), cf;
@@ -8279,16 +8321,16 @@ return function parse_ws_xml_data(sdata, s, opts, guess) {
 			tag = parsexmltag(x.substr(0,i), true);
 			if(!tag.r) tag.r = utils.encode_cell({r:tagr-1, c:tagc});
 			d = x.substr(i);
-			p = ({t:""});
+			p = ({t:""}/*:any*/);
 
-			if((cref=d.match(match_v))!= null && cref[1] !== '') p.v=unescapexml(cref[1]);
+			if((cref=d.match(match_v))!= null && /*::cref != null && */cref[1] !== '') p.v=unescapexml(cref[1]);
 			if(opts.cellFormula) {
-				if((cref=d.match(match_f))!= null && cref[1] !== '') {
+				if((cref=d.match(match_f))!= null && /*::cref != null && */cref[1] !== '') {
 					p.f=unescapexml(utf8read(cref[1]));
-					if(cref[0].indexOf('t="array"') > -1) {
+					if(/*::cref != null && cref[0] != null && */cref[0].indexOf('t="array"') > -1) {
 						p.F = (d.match(refregex)||[])[1];
 						if(p.F.indexOf(":") > -1) arrayf.push([safe_decode_range(p.F), p.F]);
-					} else if(cref[0].indexOf('t="shared"') > -1) {
+					} else if(/*::cref != null && cref[0] != null && */cref[0].indexOf('t="shared"') > -1) {
 						// TODO: parse formula
 						ftag = parsexmltag(cref[0]);
 						sharedf[parseInt(ftag.si, 10)] = [ftag, unescapexml(utf8read(cref[1]))];
@@ -8358,7 +8400,7 @@ return function parse_ws_xml_data(sdata, s, opts, guess) {
 	}
 }; })();
 
-function write_ws_xml_data(ws, opts, idx, wb) {
+function write_ws_xml_data(ws/*:Worksheet*/, opts, idx/*:number*/, wb/*:Workbook*/)/*:string*/ {
 	var o = [], r = [], range = safe_decode_range(ws['!ref']), cell, ref, rr = "", cols = [], R=0, C=0;
 	for(C = range.s.c; C <= range.e.c; ++C) cols[C] = encode_col(C);
 	for(R = range.s.r; R <= range.e.r; ++R) {
@@ -8379,7 +8421,7 @@ var WS_XML_ROOT = writextag('worksheet', null, {
 	'xmlns:r': XMLNS.r
 });
 
-function write_ws_xml(idx, opts, wb) {
+function write_ws_xml(idx/*:number*/, opts, wb/*:Workbook*/)/*:string*/ {
 	var o = [XML_HEADER, WS_XML_ROOT];
 	var s = wb.SheetNames[idx], sidx = 0, rdata = "";
 	var ws = wb.Sheets[s];
@@ -8408,7 +8450,7 @@ function parse_BrtRowHdr(data, length) {
 	data.l += length-4;
 	return z;
 }
-function write_BrtRowHdr(R, range, ws) {
+function write_BrtRowHdr(R/*:number*/, range, ws) {
 	var o = new_buf(17+8*16);
 	o.write_shift(4, R);
 
@@ -8651,7 +8693,7 @@ function parse_BrtShrFmla(data, length, opts) {
 }
 
 /* [MS-XLSB] 2.1.7.61 Worksheet */
-function parse_ws_bin(data, opts, rels, wb) {
+function parse_ws_bin(data, opts, rels, wb)/*:Worksheet*/ {
 	if(!data) return data;
 	if(!rels) rels = {'!id':{}};
 	var s = {};
@@ -8670,7 +8712,7 @@ function parse_ws_bin(data, opts, rels, wb) {
 
 	var array_formulae = [];
 	var shared_formulae = {};
-	var supbooks = ([[]]);
+	var supbooks = ([[]]/*:any*/);
 	supbooks.sharedf = shared_formulae;
 	supbooks.arrayf = array_formulae;
 	opts.supbooks = supbooks;
@@ -8698,7 +8740,7 @@ function parse_ws_bin(data, opts, rels, wb) {
 			case 'BrtCellReal':
 			case 'BrtCellRk':
 			case 'BrtCellSt':
-				p = ({t:val[2]});
+				p = ({t:val[2]}/*:any*/);
 				switch(val[2]) {
 					case 'n': p.v = val[1]; break;
 					case 's': sstr = strs[val[1]]; p.v = sstr.t; p.r = sstr.r; break;
@@ -8726,7 +8768,7 @@ function parse_ws_bin(data, opts, rels, wb) {
 				break;
 
 			case 'BrtCellBlank': if(!opts.sheetStubs) break;
-				p = ({t:'s',v:undefined});
+				p = ({t:'s',v:undefined}/*:any*/);
 				s[encode_col(C=val[0].c) + rr] = p;
 				if(refguess.s.r > row.r) refguess.s.r = row.r;
 				if(refguess.s.c > C) refguess.s.c = C;
@@ -8896,7 +8938,7 @@ function parse_ws_bin(data, opts, rels, wb) {
 }
 
 /* TODO: something useful -- this is a stub */
-function write_ws_bin_cell(ba, cell, R, C, opts) {
+function write_ws_bin_cell(ba/*:BufArray*/, cell/*:Cell*/, R/*:number*/, C/*:number*/, opts) {
 	if(cell.v === undefined) return "";
 	var vv = "";
 	switch(cell.t) {
@@ -8904,7 +8946,7 @@ function write_ws_bin_cell(ba, cell, R, C, opts) {
 		case 'n': case 'e': vv = ''+cell.v; break;
 		default: vv = cell.v; break;
 	}
-	var o = ({r:R, c:C});
+	var o/*:CellAddress*/ = ({r:R, c:C}/*:any*/);
 	/* TODO: cell style */
 	//o.s = get_cell_style(opts.cellXfs, cell, opts);
 	switch(cell.t) {
@@ -9233,12 +9275,12 @@ var WB_XML_ROOT = writextag('workbook', null, {
 	'xmlns:r': XMLNS.r
 });
 
-function safe1904(wb) {
+function safe1904(wb/*:Workbook*/)/*:string*/ {
 	/* TODO: store date1904 somewhere else */
 	try { return parsexmlbool(wb.Workbook.WBProps.date1904) ? "true" : "false"; } catch(e) { return "false"; }
 }
 
-function write_wb_xml(wb, opts) {
+function write_wb_xml(wb/*:Workbook*/, opts/*:?WriteOpts*/)/*:string*/ {
 	var o = [XML_HEADER];
 	o[o.length] = WB_XML_ROOT;
 	o[o.length] = (writextag('workbookPr', null, {date1904:safe1904(wb)}));
@@ -9250,7 +9292,7 @@ function write_wb_xml(wb, opts) {
 	return o.join("");
 }
 /* [MS-XLSB] 2.4.301 BrtBundleSh */
-function parse_BrtBundleSh(data, length) {
+function parse_BrtBundleSh(data, length/*:number*/) {
 	var z = {};
 	z.hsState = data.read_shift(4); //ST_SheetState
 	z.iTabID = data.read_shift(4);
@@ -9461,53 +9503,53 @@ function write_wb_bin(wb, opts) {
 
 	return ba.end();
 }
-function parse_wb(data, name, opts) {
-	if(name.slice(-4)===".bin") return parse_wb_bin((data), opts);
-	return parse_wb_xml((data), opts);
+function parse_wb(data, name/*:string*/, opts)/*:Workbook*/ {
+	if(name.slice(-4)===".bin") return parse_wb_bin((data/*:any*/), opts);
+	return parse_wb_xml((data/*:any*/), opts);
 }
 
-function parse_ws(data, name, opts, rels, wb) {
-	if(name.slice(-4)===".bin") return parse_ws_bin((data), opts, rels, wb);
-	return parse_ws_xml((data), opts, rels, wb);
+function parse_ws(data, name/*:string*/, opts, rels, wb)/*:Worksheet*/ {
+	if(name.slice(-4)===".bin") return parse_ws_bin((data/*:any*/), opts, rels, wb);
+	return parse_ws_xml((data/*:any*/), opts, rels, wb);
 }
 
-function parse_sty(data, name, opts) {
-	if(name.slice(-4)===".bin") return parse_sty_bin((data), opts);
-	return parse_sty_xml((data), opts);
+function parse_sty(data, name/*:string*/, opts) {
+	if(name.slice(-4)===".bin") return parse_sty_bin((data/*:any*/), opts);
+	return parse_sty_xml((data/*:any*/), opts);
 }
 
-function parse_theme(data, name, opts) {
+function parse_theme(data, name/*:string*/, opts) {
 	return parse_theme_xml(data, opts);
 }
 
-function parse_sst(data, name, opts) {
-	if(name.slice(-4)===".bin") return parse_sst_bin((data), opts);
-	return parse_sst_xml((data), opts);
+function parse_sst(data, name/*:string*/, opts)/*:SST*/ {
+	if(name.slice(-4)===".bin") return parse_sst_bin((data/*:any*/), opts);
+	return parse_sst_xml((data/*:any*/), opts);
 }
 
-function parse_cmnt(data, name, opts) {
-	if(name.slice(-4)===".bin") return parse_comments_bin((data), opts);
-	return parse_comments_xml((data), opts);
+function parse_cmnt(data, name/*:string*/, opts) {
+	if(name.slice(-4)===".bin") return parse_comments_bin((data/*:any*/), opts);
+	return parse_comments_xml((data/*:any*/), opts);
 }
 
-function parse_cc(data, name, opts) {
-	if(name.slice(-4)===".bin") return parse_cc_bin((data), opts);
-	return parse_cc_xml((data), opts);
+function parse_cc(data, name/*:string*/, opts) {
+	if(name.slice(-4)===".bin") return parse_cc_bin((data/*:any*/), opts);
+	return parse_cc_xml((data/*:any*/), opts);
 }
 
-function write_wb(wb, name, opts) {
+function write_wb(wb, name/*:string*/, opts) {
 	return (name.slice(-4)===".bin" ? write_wb_bin : write_wb_xml)(wb, opts);
 }
 
-function write_ws(data, name, opts, wb) {
+function write_ws(data/*:Worksheet*/, name/*:string*/, opts, wb/*:Workbook*/) {
 	return (name.slice(-4)===".bin" ? write_ws_bin : write_ws_xml)(data, opts, wb);
 }
 
-function write_sty(data, name, opts) {
+function write_sty(data, name/*:string*/, opts) {
 	return (name.slice(-4)===".bin" ? write_sty_bin : write_sty_xml)(data, opts);
 }
 
-function write_sst(data, name, opts) {
+function write_sst(data/*:SST*/, name/*:string*/, opts) {
 	return (name.slice(-4)===".bin" ? write_sst_bin : write_sst_xml)(data, opts);
 }
 /*
@@ -9522,14 +9564,15 @@ function write_cc(data, name:string, opts) {
 var attregexg2=/([\w:]+)=((?:")([^"]*)(?:")|(?:')([^']*)(?:'))/g;
 var attregex2=/([\w:]+)=((?:")(?:[^"]*)(?:")|(?:')(?:[^']*)(?:'))/;
 var _chr = function(c) { return String.fromCharCode(c); };
-function xlml_parsexmltag(tag, skip_root) {
+function xlml_parsexmltag(tag/*:string*/, skip_root/*:?boolean*/) {
 	var words = tag.split(/\s+/);
-	var z = ([]); if(!skip_root) z[0] = words[0];
+	var z/*:any*/ = ([]/*:any*/); if(!skip_root) z[0] = words[0];
 	if(words.length === 1) return z;
 	var m = tag.match(attregexg2), y, j, w, i;
 	if(m) for(i = 0; i != m.length; ++i) {
 		y = m[i].match(attregex2);
-if((j=y[1].indexOf(":")) === -1) z[y[1]] = y[2].substr(1,y[2].length-2);
+/*:: if(!y || !y[2]) continue; */
+		if((j=y[1].indexOf(":")) === -1) z[y[1]] = y[2].substr(1,y[2].length-2);
 		else {
 			if(y[1].substr(0,6) === "xmlns:") w = "xmlns"+y[1].substr(6);
 			else w = y[1].substr(j+1);
@@ -9538,14 +9581,15 @@ if((j=y[1].indexOf(":")) === -1) z[y[1]] = y[2].substr(1,y[2].length-2);
 	}
 	return z;
 }
-function xlml_parsexmltagobj(tag) {
+function xlml_parsexmltagobj(tag/*:string*/) {
 	var words = tag.split(/\s+/);
 	var z = {};
 	if(words.length === 1) return z;
 	var m = tag.match(attregexg2), y, j, w, i;
 	if(m) for(i = 0; i != m.length; ++i) {
 		y = m[i].match(attregex2);
-if((j=y[1].indexOf(":")) === -1) z[y[1]] = y[2].substr(1,y[2].length-2);
+/*:: if(!y || !y[2]) continue; */
+		if((j=y[1].indexOf(":")) === -1) z[y[1]] = y[2].substr(1,y[2].length-2);
 		else {
 			if(y[1].substr(0,6) === "xmlns:") w = "xmlns"+y[1].substr(6);
 			else w = y[1].substr(j+1);
@@ -9557,7 +9601,7 @@ if((j=y[1].indexOf(":")) === -1) z[y[1]] = y[2].substr(1,y[2].length-2);
 
 // ----
 
-function xlml_format(format, value) {
+function xlml_format(format, value)/*:string*/ {
 	var fmt = XLMLFormatMap[format] || unescapexml(format);
 	if(fmt === "General") return SSF._general(value);
 	return SSF.format(fmt, value);
@@ -9575,7 +9619,7 @@ function xlml_set_custprop(Custprops, Rn, cp, val) {
 	Custprops[unescapexml(Rn[3])] = val;
 }
 
-function safe_format_xlml(cell, nf, o) {
+function safe_format_xlml(cell/*:Cell*/, nf, o) {
 	try {
 		if(cell.t === 'e') { cell.w = cell.w || BErr[cell.v]; }
 		else if(nf === "General") {
@@ -9601,7 +9645,7 @@ function process_style_xlml(styles, stag, opts) {
 }
 
 /* TODO: there must exist some form of OSP-blessed spec */
-function parse_xlml_data(xml, ss, data, cell, base, styles, csty, row, arrayf, o) {
+function parse_xlml_data(xml, ss, data, cell/*:any*/, base, styles, csty, row, arrayf, o)/*:Workbook*/ {
 	var nf = "General", sid = cell.StyleID, S = {}; o = o || {};
 	var interiors = [];
 	var i = 0;
@@ -9664,13 +9708,13 @@ function parse_xlml_data(xml, ss, data, cell, base, styles, csty, row, arrayf, o
 	cell.ixfe = cell.StyleID !== undefined ? cell.StyleID : 'Default';
 }
 
-function xlml_clean_comment(comment) {
+function xlml_clean_comment(comment/*:any*/) {
 	comment.t = comment.v;
 	comment.v = comment.w = comment.ixfe = undefined;
 }
 
-function xlml_normalize(d) {
-	if(has_buf && Buffer.isBuffer(d)) return d.toString('utf8');
+function xlml_normalize(d)/*:string*/ {
+	if(has_buf &&/*::typeof Buffer !== "undefined" && d != null &&*/ Buffer.isBuffer(d)) return d.toString('utf8');
 	if(typeof d === 'string') return d;
 	throw new Error("Bad input format: expected Buffer or string");
 }
@@ -9679,14 +9723,14 @@ function xlml_normalize(d) {
 /* UOS uses CJK in tags */
 var xlmlregex = /<(\/?)([^\s?>!\/:]*:|)([^\s?>]*[^\s?>\/])[^>]*>/mg;
 //var xlmlregex = /<(\/?)([a-z0-9]*:|)(\w+)[^>]*>/mg;
-function parse_xlml_xml(d, opts) {
+function parse_xlml_xml(d, opts)/*:Workbook*/ {
 	var str = debom(xlml_normalize(d));
 	if(opts && opts.type == 'binary' && typeof cptable !== 'undefined') str = cptable.utils.decode(65001, char_codes(str));
 	if(str.substr(0,1000).indexOf("<html") >= 0) return parse_html(str, opts);
 	var Rn;
 	var state = [], tmp;
 	var sheets = {}, sheetnames = [], cursheet = {}, sheetname = "";
-	var table = {}, cell = ({}), row = {};
+	var table = {}, cell = ({}/*:any*/), row = {};
 	var dtag = xlml_parsexmltag('<Data ss:Type="String">'), didx = 0;
 	var c = 0, r = 0;
 	var refguess = {s: {r:2000000, c:2000000}, e: {r:0, c:0} };
@@ -10226,7 +10270,7 @@ function parse_xlml_xml(d, opts) {
 			}
 			if(opts.WTF) throw 'Unrecognized tag: ' + Rn[3] + "|" + state.join("|");
 	}
-	var out = ({});
+	var out = ({}/*:any*/);
 	if(!opts.bookSheets && !opts.bookProps) out.Sheets = sheets;
 	out.SheetNames = sheetnames;
 	out.SSF = SSF.get_table();
@@ -10245,7 +10289,7 @@ function parse_xlml(data, opts) {
 }
 
 /* TODO */
-function write_xlml(wb, opts) {
+function write_xlml(wb, opts)/*:string*/ {
 	var o = [XML_HEADER];
 	return o.join("");
 }
@@ -10277,7 +10321,7 @@ function parse_compobj(obj) {
 }
 
 /* 2.4.58 Continue logic */
-function slurp(R, blob, length, opts) {
+function slurp(R, blob, length/*:number*/, opts) {
 	var l = length;
 	var bufs = [];
 	var d = blob.slice(blob.l,blob.l+l);
@@ -10296,7 +10340,7 @@ function slurp(R, blob, length, opts) {
 		blob.l += 4+l;
 		next = (XLSRecordEnum[__readUInt16LE(blob, blob.l)]);
 	}
-	var b = (bconcat(bufs));
+	var b = (bconcat(bufs)/*:any*/);
 	prep_blob(b, 0);
 	var ll = 0; b.lens = [];
 	for(var j = 0; j < bufs.length; ++j) { b.lens.push(ll); ll += bufs[j].length; }
@@ -10321,13 +10365,13 @@ function safe_format_xf(p, opts, date1904) {
 	} catch(e) { if(opts.WTF) throw e; }
 }
 
-function make_cell(val, ixfe, t) {
-	return ({v:val, ixfe:ixfe, t:t});
+function make_cell(val, ixfe, t)/*:any*/ {
+	return ({v:val, ixfe:ixfe, t:t}/*:any*/);
 }
 
 // 2.3.2
-function parse_workbook(blob, options) {
-	var wb = ({opts:{}});
+function parse_workbook(blob, options/*:ParseOpts*/)/*:Workbook*/ {
+	var wb = ({opts:{}}/*:any*/);
 	var Sheets = {};
 	var out = {};
 	var Directory = {};
@@ -10387,11 +10431,11 @@ function parse_workbook(blob, options) {
 		codepage: 0, // CP from CodePage record
 		winlocked: 0, // fLockWn from WinProtect
 		wtf: false
-	});
+	}/*:any*/);
 	if(options.password) opts.password = options.password;
 	var mergecells = [];
 	var objects = [];
-	var supbooks = ([[]]); // 1-indexed, will hold extern names
+	var supbooks = ([[]]/*:any*/); // 1-indexed, will hold extern names
 	var sbc = 0, sbci = 0, sbcli = 0;
 	supbooks.SheetNames = opts.snames;
 	supbooks.sharedf = opts.sharedf;
@@ -10553,7 +10597,7 @@ function parse_workbook(blob, options) {
 						case 'String': last_formula = val; break;
 						case 'Array Formula': throw "Array Formula unsupported";
 						default:
-							temp_val = ({v:val.val, ixfe:val.cell.ixfe, t:val.tt});
+							temp_val = ({v:val.val, ixfe:val.cell.ixfe, t:val.tt}/*:any*/);
 							temp_val.XF = XFs[temp_val.ixfe];
 							if(options.cellFormula) {
 								var _f = val.formula;
@@ -10572,7 +10616,7 @@ function parse_workbook(blob, options) {
 				case 'String': {
 					if(last_formula) {
 						last_formula.val = val;
-						temp_val = ({v:last_formula.val, ixfe:last_formula.cell.ixfe, t:'s'});
+						temp_val = ({v:last_formula.val, ixfe:last_formula.cell.ixfe, t:'s'}/*:any*/);
 						temp_val.XF = XFs[temp_val.ixfe];
 						if(options.cellFormula) temp_val.f = stringify_formula(last_formula.formula, range, last_formula.cell, supbooks, opts);
 						safe_format_xf(temp_val, options, wb.opts.Date1904);
@@ -10905,22 +10949,22 @@ function parse_workbook(blob, options) {
 	return wb;
 }
 
-function parse_xlscfb(cfb, options) {
+function parse_xlscfb(cfb/*:any*/, options/*:?ParseOpts*/) {
 if(!options) options = {};
 fix_read_opts(options);
 reset_cp();
-var CompObj, Summary, Workbook;
+var CompObj, Summary, Workbook/*:?any*/;
 if(cfb.FullPaths) {
 	CompObj = cfb.find('!CompObj');
 	Summary = cfb.find('!SummaryInformation');
 	Workbook = cfb.find('/Workbook');
 } else {
 	prep_blob(cfb, 0);
-	Workbook = ({content: cfb});
+	Workbook = ({content: cfb}/*:any*/);
 }
 
 if(!Workbook) Workbook = cfb.find('/Book');
-var CompObjP, SummaryP, WorkbookP;
+var CompObjP, SummaryP, WorkbookP/*:?any*/;
 
 if(CompObj) CompObjP = parse_compobj(CompObj);
 if(options.bookProps && !options.bookSheets) WorkbookP = {};
@@ -10953,1265 +10997,1265 @@ function parse_props(cfb) {
 
 /* [MS-XLSB] 2.3 Record Enumeration */
 var XLSBRecordEnum = {
-0x0000: { n:"BrtRowHdr", f:parse_BrtRowHdr },
-0x0001: { n:"BrtCellBlank", f:parse_BrtCellBlank },
-0x0002: { n:"BrtCellRk", f:parse_BrtCellRk },
-0x0003: { n:"BrtCellError", f:parse_BrtCellError },
-0x0004: { n:"BrtCellBool", f:parse_BrtCellBool },
-0x0005: { n:"BrtCellReal", f:parse_BrtCellReal },
-0x0006: { n:"BrtCellSt", f:parse_BrtCellSt },
-0x0007: { n:"BrtCellIsst", f:parse_BrtCellIsst },
-0x0008: { n:"BrtFmlaString", f:parse_BrtFmlaString },
-0x0009: { n:"BrtFmlaNum", f:parse_BrtFmlaNum },
-0x000A: { n:"BrtFmlaBool", f:parse_BrtFmlaBool },
-0x000B: { n:"BrtFmlaError", f:parse_BrtFmlaError },
-0x0010: { n:"BrtFRTArchID$", f:parse_BrtFRTArchID$ },
-0x0013: { n:"BrtSSTItem", f:parse_RichStr },
-0x0014: { n:"BrtPCDIMissing", f:parsenoop },
-0x0015: { n:"BrtPCDINumber", f:parsenoop },
-0x0016: { n:"BrtPCDIBoolean", f:parsenoop },
-0x0017: { n:"BrtPCDIError", f:parsenoop },
-0x0018: { n:"BrtPCDIString", f:parsenoop },
-0x0019: { n:"BrtPCDIDatetime", f:parsenoop },
-0x001A: { n:"BrtPCDIIndex", f:parsenoop },
-0x001B: { n:"BrtPCDIAMissing", f:parsenoop },
-0x001C: { n:"BrtPCDIANumber", f:parsenoop },
-0x001D: { n:"BrtPCDIABoolean", f:parsenoop },
-0x001E: { n:"BrtPCDIAError", f:parsenoop },
-0x001F: { n:"BrtPCDIAString", f:parsenoop },
-0x0020: { n:"BrtPCDIADatetime", f:parsenoop },
-0x0021: { n:"BrtPCRRecord", f:parsenoop },
-0x0022: { n:"BrtPCRRecordDt", f:parsenoop },
-0x0023: { n:"BrtFRTBegin", f:parsenoop },
-0x0024: { n:"BrtFRTEnd", f:parsenoop },
-0x0025: { n:"BrtACBegin", f:parsenoop },
-0x0026: { n:"BrtACEnd", f:parsenoop },
-0x0027: { n:"BrtName", f:parse_BrtName },
-0x0028: { n:"BrtIndexRowBlock", f:parsenoop },
-0x002A: { n:"BrtIndexBlock", f:parsenoop },
-0x002B: { n:"BrtFont", f:parse_BrtFont },
-0x002C: { n:"BrtFmt", f:parse_BrtFmt },
-0x002D: { n:"BrtFill", f:parsenoop },
-0x002E: { n:"BrtBorder", f:parsenoop },
-0x002F: { n:"BrtXF", f:parse_BrtXF },
-0x0030: { n:"BrtStyle", f:parsenoop },
-0x0031: { n:"BrtCellMeta", f:parsenoop },
-0x0032: { n:"BrtValueMeta", f:parsenoop },
-0x0033: { n:"BrtMdb", f:parsenoop },
-0x0034: { n:"BrtBeginFmd", f:parsenoop },
-0x0035: { n:"BrtEndFmd", f:parsenoop },
-0x0036: { n:"BrtBeginMdx", f:parsenoop },
-0x0037: { n:"BrtEndMdx", f:parsenoop },
-0x0038: { n:"BrtBeginMdxTuple", f:parsenoop },
-0x0039: { n:"BrtEndMdxTuple", f:parsenoop },
-0x003A: { n:"BrtMdxMbrIstr", f:parsenoop },
-0x003B: { n:"BrtStr", f:parsenoop },
-0x003C: { n:"BrtColInfo", f:parsenoop },
-0x003E: { n:"BrtCellRString", f:parsenoop },
-0x003F: { n:"BrtCalcChainItem$", f:parse_BrtCalcChainItem$ },
-0x0040: { n:"BrtDVal", f:parsenoop },
-0x0041: { n:"BrtSxvcellNum", f:parsenoop },
-0x0042: { n:"BrtSxvcellStr", f:parsenoop },
-0x0043: { n:"BrtSxvcellBool", f:parsenoop },
-0x0044: { n:"BrtSxvcellErr", f:parsenoop },
-0x0045: { n:"BrtSxvcellDate", f:parsenoop },
-0x0046: { n:"BrtSxvcellNil", f:parsenoop },
-0x0080: { n:"BrtFileVersion", f:parsenoop },
-0x0081: { n:"BrtBeginSheet", f:parsenoop },
-0x0082: { n:"BrtEndSheet", f:parsenoop },
-0x0083: { n:"BrtBeginBook", f:parsenoop, p:0 },
-0x0084: { n:"BrtEndBook", f:parsenoop },
-0x0085: { n:"BrtBeginWsViews", f:parsenoop },
-0x0086: { n:"BrtEndWsViews", f:parsenoop },
-0x0087: { n:"BrtBeginBookViews", f:parsenoop },
-0x0088: { n:"BrtEndBookViews", f:parsenoop },
-0x0089: { n:"BrtBeginWsView", f:parsenoop },
-0x008A: { n:"BrtEndWsView", f:parsenoop },
-0x008B: { n:"BrtBeginCsViews", f:parsenoop },
-0x008C: { n:"BrtEndCsViews", f:parsenoop },
-0x008D: { n:"BrtBeginCsView", f:parsenoop },
-0x008E: { n:"BrtEndCsView", f:parsenoop },
-0x008F: { n:"BrtBeginBundleShs", f:parsenoop },
-0x0090: { n:"BrtEndBundleShs", f:parsenoop },
-0x0091: { n:"BrtBeginSheetData", f:parsenoop },
-0x0092: { n:"BrtEndSheetData", f:parsenoop },
-0x0093: { n:"BrtWsProp", f:parse_BrtWsProp },
-0x0094: { n:"BrtWsDim", f:parse_BrtWsDim, p:16 },
-0x0097: { n:"BrtPane", f:parsenoop },
-0x0098: { n:"BrtSel", f:parsenoop },
-0x0099: { n:"BrtWbProp", f:parse_BrtWbProp },
-0x009A: { n:"BrtWbFactoid", f:parsenoop },
-0x009B: { n:"BrtFileRecover", f:parsenoop },
-0x009C: { n:"BrtBundleSh", f:parse_BrtBundleSh },
-0x009D: { n:"BrtCalcProp", f:parsenoop },
-0x009E: { n:"BrtBookView", f:parsenoop },
-0x009F: { n:"BrtBeginSst", f:parse_BrtBeginSst },
-0x00A0: { n:"BrtEndSst", f:parsenoop },
-0x00A1: { n:"BrtBeginAFilter", f:parsenoop },
-0x00A2: { n:"BrtEndAFilter", f:parsenoop },
-0x00A3: { n:"BrtBeginFilterColumn", f:parsenoop },
-0x00A4: { n:"BrtEndFilterColumn", f:parsenoop },
-0x00A5: { n:"BrtBeginFilters", f:parsenoop },
-0x00A6: { n:"BrtEndFilters", f:parsenoop },
-0x00A7: { n:"BrtFilter", f:parsenoop },
-0x00A8: { n:"BrtColorFilter", f:parsenoop },
-0x00A9: { n:"BrtIconFilter", f:parsenoop },
-0x00AA: { n:"BrtTop10Filter", f:parsenoop },
-0x00AB: { n:"BrtDynamicFilter", f:parsenoop },
-0x00AC: { n:"BrtBeginCustomFilters", f:parsenoop },
-0x00AD: { n:"BrtEndCustomFilters", f:parsenoop },
-0x00AE: { n:"BrtCustomFilter", f:parsenoop },
-0x00AF: { n:"BrtAFilterDateGroupItem", f:parsenoop },
-0x00B0: { n:"BrtMergeCell", f:parse_BrtMergeCell },
-0x00B1: { n:"BrtBeginMergeCells", f:parsenoop },
-0x00B2: { n:"BrtEndMergeCells", f:parsenoop },
-0x00B3: { n:"BrtBeginPivotCacheDef", f:parsenoop },
-0x00B4: { n:"BrtEndPivotCacheDef", f:parsenoop },
-0x00B5: { n:"BrtBeginPCDFields", f:parsenoop },
-0x00B6: { n:"BrtEndPCDFields", f:parsenoop },
-0x00B7: { n:"BrtBeginPCDField", f:parsenoop },
-0x00B8: { n:"BrtEndPCDField", f:parsenoop },
-0x00B9: { n:"BrtBeginPCDSource", f:parsenoop },
-0x00BA: { n:"BrtEndPCDSource", f:parsenoop },
-0x00BB: { n:"BrtBeginPCDSRange", f:parsenoop },
-0x00BC: { n:"BrtEndPCDSRange", f:parsenoop },
-0x00BD: { n:"BrtBeginPCDFAtbl", f:parsenoop },
-0x00BE: { n:"BrtEndPCDFAtbl", f:parsenoop },
-0x00BF: { n:"BrtBeginPCDIRun", f:parsenoop },
-0x00C0: { n:"BrtEndPCDIRun", f:parsenoop },
-0x00C1: { n:"BrtBeginPivotCacheRecords", f:parsenoop },
-0x00C2: { n:"BrtEndPivotCacheRecords", f:parsenoop },
-0x00C3: { n:"BrtBeginPCDHierarchies", f:parsenoop },
-0x00C4: { n:"BrtEndPCDHierarchies", f:parsenoop },
-0x00C5: { n:"BrtBeginPCDHierarchy", f:parsenoop },
-0x00C6: { n:"BrtEndPCDHierarchy", f:parsenoop },
-0x00C7: { n:"BrtBeginPCDHFieldsUsage", f:parsenoop },
-0x00C8: { n:"BrtEndPCDHFieldsUsage", f:parsenoop },
-0x00C9: { n:"BrtBeginExtConnection", f:parsenoop },
-0x00CA: { n:"BrtEndExtConnection", f:parsenoop },
-0x00CB: { n:"BrtBeginECDbProps", f:parsenoop },
-0x00CC: { n:"BrtEndECDbProps", f:parsenoop },
-0x00CD: { n:"BrtBeginECOlapProps", f:parsenoop },
-0x00CE: { n:"BrtEndECOlapProps", f:parsenoop },
-0x00CF: { n:"BrtBeginPCDSConsol", f:parsenoop },
-0x00D0: { n:"BrtEndPCDSConsol", f:parsenoop },
-0x00D1: { n:"BrtBeginPCDSCPages", f:parsenoop },
-0x00D2: { n:"BrtEndPCDSCPages", f:parsenoop },
-0x00D3: { n:"BrtBeginPCDSCPage", f:parsenoop },
-0x00D4: { n:"BrtEndPCDSCPage", f:parsenoop },
-0x00D5: { n:"BrtBeginPCDSCPItem", f:parsenoop },
-0x00D6: { n:"BrtEndPCDSCPItem", f:parsenoop },
-0x00D7: { n:"BrtBeginPCDSCSets", f:parsenoop },
-0x00D8: { n:"BrtEndPCDSCSets", f:parsenoop },
-0x00D9: { n:"BrtBeginPCDSCSet", f:parsenoop },
-0x00DA: { n:"BrtEndPCDSCSet", f:parsenoop },
-0x00DB: { n:"BrtBeginPCDFGroup", f:parsenoop },
-0x00DC: { n:"BrtEndPCDFGroup", f:parsenoop },
-0x00DD: { n:"BrtBeginPCDFGItems", f:parsenoop },
-0x00DE: { n:"BrtEndPCDFGItems", f:parsenoop },
-0x00DF: { n:"BrtBeginPCDFGRange", f:parsenoop },
-0x00E0: { n:"BrtEndPCDFGRange", f:parsenoop },
-0x00E1: { n:"BrtBeginPCDFGDiscrete", f:parsenoop },
-0x00E2: { n:"BrtEndPCDFGDiscrete", f:parsenoop },
-0x00E3: { n:"BrtBeginPCDSDTupleCache", f:parsenoop },
-0x00E4: { n:"BrtEndPCDSDTupleCache", f:parsenoop },
-0x00E5: { n:"BrtBeginPCDSDTCEntries", f:parsenoop },
-0x00E6: { n:"BrtEndPCDSDTCEntries", f:parsenoop },
-0x00E7: { n:"BrtBeginPCDSDTCEMembers", f:parsenoop },
-0x00E8: { n:"BrtEndPCDSDTCEMembers", f:parsenoop },
-0x00E9: { n:"BrtBeginPCDSDTCEMember", f:parsenoop },
-0x00EA: { n:"BrtEndPCDSDTCEMember", f:parsenoop },
-0x00EB: { n:"BrtBeginPCDSDTCQueries", f:parsenoop },
-0x00EC: { n:"BrtEndPCDSDTCQueries", f:parsenoop },
-0x00ED: { n:"BrtBeginPCDSDTCQuery", f:parsenoop },
-0x00EE: { n:"BrtEndPCDSDTCQuery", f:parsenoop },
-0x00EF: { n:"BrtBeginPCDSDTCSets", f:parsenoop },
-0x00F0: { n:"BrtEndPCDSDTCSets", f:parsenoop },
-0x00F1: { n:"BrtBeginPCDSDTCSet", f:parsenoop },
-0x00F2: { n:"BrtEndPCDSDTCSet", f:parsenoop },
-0x00F3: { n:"BrtBeginPCDCalcItems", f:parsenoop },
-0x00F4: { n:"BrtEndPCDCalcItems", f:parsenoop },
-0x00F5: { n:"BrtBeginPCDCalcItem", f:parsenoop },
-0x00F6: { n:"BrtEndPCDCalcItem", f:parsenoop },
-0x00F7: { n:"BrtBeginPRule", f:parsenoop },
-0x00F8: { n:"BrtEndPRule", f:parsenoop },
-0x00F9: { n:"BrtBeginPRFilters", f:parsenoop },
-0x00FA: { n:"BrtEndPRFilters", f:parsenoop },
-0x00FB: { n:"BrtBeginPRFilter", f:parsenoop },
-0x00FC: { n:"BrtEndPRFilter", f:parsenoop },
-0x00FD: { n:"BrtBeginPNames", f:parsenoop },
-0x00FE: { n:"BrtEndPNames", f:parsenoop },
-0x00FF: { n:"BrtBeginPName", f:parsenoop },
-0x0100: { n:"BrtEndPName", f:parsenoop },
-0x0101: { n:"BrtBeginPNPairs", f:parsenoop },
-0x0102: { n:"BrtEndPNPairs", f:parsenoop },
-0x0103: { n:"BrtBeginPNPair", f:parsenoop },
-0x0104: { n:"BrtEndPNPair", f:parsenoop },
-0x0105: { n:"BrtBeginECWebProps", f:parsenoop },
-0x0106: { n:"BrtEndECWebProps", f:parsenoop },
-0x0107: { n:"BrtBeginEcWpTables", f:parsenoop },
-0x0108: { n:"BrtEndECWPTables", f:parsenoop },
-0x0109: { n:"BrtBeginECParams", f:parsenoop },
-0x010A: { n:"BrtEndECParams", f:parsenoop },
-0x010B: { n:"BrtBeginECParam", f:parsenoop },
-0x010C: { n:"BrtEndECParam", f:parsenoop },
-0x010D: { n:"BrtBeginPCDKPIs", f:parsenoop },
-0x010E: { n:"BrtEndPCDKPIs", f:parsenoop },
-0x010F: { n:"BrtBeginPCDKPI", f:parsenoop },
-0x0110: { n:"BrtEndPCDKPI", f:parsenoop },
-0x0111: { n:"BrtBeginDims", f:parsenoop },
-0x0112: { n:"BrtEndDims", f:parsenoop },
-0x0113: { n:"BrtBeginDim", f:parsenoop },
-0x0114: { n:"BrtEndDim", f:parsenoop },
-0x0115: { n:"BrtIndexPartEnd", f:parsenoop },
-0x0116: { n:"BrtBeginStyleSheet", f:parsenoop },
-0x0117: { n:"BrtEndStyleSheet", f:parsenoop },
-0x0118: { n:"BrtBeginSXView", f:parsenoop },
-0x0119: { n:"BrtEndSXVI", f:parsenoop },
-0x011A: { n:"BrtBeginSXVI", f:parsenoop },
-0x011B: { n:"BrtBeginSXVIs", f:parsenoop },
-0x011C: { n:"BrtEndSXVIs", f:parsenoop },
-0x011D: { n:"BrtBeginSXVD", f:parsenoop },
-0x011E: { n:"BrtEndSXVD", f:parsenoop },
-0x011F: { n:"BrtBeginSXVDs", f:parsenoop },
-0x0120: { n:"BrtEndSXVDs", f:parsenoop },
-0x0121: { n:"BrtBeginSXPI", f:parsenoop },
-0x0122: { n:"BrtEndSXPI", f:parsenoop },
-0x0123: { n:"BrtBeginSXPIs", f:parsenoop },
-0x0124: { n:"BrtEndSXPIs", f:parsenoop },
-0x0125: { n:"BrtBeginSXDI", f:parsenoop },
-0x0126: { n:"BrtEndSXDI", f:parsenoop },
-0x0127: { n:"BrtBeginSXDIs", f:parsenoop },
-0x0128: { n:"BrtEndSXDIs", f:parsenoop },
-0x0129: { n:"BrtBeginSXLI", f:parsenoop },
-0x012A: { n:"BrtEndSXLI", f:parsenoop },
-0x012B: { n:"BrtBeginSXLIRws", f:parsenoop },
-0x012C: { n:"BrtEndSXLIRws", f:parsenoop },
-0x012D: { n:"BrtBeginSXLICols", f:parsenoop },
-0x012E: { n:"BrtEndSXLICols", f:parsenoop },
-0x012F: { n:"BrtBeginSXFormat", f:parsenoop },
-0x0130: { n:"BrtEndSXFormat", f:parsenoop },
-0x0131: { n:"BrtBeginSXFormats", f:parsenoop },
-0x0132: { n:"BrtEndSxFormats", f:parsenoop },
-0x0133: { n:"BrtBeginSxSelect", f:parsenoop },
-0x0134: { n:"BrtEndSxSelect", f:parsenoop },
-0x0135: { n:"BrtBeginISXVDRws", f:parsenoop },
-0x0136: { n:"BrtEndISXVDRws", f:parsenoop },
-0x0137: { n:"BrtBeginISXVDCols", f:parsenoop },
-0x0138: { n:"BrtEndISXVDCols", f:parsenoop },
-0x0139: { n:"BrtEndSXLocation", f:parsenoop },
-0x013A: { n:"BrtBeginSXLocation", f:parsenoop },
-0x013B: { n:"BrtEndSXView", f:parsenoop },
-0x013C: { n:"BrtBeginSXTHs", f:parsenoop },
-0x013D: { n:"BrtEndSXTHs", f:parsenoop },
-0x013E: { n:"BrtBeginSXTH", f:parsenoop },
-0x013F: { n:"BrtEndSXTH", f:parsenoop },
-0x0140: { n:"BrtBeginISXTHRws", f:parsenoop },
-0x0141: { n:"BrtEndISXTHRws", f:parsenoop },
-0x0142: { n:"BrtBeginISXTHCols", f:parsenoop },
-0x0143: { n:"BrtEndISXTHCols", f:parsenoop },
-0x0144: { n:"BrtBeginSXTDMPS", f:parsenoop },
-0x0145: { n:"BrtEndSXTDMPs", f:parsenoop },
-0x0146: { n:"BrtBeginSXTDMP", f:parsenoop },
-0x0147: { n:"BrtEndSXTDMP", f:parsenoop },
-0x0148: { n:"BrtBeginSXTHItems", f:parsenoop },
-0x0149: { n:"BrtEndSXTHItems", f:parsenoop },
-0x014A: { n:"BrtBeginSXTHItem", f:parsenoop },
-0x014B: { n:"BrtEndSXTHItem", f:parsenoop },
-0x014C: { n:"BrtBeginMetadata", f:parsenoop },
-0x014D: { n:"BrtEndMetadata", f:parsenoop },
-0x014E: { n:"BrtBeginEsmdtinfo", f:parsenoop },
-0x014F: { n:"BrtMdtinfo", f:parsenoop },
-0x0150: { n:"BrtEndEsmdtinfo", f:parsenoop },
-0x0151: { n:"BrtBeginEsmdb", f:parsenoop },
-0x0152: { n:"BrtEndEsmdb", f:parsenoop },
-0x0153: { n:"BrtBeginEsfmd", f:parsenoop },
-0x0154: { n:"BrtEndEsfmd", f:parsenoop },
-0x0155: { n:"BrtBeginSingleCells", f:parsenoop },
-0x0156: { n:"BrtEndSingleCells", f:parsenoop },
-0x0157: { n:"BrtBeginList", f:parsenoop },
-0x0158: { n:"BrtEndList", f:parsenoop },
-0x0159: { n:"BrtBeginListCols", f:parsenoop },
-0x015A: { n:"BrtEndListCols", f:parsenoop },
-0x015B: { n:"BrtBeginListCol", f:parsenoop },
-0x015C: { n:"BrtEndListCol", f:parsenoop },
-0x015D: { n:"BrtBeginListXmlCPr", f:parsenoop },
-0x015E: { n:"BrtEndListXmlCPr", f:parsenoop },
-0x015F: { n:"BrtListCCFmla", f:parsenoop },
-0x0160: { n:"BrtListTrFmla", f:parsenoop },
-0x0161: { n:"BrtBeginExternals", f:parsenoop },
-0x0162: { n:"BrtEndExternals", f:parsenoop },
-0x0163: { n:"BrtSupBookSrc", f:parsenoop },
-0x0165: { n:"BrtSupSelf", f:parsenoop },
-0x0166: { n:"BrtSupSame", f:parsenoop },
-0x0167: { n:"BrtSupTabs", f:parsenoop },
-0x0168: { n:"BrtBeginSupBook", f:parsenoop },
-0x0169: { n:"BrtPlaceholderName", f:parsenoop },
-0x016A: { n:"BrtExternSheet", f:parsenoop },
-0x016B: { n:"BrtExternTableStart", f:parsenoop },
-0x016C: { n:"BrtExternTableEnd", f:parsenoop },
-0x016E: { n:"BrtExternRowHdr", f:parsenoop },
-0x016F: { n:"BrtExternCellBlank", f:parsenoop },
-0x0170: { n:"BrtExternCellReal", f:parsenoop },
-0x0171: { n:"BrtExternCellBool", f:parsenoop },
-0x0172: { n:"BrtExternCellError", f:parsenoop },
-0x0173: { n:"BrtExternCellString", f:parsenoop },
-0x0174: { n:"BrtBeginEsmdx", f:parsenoop },
-0x0175: { n:"BrtEndEsmdx", f:parsenoop },
-0x0176: { n:"BrtBeginMdxSet", f:parsenoop },
-0x0177: { n:"BrtEndMdxSet", f:parsenoop },
-0x0178: { n:"BrtBeginMdxMbrProp", f:parsenoop },
-0x0179: { n:"BrtEndMdxMbrProp", f:parsenoop },
-0x017A: { n:"BrtBeginMdxKPI", f:parsenoop },
-0x017B: { n:"BrtEndMdxKPI", f:parsenoop },
-0x017C: { n:"BrtBeginEsstr", f:parsenoop },
-0x017D: { n:"BrtEndEsstr", f:parsenoop },
-0x017E: { n:"BrtBeginPRFItem", f:parsenoop },
-0x017F: { n:"BrtEndPRFItem", f:parsenoop },
-0x0180: { n:"BrtBeginPivotCacheIDs", f:parsenoop },
-0x0181: { n:"BrtEndPivotCacheIDs", f:parsenoop },
-0x0182: { n:"BrtBeginPivotCacheID", f:parsenoop },
-0x0183: { n:"BrtEndPivotCacheID", f:parsenoop },
-0x0184: { n:"BrtBeginISXVIs", f:parsenoop },
-0x0185: { n:"BrtEndISXVIs", f:parsenoop },
-0x0186: { n:"BrtBeginColInfos", f:parsenoop },
-0x0187: { n:"BrtEndColInfos", f:parsenoop },
-0x0188: { n:"BrtBeginRwBrk", f:parsenoop },
-0x0189: { n:"BrtEndRwBrk", f:parsenoop },
-0x018A: { n:"BrtBeginColBrk", f:parsenoop },
-0x018B: { n:"BrtEndColBrk", f:parsenoop },
-0x018C: { n:"BrtBrk", f:parsenoop },
-0x018D: { n:"BrtUserBookView", f:parsenoop },
-0x018E: { n:"BrtInfo", f:parsenoop },
-0x018F: { n:"BrtCUsr", f:parsenoop },
-0x0190: { n:"BrtUsr", f:parsenoop },
-0x0191: { n:"BrtBeginUsers", f:parsenoop },
-0x0193: { n:"BrtEOF", f:parsenoop },
-0x0194: { n:"BrtUCR", f:parsenoop },
-0x0195: { n:"BrtRRInsDel", f:parsenoop },
-0x0196: { n:"BrtRREndInsDel", f:parsenoop },
-0x0197: { n:"BrtRRMove", f:parsenoop },
-0x0198: { n:"BrtRREndMove", f:parsenoop },
-0x0199: { n:"BrtRRChgCell", f:parsenoop },
-0x019A: { n:"BrtRREndChgCell", f:parsenoop },
-0x019B: { n:"BrtRRHeader", f:parsenoop },
-0x019C: { n:"BrtRRUserView", f:parsenoop },
-0x019D: { n:"BrtRRRenSheet", f:parsenoop },
-0x019E: { n:"BrtRRInsertSh", f:parsenoop },
-0x019F: { n:"BrtRRDefName", f:parsenoop },
-0x01A0: { n:"BrtRRNote", f:parsenoop },
-0x01A1: { n:"BrtRRConflict", f:parsenoop },
-0x01A2: { n:"BrtRRTQSIF", f:parsenoop },
-0x01A3: { n:"BrtRRFormat", f:parsenoop },
-0x01A4: { n:"BrtRREndFormat", f:parsenoop },
-0x01A5: { n:"BrtRRAutoFmt", f:parsenoop },
-0x01A6: { n:"BrtBeginUserShViews", f:parsenoop },
-0x01A7: { n:"BrtBeginUserShView", f:parsenoop },
-0x01A8: { n:"BrtEndUserShView", f:parsenoop },
-0x01A9: { n:"BrtEndUserShViews", f:parsenoop },
-0x01AA: { n:"BrtArrFmla", f:parse_BrtArrFmla },
-0x01AB: { n:"BrtShrFmla", f:parse_BrtShrFmla },
-0x01AC: { n:"BrtTable", f:parsenoop },
-0x01AD: { n:"BrtBeginExtConnections", f:parsenoop },
-0x01AE: { n:"BrtEndExtConnections", f:parsenoop },
-0x01AF: { n:"BrtBeginPCDCalcMems", f:parsenoop },
-0x01B0: { n:"BrtEndPCDCalcMems", f:parsenoop },
-0x01B1: { n:"BrtBeginPCDCalcMem", f:parsenoop },
-0x01B2: { n:"BrtEndPCDCalcMem", f:parsenoop },
-0x01B3: { n:"BrtBeginPCDHGLevels", f:parsenoop },
-0x01B4: { n:"BrtEndPCDHGLevels", f:parsenoop },
-0x01B5: { n:"BrtBeginPCDHGLevel", f:parsenoop },
-0x01B6: { n:"BrtEndPCDHGLevel", f:parsenoop },
-0x01B7: { n:"BrtBeginPCDHGLGroups", f:parsenoop },
-0x01B8: { n:"BrtEndPCDHGLGroups", f:parsenoop },
-0x01B9: { n:"BrtBeginPCDHGLGroup", f:parsenoop },
-0x01BA: { n:"BrtEndPCDHGLGroup", f:parsenoop },
-0x01BB: { n:"BrtBeginPCDHGLGMembers", f:parsenoop },
-0x01BC: { n:"BrtEndPCDHGLGMembers", f:parsenoop },
-0x01BD: { n:"BrtBeginPCDHGLGMember", f:parsenoop },
-0x01BE: { n:"BrtEndPCDHGLGMember", f:parsenoop },
-0x01BF: { n:"BrtBeginQSI", f:parsenoop },
-0x01C0: { n:"BrtEndQSI", f:parsenoop },
-0x01C1: { n:"BrtBeginQSIR", f:parsenoop },
-0x01C2: { n:"BrtEndQSIR", f:parsenoop },
-0x01C3: { n:"BrtBeginDeletedNames", f:parsenoop },
-0x01C4: { n:"BrtEndDeletedNames", f:parsenoop },
-0x01C5: { n:"BrtBeginDeletedName", f:parsenoop },
-0x01C6: { n:"BrtEndDeletedName", f:parsenoop },
-0x01C7: { n:"BrtBeginQSIFs", f:parsenoop },
-0x01C8: { n:"BrtEndQSIFs", f:parsenoop },
-0x01C9: { n:"BrtBeginQSIF", f:parsenoop },
-0x01CA: { n:"BrtEndQSIF", f:parsenoop },
-0x01CB: { n:"BrtBeginAutoSortScope", f:parsenoop },
-0x01CC: { n:"BrtEndAutoSortScope", f:parsenoop },
-0x01CD: { n:"BrtBeginConditionalFormatting", f:parsenoop },
-0x01CE: { n:"BrtEndConditionalFormatting", f:parsenoop },
-0x01CF: { n:"BrtBeginCFRule", f:parsenoop },
-0x01D0: { n:"BrtEndCFRule", f:parsenoop },
-0x01D1: { n:"BrtBeginIconSet", f:parsenoop },
-0x01D2: { n:"BrtEndIconSet", f:parsenoop },
-0x01D3: { n:"BrtBeginDatabar", f:parsenoop },
-0x01D4: { n:"BrtEndDatabar", f:parsenoop },
-0x01D5: { n:"BrtBeginColorScale", f:parsenoop },
-0x01D6: { n:"BrtEndColorScale", f:parsenoop },
-0x01D7: { n:"BrtCFVO", f:parsenoop },
-0x01D8: { n:"BrtExternValueMeta", f:parsenoop },
-0x01D9: { n:"BrtBeginColorPalette", f:parsenoop },
-0x01DA: { n:"BrtEndColorPalette", f:parsenoop },
-0x01DB: { n:"BrtIndexedColor", f:parsenoop },
-0x01DC: { n:"BrtMargins", f:parsenoop },
-0x01DD: { n:"BrtPrintOptions", f:parsenoop },
-0x01DE: { n:"BrtPageSetup", f:parsenoop },
-0x01DF: { n:"BrtBeginHeaderFooter", f:parsenoop },
-0x01E0: { n:"BrtEndHeaderFooter", f:parsenoop },
-0x01E1: { n:"BrtBeginSXCrtFormat", f:parsenoop },
-0x01E2: { n:"BrtEndSXCrtFormat", f:parsenoop },
-0x01E3: { n:"BrtBeginSXCrtFormats", f:parsenoop },
-0x01E4: { n:"BrtEndSXCrtFormats", f:parsenoop },
-0x01E5: { n:"BrtWsFmtInfo", f:parsenoop },
-0x01E6: { n:"BrtBeginMgs", f:parsenoop },
-0x01E7: { n:"BrtEndMGs", f:parsenoop },
-0x01E8: { n:"BrtBeginMGMaps", f:parsenoop },
-0x01E9: { n:"BrtEndMGMaps", f:parsenoop },
-0x01EA: { n:"BrtBeginMG", f:parsenoop },
-0x01EB: { n:"BrtEndMG", f:parsenoop },
-0x01EC: { n:"BrtBeginMap", f:parsenoop },
-0x01ED: { n:"BrtEndMap", f:parsenoop },
-0x01EE: { n:"BrtHLink", f:parse_BrtHLink },
-0x01EF: { n:"BrtBeginDCon", f:parsenoop },
-0x01F0: { n:"BrtEndDCon", f:parsenoop },
-0x01F1: { n:"BrtBeginDRefs", f:parsenoop },
-0x01F2: { n:"BrtEndDRefs", f:parsenoop },
-0x01F3: { n:"BrtDRef", f:parsenoop },
-0x01F4: { n:"BrtBeginScenMan", f:parsenoop },
-0x01F5: { n:"BrtEndScenMan", f:parsenoop },
-0x01F6: { n:"BrtBeginSct", f:parsenoop },
-0x01F7: { n:"BrtEndSct", f:parsenoop },
-0x01F8: { n:"BrtSlc", f:parsenoop },
-0x01F9: { n:"BrtBeginDXFs", f:parsenoop },
-0x01FA: { n:"BrtEndDXFs", f:parsenoop },
-0x01FB: { n:"BrtDXF", f:parsenoop },
-0x01FC: { n:"BrtBeginTableStyles", f:parsenoop },
-0x01FD: { n:"BrtEndTableStyles", f:parsenoop },
-0x01FE: { n:"BrtBeginTableStyle", f:parsenoop },
-0x01FF: { n:"BrtEndTableStyle", f:parsenoop },
-0x0200: { n:"BrtTableStyleElement", f:parsenoop },
-0x0201: { n:"BrtTableStyleClient", f:parsenoop },
-0x0202: { n:"BrtBeginVolDeps", f:parsenoop },
-0x0203: { n:"BrtEndVolDeps", f:parsenoop },
-0x0204: { n:"BrtBeginVolType", f:parsenoop },
-0x0205: { n:"BrtEndVolType", f:parsenoop },
-0x0206: { n:"BrtBeginVolMain", f:parsenoop },
-0x0207: { n:"BrtEndVolMain", f:parsenoop },
-0x0208: { n:"BrtBeginVolTopic", f:parsenoop },
-0x0209: { n:"BrtEndVolTopic", f:parsenoop },
-0x020A: { n:"BrtVolSubtopic", f:parsenoop },
-0x020B: { n:"BrtVolRef", f:parsenoop },
-0x020C: { n:"BrtVolNum", f:parsenoop },
-0x020D: { n:"BrtVolErr", f:parsenoop },
-0x020E: { n:"BrtVolStr", f:parsenoop },
-0x020F: { n:"BrtVolBool", f:parsenoop },
-0x0210: { n:"BrtBeginCalcChain$", f:parsenoop },
-0x0211: { n:"BrtEndCalcChain$", f:parsenoop },
-0x0212: { n:"BrtBeginSortState", f:parsenoop },
-0x0213: { n:"BrtEndSortState", f:parsenoop },
-0x0214: { n:"BrtBeginSortCond", f:parsenoop },
-0x0215: { n:"BrtEndSortCond", f:parsenoop },
-0x0216: { n:"BrtBookProtection", f:parsenoop },
-0x0217: { n:"BrtSheetProtection", f:parsenoop },
-0x0218: { n:"BrtRangeProtection", f:parsenoop },
-0x0219: { n:"BrtPhoneticInfo", f:parsenoop },
-0x021A: { n:"BrtBeginECTxtWiz", f:parsenoop },
-0x021B: { n:"BrtEndECTxtWiz", f:parsenoop },
-0x021C: { n:"BrtBeginECTWFldInfoLst", f:parsenoop },
-0x021D: { n:"BrtEndECTWFldInfoLst", f:parsenoop },
-0x021E: { n:"BrtBeginECTwFldInfo", f:parsenoop },
-0x0224: { n:"BrtFileSharing", f:parsenoop },
-0x0225: { n:"BrtOleSize", f:parsenoop },
-0x0226: { n:"BrtDrawing", f:parsenoop },
-0x0227: { n:"BrtLegacyDrawing", f:parsenoop },
-0x0228: { n:"BrtLegacyDrawingHF", f:parsenoop },
-0x0229: { n:"BrtWebOpt", f:parsenoop },
-0x022A: { n:"BrtBeginWebPubItems", f:parsenoop },
-0x022B: { n:"BrtEndWebPubItems", f:parsenoop },
-0x022C: { n:"BrtBeginWebPubItem", f:parsenoop },
-0x022D: { n:"BrtEndWebPubItem", f:parsenoop },
-0x022E: { n:"BrtBeginSXCondFmt", f:parsenoop },
-0x022F: { n:"BrtEndSXCondFmt", f:parsenoop },
-0x0230: { n:"BrtBeginSXCondFmts", f:parsenoop },
-0x0231: { n:"BrtEndSXCondFmts", f:parsenoop },
-0x0232: { n:"BrtBkHim", f:parsenoop },
-0x0234: { n:"BrtColor", f:parsenoop },
-0x0235: { n:"BrtBeginIndexedColors", f:parsenoop },
-0x0236: { n:"BrtEndIndexedColors", f:parsenoop },
-0x0239: { n:"BrtBeginMRUColors", f:parsenoop },
-0x023A: { n:"BrtEndMRUColors", f:parsenoop },
-0x023C: { n:"BrtMRUColor", f:parsenoop },
-0x023D: { n:"BrtBeginDVals", f:parsenoop },
-0x023E: { n:"BrtEndDVals", f:parsenoop },
-0x0241: { n:"BrtSupNameStart", f:parsenoop },
-0x0242: { n:"BrtSupNameValueStart", f:parsenoop },
-0x0243: { n:"BrtSupNameValueEnd", f:parsenoop },
-0x0244: { n:"BrtSupNameNum", f:parsenoop },
-0x0245: { n:"BrtSupNameErr", f:parsenoop },
-0x0246: { n:"BrtSupNameSt", f:parsenoop },
-0x0247: { n:"BrtSupNameNil", f:parsenoop },
-0x0248: { n:"BrtSupNameBool", f:parsenoop },
-0x0249: { n:"BrtSupNameFmla", f:parsenoop },
-0x024A: { n:"BrtSupNameBits", f:parsenoop },
-0x024B: { n:"BrtSupNameEnd", f:parsenoop },
-0x024C: { n:"BrtEndSupBook", f:parsenoop },
-0x024D: { n:"BrtCellSmartTagProperty", f:parsenoop },
-0x024E: { n:"BrtBeginCellSmartTag", f:parsenoop },
-0x024F: { n:"BrtEndCellSmartTag", f:parsenoop },
-0x0250: { n:"BrtBeginCellSmartTags", f:parsenoop },
-0x0251: { n:"BrtEndCellSmartTags", f:parsenoop },
-0x0252: { n:"BrtBeginSmartTags", f:parsenoop },
-0x0253: { n:"BrtEndSmartTags", f:parsenoop },
-0x0254: { n:"BrtSmartTagType", f:parsenoop },
-0x0255: { n:"BrtBeginSmartTagTypes", f:parsenoop },
-0x0256: { n:"BrtEndSmartTagTypes", f:parsenoop },
-0x0257: { n:"BrtBeginSXFilters", f:parsenoop },
-0x0258: { n:"BrtEndSXFilters", f:parsenoop },
-0x0259: { n:"BrtBeginSXFILTER", f:parsenoop },
-0x025A: { n:"BrtEndSXFilter", f:parsenoop },
-0x025B: { n:"BrtBeginFills", f:parsenoop },
-0x025C: { n:"BrtEndFills", f:parsenoop },
-0x025D: { n:"BrtBeginCellWatches", f:parsenoop },
-0x025E: { n:"BrtEndCellWatches", f:parsenoop },
-0x025F: { n:"BrtCellWatch", f:parsenoop },
-0x0260: { n:"BrtBeginCRErrs", f:parsenoop },
-0x0261: { n:"BrtEndCRErrs", f:parsenoop },
-0x0262: { n:"BrtCrashRecErr", f:parsenoop },
-0x0263: { n:"BrtBeginFonts", f:parsenoop },
-0x0264: { n:"BrtEndFonts", f:parsenoop },
-0x0265: { n:"BrtBeginBorders", f:parsenoop },
-0x0266: { n:"BrtEndBorders", f:parsenoop },
-0x0267: { n:"BrtBeginFmts", f:parsenoop },
-0x0268: { n:"BrtEndFmts", f:parsenoop },
-0x0269: { n:"BrtBeginCellXFs", f:parsenoop },
-0x026A: { n:"BrtEndCellXFs", f:parsenoop },
-0x026B: { n:"BrtBeginStyles", f:parsenoop },
-0x026C: { n:"BrtEndStyles", f:parsenoop },
-0x0271: { n:"BrtBigName", f:parsenoop },
-0x0272: { n:"BrtBeginCellStyleXFs", f:parsenoop },
-0x0273: { n:"BrtEndCellStyleXFs", f:parsenoop },
-0x0274: { n:"BrtBeginComments", f:parsenoop },
-0x0275: { n:"BrtEndComments", f:parsenoop },
-0x0276: { n:"BrtBeginCommentAuthors", f:parsenoop },
-0x0277: { n:"BrtEndCommentAuthors", f:parsenoop },
-0x0278: { n:"BrtCommentAuthor", f:parse_BrtCommentAuthor },
-0x0279: { n:"BrtBeginCommentList", f:parsenoop },
-0x027A: { n:"BrtEndCommentList", f:parsenoop },
-0x027B: { n:"BrtBeginComment", f:parse_BrtBeginComment},
-0x027C: { n:"BrtEndComment", f:parsenoop },
-0x027D: { n:"BrtCommentText", f:parse_BrtCommentText },
-0x027E: { n:"BrtBeginOleObjects", f:parsenoop },
-0x027F: { n:"BrtOleObject", f:parsenoop },
-0x0280: { n:"BrtEndOleObjects", f:parsenoop },
-0x0281: { n:"BrtBeginSxrules", f:parsenoop },
-0x0282: { n:"BrtEndSxRules", f:parsenoop },
-0x0283: { n:"BrtBeginActiveXControls", f:parsenoop },
-0x0284: { n:"BrtActiveX", f:parsenoop },
-0x0285: { n:"BrtEndActiveXControls", f:parsenoop },
-0x0286: { n:"BrtBeginPCDSDTCEMembersSortBy", f:parsenoop },
-0x0288: { n:"BrtBeginCellIgnoreECs", f:parsenoop },
-0x0289: { n:"BrtCellIgnoreEC", f:parsenoop },
-0x028A: { n:"BrtEndCellIgnoreECs", f:parsenoop },
-0x028B: { n:"BrtCsProp", f:parsenoop },
-0x028C: { n:"BrtCsPageSetup", f:parsenoop },
-0x028D: { n:"BrtBeginUserCsViews", f:parsenoop },
-0x028E: { n:"BrtEndUserCsViews", f:parsenoop },
-0x028F: { n:"BrtBeginUserCsView", f:parsenoop },
-0x0290: { n:"BrtEndUserCsView", f:parsenoop },
-0x0291: { n:"BrtBeginPcdSFCIEntries", f:parsenoop },
-0x0292: { n:"BrtEndPCDSFCIEntries", f:parsenoop },
-0x0293: { n:"BrtPCDSFCIEntry", f:parsenoop },
-0x0294: { n:"BrtBeginListParts", f:parsenoop },
-0x0295: { n:"BrtListPart", f:parsenoop },
-0x0296: { n:"BrtEndListParts", f:parsenoop },
-0x0297: { n:"BrtSheetCalcProp", f:parsenoop },
-0x0298: { n:"BrtBeginFnGroup", f:parsenoop },
-0x0299: { n:"BrtFnGroup", f:parsenoop },
-0x029A: { n:"BrtEndFnGroup", f:parsenoop },
-0x029B: { n:"BrtSupAddin", f:parsenoop },
-0x029C: { n:"BrtSXTDMPOrder", f:parsenoop },
-0x029D: { n:"BrtCsProtection", f:parsenoop },
-0x029F: { n:"BrtBeginWsSortMap", f:parsenoop },
-0x02A0: { n:"BrtEndWsSortMap", f:parsenoop },
-0x02A1: { n:"BrtBeginRRSort", f:parsenoop },
-0x02A2: { n:"BrtEndRRSort", f:parsenoop },
-0x02A3: { n:"BrtRRSortItem", f:parsenoop },
-0x02A4: { n:"BrtFileSharingIso", f:parsenoop },
-0x02A5: { n:"BrtBookProtectionIso", f:parsenoop },
-0x02A6: { n:"BrtSheetProtectionIso", f:parsenoop },
-0x02A7: { n:"BrtCsProtectionIso", f:parsenoop },
-0x02A8: { n:"BrtRangeProtectionIso", f:parsenoop },
-0x0400: { n:"BrtRwDescent", f:parsenoop },
-0x0401: { n:"BrtKnownFonts", f:parsenoop },
-0x0402: { n:"BrtBeginSXTupleSet", f:parsenoop },
-0x0403: { n:"BrtEndSXTupleSet", f:parsenoop },
-0x0404: { n:"BrtBeginSXTupleSetHeader", f:parsenoop },
-0x0405: { n:"BrtEndSXTupleSetHeader", f:parsenoop },
-0x0406: { n:"BrtSXTupleSetHeaderItem", f:parsenoop },
-0x0407: { n:"BrtBeginSXTupleSetData", f:parsenoop },
-0x0408: { n:"BrtEndSXTupleSetData", f:parsenoop },
-0x0409: { n:"BrtBeginSXTupleSetRow", f:parsenoop },
-0x040A: { n:"BrtEndSXTupleSetRow", f:parsenoop },
-0x040B: { n:"BrtSXTupleSetRowItem", f:parsenoop },
-0x040C: { n:"BrtNameExt", f:parsenoop },
-0x040D: { n:"BrtPCDH14", f:parsenoop },
-0x040E: { n:"BrtBeginPCDCalcMem14", f:parsenoop },
-0x040F: { n:"BrtEndPCDCalcMem14", f:parsenoop },
-0x0410: { n:"BrtSXTH14", f:parsenoop },
-0x0411: { n:"BrtBeginSparklineGroup", f:parsenoop },
-0x0412: { n:"BrtEndSparklineGroup", f:parsenoop },
-0x0413: { n:"BrtSparkline", f:parsenoop },
-0x0414: { n:"BrtSXDI14", f:parsenoop },
-0x0415: { n:"BrtWsFmtInfoEx14", f:parsenoop },
-0x0416: { n:"BrtBeginConditionalFormatting14", f:parsenoop },
-0x0417: { n:"BrtEndConditionalFormatting14", f:parsenoop },
-0x0418: { n:"BrtBeginCFRule14", f:parsenoop },
-0x0419: { n:"BrtEndCFRule14", f:parsenoop },
-0x041A: { n:"BrtCFVO14", f:parsenoop },
-0x041B: { n:"BrtBeginDatabar14", f:parsenoop },
-0x041C: { n:"BrtBeginIconSet14", f:parsenoop },
-0x041D: { n:"BrtDVal14", f:parsenoop },
-0x041E: { n:"BrtBeginDVals14", f:parsenoop },
-0x041F: { n:"BrtColor14", f:parsenoop },
-0x0420: { n:"BrtBeginSparklines", f:parsenoop },
-0x0421: { n:"BrtEndSparklines", f:parsenoop },
-0x0422: { n:"BrtBeginSparklineGroups", f:parsenoop },
-0x0423: { n:"BrtEndSparklineGroups", f:parsenoop },
-0x0425: { n:"BrtSXVD14", f:parsenoop },
-0x0426: { n:"BrtBeginSxview14", f:parsenoop },
-0x0427: { n:"BrtEndSxview14", f:parsenoop },
-0x042A: { n:"BrtBeginPCD14", f:parsenoop },
-0x042B: { n:"BrtEndPCD14", f:parsenoop },
-0x042C: { n:"BrtBeginExtConn14", f:parsenoop },
-0x042D: { n:"BrtEndExtConn14", f:parsenoop },
-0x042E: { n:"BrtBeginSlicerCacheIDs", f:parsenoop },
-0x042F: { n:"BrtEndSlicerCacheIDs", f:parsenoop },
-0x0430: { n:"BrtBeginSlicerCacheID", f:parsenoop },
-0x0431: { n:"BrtEndSlicerCacheID", f:parsenoop },
-0x0433: { n:"BrtBeginSlicerCache", f:parsenoop },
-0x0434: { n:"BrtEndSlicerCache", f:parsenoop },
-0x0435: { n:"BrtBeginSlicerCacheDef", f:parsenoop },
-0x0436: { n:"BrtEndSlicerCacheDef", f:parsenoop },
-0x0437: { n:"BrtBeginSlicersEx", f:parsenoop },
-0x0438: { n:"BrtEndSlicersEx", f:parsenoop },
-0x0439: { n:"BrtBeginSlicerEx", f:parsenoop },
-0x043A: { n:"BrtEndSlicerEx", f:parsenoop },
-0x043B: { n:"BrtBeginSlicer", f:parsenoop },
-0x043C: { n:"BrtEndSlicer", f:parsenoop },
-0x043D: { n:"BrtSlicerCachePivotTables", f:parsenoop },
-0x043E: { n:"BrtBeginSlicerCacheOlapImpl", f:parsenoop },
-0x043F: { n:"BrtEndSlicerCacheOlapImpl", f:parsenoop },
-0x0440: { n:"BrtBeginSlicerCacheLevelsData", f:parsenoop },
-0x0441: { n:"BrtEndSlicerCacheLevelsData", f:parsenoop },
-0x0442: { n:"BrtBeginSlicerCacheLevelData", f:parsenoop },
-0x0443: { n:"BrtEndSlicerCacheLevelData", f:parsenoop },
-0x0444: { n:"BrtBeginSlicerCacheSiRanges", f:parsenoop },
-0x0445: { n:"BrtEndSlicerCacheSiRanges", f:parsenoop },
-0x0446: { n:"BrtBeginSlicerCacheSiRange", f:parsenoop },
-0x0447: { n:"BrtEndSlicerCacheSiRange", f:parsenoop },
-0x0448: { n:"BrtSlicerCacheOlapItem", f:parsenoop },
-0x0449: { n:"BrtBeginSlicerCacheSelections", f:parsenoop },
-0x044A: { n:"BrtSlicerCacheSelection", f:parsenoop },
-0x044B: { n:"BrtEndSlicerCacheSelections", f:parsenoop },
-0x044C: { n:"BrtBeginSlicerCacheNative", f:parsenoop },
-0x044D: { n:"BrtEndSlicerCacheNative", f:parsenoop },
-0x044E: { n:"BrtSlicerCacheNativeItem", f:parsenoop },
-0x044F: { n:"BrtRangeProtection14", f:parsenoop },
-0x0450: { n:"BrtRangeProtectionIso14", f:parsenoop },
-0x0451: { n:"BrtCellIgnoreEC14", f:parsenoop },
-0x0457: { n:"BrtList14", f:parsenoop },
-0x0458: { n:"BrtCFIcon", f:parsenoop },
-0x0459: { n:"BrtBeginSlicerCachesPivotCacheIDs", f:parsenoop },
-0x045A: { n:"BrtEndSlicerCachesPivotCacheIDs", f:parsenoop },
-0x045B: { n:"BrtBeginSlicers", f:parsenoop },
-0x045C: { n:"BrtEndSlicers", f:parsenoop },
-0x045D: { n:"BrtWbProp14", f:parsenoop },
-0x045E: { n:"BrtBeginSXEdit", f:parsenoop },
-0x045F: { n:"BrtEndSXEdit", f:parsenoop },
-0x0460: { n:"BrtBeginSXEdits", f:parsenoop },
-0x0461: { n:"BrtEndSXEdits", f:parsenoop },
-0x0462: { n:"BrtBeginSXChange", f:parsenoop },
-0x0463: { n:"BrtEndSXChange", f:parsenoop },
-0x0464: { n:"BrtBeginSXChanges", f:parsenoop },
-0x0465: { n:"BrtEndSXChanges", f:parsenoop },
-0x0466: { n:"BrtSXTupleItems", f:parsenoop },
-0x0468: { n:"BrtBeginSlicerStyle", f:parsenoop },
-0x0469: { n:"BrtEndSlicerStyle", f:parsenoop },
-0x046A: { n:"BrtSlicerStyleElement", f:parsenoop },
-0x046B: { n:"BrtBeginStyleSheetExt14", f:parsenoop },
-0x046C: { n:"BrtEndStyleSheetExt14", f:parsenoop },
-0x046D: { n:"BrtBeginSlicerCachesPivotCacheID", f:parsenoop },
-0x046E: { n:"BrtEndSlicerCachesPivotCacheID", f:parsenoop },
-0x046F: { n:"BrtBeginConditionalFormattings", f:parsenoop },
-0x0470: { n:"BrtEndConditionalFormattings", f:parsenoop },
-0x0471: { n:"BrtBeginPCDCalcMemExt", f:parsenoop },
-0x0472: { n:"BrtEndPCDCalcMemExt", f:parsenoop },
-0x0473: { n:"BrtBeginPCDCalcMemsExt", f:parsenoop },
-0x0474: { n:"BrtEndPCDCalcMemsExt", f:parsenoop },
-0x0475: { n:"BrtPCDField14", f:parsenoop },
-0x0476: { n:"BrtBeginSlicerStyles", f:parsenoop },
-0x0477: { n:"BrtEndSlicerStyles", f:parsenoop },
-0x0478: { n:"BrtBeginSlicerStyleElements", f:parsenoop },
-0x0479: { n:"BrtEndSlicerStyleElements", f:parsenoop },
-0x047A: { n:"BrtCFRuleExt", f:parsenoop },
-0x047B: { n:"BrtBeginSXCondFmt14", f:parsenoop },
-0x047C: { n:"BrtEndSXCondFmt14", f:parsenoop },
-0x047D: { n:"BrtBeginSXCondFmts14", f:parsenoop },
-0x047E: { n:"BrtEndSXCondFmts14", f:parsenoop },
-0x0480: { n:"BrtBeginSortCond14", f:parsenoop },
-0x0481: { n:"BrtEndSortCond14", f:parsenoop },
-0x0482: { n:"BrtEndDVals14", f:parsenoop },
-0x0483: { n:"BrtEndIconSet14", f:parsenoop },
-0x0484: { n:"BrtEndDatabar14", f:parsenoop },
-0x0485: { n:"BrtBeginColorScale14", f:parsenoop },
-0x0486: { n:"BrtEndColorScale14", f:parsenoop },
-0x0487: { n:"BrtBeginSxrules14", f:parsenoop },
-0x0488: { n:"BrtEndSxrules14", f:parsenoop },
-0x0489: { n:"BrtBeginPRule14", f:parsenoop },
-0x048A: { n:"BrtEndPRule14", f:parsenoop },
-0x048B: { n:"BrtBeginPRFilters14", f:parsenoop },
-0x048C: { n:"BrtEndPRFilters14", f:parsenoop },
-0x048D: { n:"BrtBeginPRFilter14", f:parsenoop },
-0x048E: { n:"BrtEndPRFilter14", f:parsenoop },
-0x048F: { n:"BrtBeginPRFItem14", f:parsenoop },
-0x0490: { n:"BrtEndPRFItem14", f:parsenoop },
-0x0491: { n:"BrtBeginCellIgnoreECs14", f:parsenoop },
-0x0492: { n:"BrtEndCellIgnoreECs14", f:parsenoop },
-0x0493: { n:"BrtDxf14", f:parsenoop },
-0x0494: { n:"BrtBeginDxF14s", f:parsenoop },
-0x0495: { n:"BrtEndDxf14s", f:parsenoop },
-0x0499: { n:"BrtFilter14", f:parsenoop },
-0x049A: { n:"BrtBeginCustomFilters14", f:parsenoop },
-0x049C: { n:"BrtCustomFilter14", f:parsenoop },
-0x049D: { n:"BrtIconFilter14", f:parsenoop },
-0x049E: { n:"BrtPivotCacheConnectionName", f:parsenoop },
-0x0800: { n:"BrtBeginDecoupledPivotCacheIDs", f:parsenoop },
-0x0801: { n:"BrtEndDecoupledPivotCacheIDs", f:parsenoop },
-0x0802: { n:"BrtDecoupledPivotCacheID", f:parsenoop },
-0x0803: { n:"BrtBeginPivotTableRefs", f:parsenoop },
-0x0804: { n:"BrtEndPivotTableRefs", f:parsenoop },
-0x0805: { n:"BrtPivotTableRef", f:parsenoop },
-0x0806: { n:"BrtSlicerCacheBookPivotTables", f:parsenoop },
-0x0807: { n:"BrtBeginSxvcells", f:parsenoop },
-0x0808: { n:"BrtEndSxvcells", f:parsenoop },
-0x0809: { n:"BrtBeginSxRow", f:parsenoop },
-0x080A: { n:"BrtEndSxRow", f:parsenoop },
-0x080C: { n:"BrtPcdCalcMem15", f:parsenoop },
-0x0813: { n:"BrtQsi15", f:parsenoop },
-0x0814: { n:"BrtBeginWebExtensions", f:parsenoop },
-0x0815: { n:"BrtEndWebExtensions", f:parsenoop },
-0x0816: { n:"BrtWebExtension", f:parsenoop },
-0x0817: { n:"BrtAbsPath15", f:parsenoop },
-0x0818: { n:"BrtBeginPivotTableUISettings", f:parsenoop },
-0x0819: { n:"BrtEndPivotTableUISettings", f:parsenoop },
-0x081B: { n:"BrtTableSlicerCacheIDs", f:parsenoop },
-0x081C: { n:"BrtTableSlicerCacheID", f:parsenoop },
-0x081D: { n:"BrtBeginTableSlicerCache", f:parsenoop },
-0x081E: { n:"BrtEndTableSlicerCache", f:parsenoop },
-0x081F: { n:"BrtSxFilter15", f:parsenoop },
-0x0820: { n:"BrtBeginTimelineCachePivotCacheIDs", f:parsenoop },
-0x0821: { n:"BrtEndTimelineCachePivotCacheIDs", f:parsenoop },
-0x0822: { n:"BrtTimelineCachePivotCacheID", f:parsenoop },
-0x0823: { n:"BrtBeginTimelineCacheIDs", f:parsenoop },
-0x0824: { n:"BrtEndTimelineCacheIDs", f:parsenoop },
-0x0825: { n:"BrtBeginTimelineCacheID", f:parsenoop },
-0x0826: { n:"BrtEndTimelineCacheID", f:parsenoop },
-0x0827: { n:"BrtBeginTimelinesEx", f:parsenoop },
-0x0828: { n:"BrtEndTimelinesEx", f:parsenoop },
-0x0829: { n:"BrtBeginTimelineEx", f:parsenoop },
-0x082A: { n:"BrtEndTimelineEx", f:parsenoop },
-0x082B: { n:"BrtWorkBookPr15", f:parsenoop },
-0x082C: { n:"BrtPCDH15", f:parsenoop },
-0x082D: { n:"BrtBeginTimelineStyle", f:parsenoop },
-0x082E: { n:"BrtEndTimelineStyle", f:parsenoop },
-0x082F: { n:"BrtTimelineStyleElement", f:parsenoop },
-0x0830: { n:"BrtBeginTimelineStylesheetExt15", f:parsenoop },
-0x0831: { n:"BrtEndTimelineStylesheetExt15", f:parsenoop },
-0x0832: { n:"BrtBeginTimelineStyles", f:parsenoop },
-0x0833: { n:"BrtEndTimelineStyles", f:parsenoop },
-0x0834: { n:"BrtBeginTimelineStyleElements", f:parsenoop },
-0x0835: { n:"BrtEndTimelineStyleElements", f:parsenoop },
-0x0836: { n:"BrtDxf15", f:parsenoop },
-0x0837: { n:"BrtBeginDxfs15", f:parsenoop },
-0x0838: { n:"brtEndDxfs15", f:parsenoop },
-0x0839: { n:"BrtSlicerCacheHideItemsWithNoData", f:parsenoop },
-0x083A: { n:"BrtBeginItemUniqueNames", f:parsenoop },
-0x083B: { n:"BrtEndItemUniqueNames", f:parsenoop },
-0x083C: { n:"BrtItemUniqueName", f:parsenoop },
-0x083D: { n:"BrtBeginExtConn15", f:parsenoop },
-0x083E: { n:"BrtEndExtConn15", f:parsenoop },
-0x083F: { n:"BrtBeginOledbPr15", f:parsenoop },
-0x0840: { n:"BrtEndOledbPr15", f:parsenoop },
-0x0841: { n:"BrtBeginDataFeedPr15", f:parsenoop },
-0x0842: { n:"BrtEndDataFeedPr15", f:parsenoop },
-0x0843: { n:"BrtTextPr15", f:parsenoop },
-0x0844: { n:"BrtRangePr15", f:parsenoop },
-0x0845: { n:"BrtDbCommand15", f:parsenoop },
-0x0846: { n:"BrtBeginDbTables15", f:parsenoop },
-0x0847: { n:"BrtEndDbTables15", f:parsenoop },
-0x0848: { n:"BrtDbTable15", f:parsenoop },
-0x0849: { n:"BrtBeginDataModel", f:parsenoop },
-0x084A: { n:"BrtEndDataModel", f:parsenoop },
-0x084B: { n:"BrtBeginModelTables", f:parsenoop },
-0x084C: { n:"BrtEndModelTables", f:parsenoop },
-0x084D: { n:"BrtModelTable", f:parsenoop },
-0x084E: { n:"BrtBeginModelRelationships", f:parsenoop },
-0x084F: { n:"BrtEndModelRelationships", f:parsenoop },
-0x0850: { n:"BrtModelRelationship", f:parsenoop },
-0x0851: { n:"BrtBeginECTxtWiz15", f:parsenoop },
-0x0852: { n:"BrtEndECTxtWiz15", f:parsenoop },
-0x0853: { n:"BrtBeginECTWFldInfoLst15", f:parsenoop },
-0x0854: { n:"BrtEndECTWFldInfoLst15", f:parsenoop },
-0x0855: { n:"BrtBeginECTWFldInfo15", f:parsenoop },
-0x0856: { n:"BrtFieldListActiveItem", f:parsenoop },
-0x0857: { n:"BrtPivotCacheIdVersion", f:parsenoop },
-0x0858: { n:"BrtSXDI15", f:parsenoop },
-0xFFFF: { n:"", f:parsenoop }
+	/*::[*/0x0000/*::]*/: { n:"BrtRowHdr", f:parse_BrtRowHdr },
+	/*::[*/0x0001/*::]*/: { n:"BrtCellBlank", f:parse_BrtCellBlank },
+	/*::[*/0x0002/*::]*/: { n:"BrtCellRk", f:parse_BrtCellRk },
+	/*::[*/0x0003/*::]*/: { n:"BrtCellError", f:parse_BrtCellError },
+	/*::[*/0x0004/*::]*/: { n:"BrtCellBool", f:parse_BrtCellBool },
+	/*::[*/0x0005/*::]*/: { n:"BrtCellReal", f:parse_BrtCellReal },
+	/*::[*/0x0006/*::]*/: { n:"BrtCellSt", f:parse_BrtCellSt },
+	/*::[*/0x0007/*::]*/: { n:"BrtCellIsst", f:parse_BrtCellIsst },
+	/*::[*/0x0008/*::]*/: { n:"BrtFmlaString", f:parse_BrtFmlaString },
+	/*::[*/0x0009/*::]*/: { n:"BrtFmlaNum", f:parse_BrtFmlaNum },
+	/*::[*/0x000A/*::]*/: { n:"BrtFmlaBool", f:parse_BrtFmlaBool },
+	/*::[*/0x000B/*::]*/: { n:"BrtFmlaError", f:parse_BrtFmlaError },
+	/*::[*/0x0010/*::]*/: { n:"BrtFRTArchID$", f:parse_BrtFRTArchID$ },
+	/*::[*/0x0013/*::]*/: { n:"BrtSSTItem", f:parse_RichStr },
+	/*::[*/0x0014/*::]*/: { n:"BrtPCDIMissing", f:parsenoop },
+	/*::[*/0x0015/*::]*/: { n:"BrtPCDINumber", f:parsenoop },
+	/*::[*/0x0016/*::]*/: { n:"BrtPCDIBoolean", f:parsenoop },
+	/*::[*/0x0017/*::]*/: { n:"BrtPCDIError", f:parsenoop },
+	/*::[*/0x0018/*::]*/: { n:"BrtPCDIString", f:parsenoop },
+	/*::[*/0x0019/*::]*/: { n:"BrtPCDIDatetime", f:parsenoop },
+	/*::[*/0x001A/*::]*/: { n:"BrtPCDIIndex", f:parsenoop },
+	/*::[*/0x001B/*::]*/: { n:"BrtPCDIAMissing", f:parsenoop },
+	/*::[*/0x001C/*::]*/: { n:"BrtPCDIANumber", f:parsenoop },
+	/*::[*/0x001D/*::]*/: { n:"BrtPCDIABoolean", f:parsenoop },
+	/*::[*/0x001E/*::]*/: { n:"BrtPCDIAError", f:parsenoop },
+	/*::[*/0x001F/*::]*/: { n:"BrtPCDIAString", f:parsenoop },
+	/*::[*/0x0020/*::]*/: { n:"BrtPCDIADatetime", f:parsenoop },
+	/*::[*/0x0021/*::]*/: { n:"BrtPCRRecord", f:parsenoop },
+	/*::[*/0x0022/*::]*/: { n:"BrtPCRRecordDt", f:parsenoop },
+	/*::[*/0x0023/*::]*/: { n:"BrtFRTBegin", f:parsenoop },
+	/*::[*/0x0024/*::]*/: { n:"BrtFRTEnd", f:parsenoop },
+	/*::[*/0x0025/*::]*/: { n:"BrtACBegin", f:parsenoop },
+	/*::[*/0x0026/*::]*/: { n:"BrtACEnd", f:parsenoop },
+	/*::[*/0x0027/*::]*/: { n:"BrtName", f:parse_BrtName },
+	/*::[*/0x0028/*::]*/: { n:"BrtIndexRowBlock", f:parsenoop },
+	/*::[*/0x002A/*::]*/: { n:"BrtIndexBlock", f:parsenoop },
+	/*::[*/0x002B/*::]*/: { n:"BrtFont", f:parse_BrtFont },
+	/*::[*/0x002C/*::]*/: { n:"BrtFmt", f:parse_BrtFmt },
+	/*::[*/0x002D/*::]*/: { n:"BrtFill", f:parsenoop },
+	/*::[*/0x002E/*::]*/: { n:"BrtBorder", f:parsenoop },
+	/*::[*/0x002F/*::]*/: { n:"BrtXF", f:parse_BrtXF },
+	/*::[*/0x0030/*::]*/: { n:"BrtStyle", f:parsenoop },
+	/*::[*/0x0031/*::]*/: { n:"BrtCellMeta", f:parsenoop },
+	/*::[*/0x0032/*::]*/: { n:"BrtValueMeta", f:parsenoop },
+	/*::[*/0x0033/*::]*/: { n:"BrtMdb", f:parsenoop },
+	/*::[*/0x0034/*::]*/: { n:"BrtBeginFmd", f:parsenoop },
+	/*::[*/0x0035/*::]*/: { n:"BrtEndFmd", f:parsenoop },
+	/*::[*/0x0036/*::]*/: { n:"BrtBeginMdx", f:parsenoop },
+	/*::[*/0x0037/*::]*/: { n:"BrtEndMdx", f:parsenoop },
+	/*::[*/0x0038/*::]*/: { n:"BrtBeginMdxTuple", f:parsenoop },
+	/*::[*/0x0039/*::]*/: { n:"BrtEndMdxTuple", f:parsenoop },
+	/*::[*/0x003A/*::]*/: { n:"BrtMdxMbrIstr", f:parsenoop },
+	/*::[*/0x003B/*::]*/: { n:"BrtStr", f:parsenoop },
+	/*::[*/0x003C/*::]*/: { n:"BrtColInfo", f:parsenoop },
+	/*::[*/0x003E/*::]*/: { n:"BrtCellRString", f:parsenoop },
+	/*::[*/0x003F/*::]*/: { n:"BrtCalcChainItem$", f:parse_BrtCalcChainItem$ },
+	/*::[*/0x0040/*::]*/: { n:"BrtDVal", f:parsenoop },
+	/*::[*/0x0041/*::]*/: { n:"BrtSxvcellNum", f:parsenoop },
+	/*::[*/0x0042/*::]*/: { n:"BrtSxvcellStr", f:parsenoop },
+	/*::[*/0x0043/*::]*/: { n:"BrtSxvcellBool", f:parsenoop },
+	/*::[*/0x0044/*::]*/: { n:"BrtSxvcellErr", f:parsenoop },
+	/*::[*/0x0045/*::]*/: { n:"BrtSxvcellDate", f:parsenoop },
+	/*::[*/0x0046/*::]*/: { n:"BrtSxvcellNil", f:parsenoop },
+	/*::[*/0x0080/*::]*/: { n:"BrtFileVersion", f:parsenoop },
+	/*::[*/0x0081/*::]*/: { n:"BrtBeginSheet", f:parsenoop },
+	/*::[*/0x0082/*::]*/: { n:"BrtEndSheet", f:parsenoop },
+	/*::[*/0x0083/*::]*/: { n:"BrtBeginBook", f:parsenoop, p:0 },
+	/*::[*/0x0084/*::]*/: { n:"BrtEndBook", f:parsenoop },
+	/*::[*/0x0085/*::]*/: { n:"BrtBeginWsViews", f:parsenoop },
+	/*::[*/0x0086/*::]*/: { n:"BrtEndWsViews", f:parsenoop },
+	/*::[*/0x0087/*::]*/: { n:"BrtBeginBookViews", f:parsenoop },
+	/*::[*/0x0088/*::]*/: { n:"BrtEndBookViews", f:parsenoop },
+	/*::[*/0x0089/*::]*/: { n:"BrtBeginWsView", f:parsenoop },
+	/*::[*/0x008A/*::]*/: { n:"BrtEndWsView", f:parsenoop },
+	/*::[*/0x008B/*::]*/: { n:"BrtBeginCsViews", f:parsenoop },
+	/*::[*/0x008C/*::]*/: { n:"BrtEndCsViews", f:parsenoop },
+	/*::[*/0x008D/*::]*/: { n:"BrtBeginCsView", f:parsenoop },
+	/*::[*/0x008E/*::]*/: { n:"BrtEndCsView", f:parsenoop },
+	/*::[*/0x008F/*::]*/: { n:"BrtBeginBundleShs", f:parsenoop },
+	/*::[*/0x0090/*::]*/: { n:"BrtEndBundleShs", f:parsenoop },
+	/*::[*/0x0091/*::]*/: { n:"BrtBeginSheetData", f:parsenoop },
+	/*::[*/0x0092/*::]*/: { n:"BrtEndSheetData", f:parsenoop },
+	/*::[*/0x0093/*::]*/: { n:"BrtWsProp", f:parse_BrtWsProp },
+	/*::[*/0x0094/*::]*/: { n:"BrtWsDim", f:parse_BrtWsDim, p:16 },
+	/*::[*/0x0097/*::]*/: { n:"BrtPane", f:parsenoop },
+	/*::[*/0x0098/*::]*/: { n:"BrtSel", f:parsenoop },
+	/*::[*/0x0099/*::]*/: { n:"BrtWbProp", f:parse_BrtWbProp },
+	/*::[*/0x009A/*::]*/: { n:"BrtWbFactoid", f:parsenoop },
+	/*::[*/0x009B/*::]*/: { n:"BrtFileRecover", f:parsenoop },
+	/*::[*/0x009C/*::]*/: { n:"BrtBundleSh", f:parse_BrtBundleSh },
+	/*::[*/0x009D/*::]*/: { n:"BrtCalcProp", f:parsenoop },
+	/*::[*/0x009E/*::]*/: { n:"BrtBookView", f:parsenoop },
+	/*::[*/0x009F/*::]*/: { n:"BrtBeginSst", f:parse_BrtBeginSst },
+	/*::[*/0x00A0/*::]*/: { n:"BrtEndSst", f:parsenoop },
+	/*::[*/0x00A1/*::]*/: { n:"BrtBeginAFilter", f:parsenoop },
+	/*::[*/0x00A2/*::]*/: { n:"BrtEndAFilter", f:parsenoop },
+	/*::[*/0x00A3/*::]*/: { n:"BrtBeginFilterColumn", f:parsenoop },
+	/*::[*/0x00A4/*::]*/: { n:"BrtEndFilterColumn", f:parsenoop },
+	/*::[*/0x00A5/*::]*/: { n:"BrtBeginFilters", f:parsenoop },
+	/*::[*/0x00A6/*::]*/: { n:"BrtEndFilters", f:parsenoop },
+	/*::[*/0x00A7/*::]*/: { n:"BrtFilter", f:parsenoop },
+	/*::[*/0x00A8/*::]*/: { n:"BrtColorFilter", f:parsenoop },
+	/*::[*/0x00A9/*::]*/: { n:"BrtIconFilter", f:parsenoop },
+	/*::[*/0x00AA/*::]*/: { n:"BrtTop10Filter", f:parsenoop },
+	/*::[*/0x00AB/*::]*/: { n:"BrtDynamicFilter", f:parsenoop },
+	/*::[*/0x00AC/*::]*/: { n:"BrtBeginCustomFilters", f:parsenoop },
+	/*::[*/0x00AD/*::]*/: { n:"BrtEndCustomFilters", f:parsenoop },
+	/*::[*/0x00AE/*::]*/: { n:"BrtCustomFilter", f:parsenoop },
+	/*::[*/0x00AF/*::]*/: { n:"BrtAFilterDateGroupItem", f:parsenoop },
+	/*::[*/0x00B0/*::]*/: { n:"BrtMergeCell", f:parse_BrtMergeCell },
+	/*::[*/0x00B1/*::]*/: { n:"BrtBeginMergeCells", f:parsenoop },
+	/*::[*/0x00B2/*::]*/: { n:"BrtEndMergeCells", f:parsenoop },
+	/*::[*/0x00B3/*::]*/: { n:"BrtBeginPivotCacheDef", f:parsenoop },
+	/*::[*/0x00B4/*::]*/: { n:"BrtEndPivotCacheDef", f:parsenoop },
+	/*::[*/0x00B5/*::]*/: { n:"BrtBeginPCDFields", f:parsenoop },
+	/*::[*/0x00B6/*::]*/: { n:"BrtEndPCDFields", f:parsenoop },
+	/*::[*/0x00B7/*::]*/: { n:"BrtBeginPCDField", f:parsenoop },
+	/*::[*/0x00B8/*::]*/: { n:"BrtEndPCDField", f:parsenoop },
+	/*::[*/0x00B9/*::]*/: { n:"BrtBeginPCDSource", f:parsenoop },
+	/*::[*/0x00BA/*::]*/: { n:"BrtEndPCDSource", f:parsenoop },
+	/*::[*/0x00BB/*::]*/: { n:"BrtBeginPCDSRange", f:parsenoop },
+	/*::[*/0x00BC/*::]*/: { n:"BrtEndPCDSRange", f:parsenoop },
+	/*::[*/0x00BD/*::]*/: { n:"BrtBeginPCDFAtbl", f:parsenoop },
+	/*::[*/0x00BE/*::]*/: { n:"BrtEndPCDFAtbl", f:parsenoop },
+	/*::[*/0x00BF/*::]*/: { n:"BrtBeginPCDIRun", f:parsenoop },
+	/*::[*/0x00C0/*::]*/: { n:"BrtEndPCDIRun", f:parsenoop },
+	/*::[*/0x00C1/*::]*/: { n:"BrtBeginPivotCacheRecords", f:parsenoop },
+	/*::[*/0x00C2/*::]*/: { n:"BrtEndPivotCacheRecords", f:parsenoop },
+	/*::[*/0x00C3/*::]*/: { n:"BrtBeginPCDHierarchies", f:parsenoop },
+	/*::[*/0x00C4/*::]*/: { n:"BrtEndPCDHierarchies", f:parsenoop },
+	/*::[*/0x00C5/*::]*/: { n:"BrtBeginPCDHierarchy", f:parsenoop },
+	/*::[*/0x00C6/*::]*/: { n:"BrtEndPCDHierarchy", f:parsenoop },
+	/*::[*/0x00C7/*::]*/: { n:"BrtBeginPCDHFieldsUsage", f:parsenoop },
+	/*::[*/0x00C8/*::]*/: { n:"BrtEndPCDHFieldsUsage", f:parsenoop },
+	/*::[*/0x00C9/*::]*/: { n:"BrtBeginExtConnection", f:parsenoop },
+	/*::[*/0x00CA/*::]*/: { n:"BrtEndExtConnection", f:parsenoop },
+	/*::[*/0x00CB/*::]*/: { n:"BrtBeginECDbProps", f:parsenoop },
+	/*::[*/0x00CC/*::]*/: { n:"BrtEndECDbProps", f:parsenoop },
+	/*::[*/0x00CD/*::]*/: { n:"BrtBeginECOlapProps", f:parsenoop },
+	/*::[*/0x00CE/*::]*/: { n:"BrtEndECOlapProps", f:parsenoop },
+	/*::[*/0x00CF/*::]*/: { n:"BrtBeginPCDSConsol", f:parsenoop },
+	/*::[*/0x00D0/*::]*/: { n:"BrtEndPCDSConsol", f:parsenoop },
+	/*::[*/0x00D1/*::]*/: { n:"BrtBeginPCDSCPages", f:parsenoop },
+	/*::[*/0x00D2/*::]*/: { n:"BrtEndPCDSCPages", f:parsenoop },
+	/*::[*/0x00D3/*::]*/: { n:"BrtBeginPCDSCPage", f:parsenoop },
+	/*::[*/0x00D4/*::]*/: { n:"BrtEndPCDSCPage", f:parsenoop },
+	/*::[*/0x00D5/*::]*/: { n:"BrtBeginPCDSCPItem", f:parsenoop },
+	/*::[*/0x00D6/*::]*/: { n:"BrtEndPCDSCPItem", f:parsenoop },
+	/*::[*/0x00D7/*::]*/: { n:"BrtBeginPCDSCSets", f:parsenoop },
+	/*::[*/0x00D8/*::]*/: { n:"BrtEndPCDSCSets", f:parsenoop },
+	/*::[*/0x00D9/*::]*/: { n:"BrtBeginPCDSCSet", f:parsenoop },
+	/*::[*/0x00DA/*::]*/: { n:"BrtEndPCDSCSet", f:parsenoop },
+	/*::[*/0x00DB/*::]*/: { n:"BrtBeginPCDFGroup", f:parsenoop },
+	/*::[*/0x00DC/*::]*/: { n:"BrtEndPCDFGroup", f:parsenoop },
+	/*::[*/0x00DD/*::]*/: { n:"BrtBeginPCDFGItems", f:parsenoop },
+	/*::[*/0x00DE/*::]*/: { n:"BrtEndPCDFGItems", f:parsenoop },
+	/*::[*/0x00DF/*::]*/: { n:"BrtBeginPCDFGRange", f:parsenoop },
+	/*::[*/0x00E0/*::]*/: { n:"BrtEndPCDFGRange", f:parsenoop },
+	/*::[*/0x00E1/*::]*/: { n:"BrtBeginPCDFGDiscrete", f:parsenoop },
+	/*::[*/0x00E2/*::]*/: { n:"BrtEndPCDFGDiscrete", f:parsenoop },
+	/*::[*/0x00E3/*::]*/: { n:"BrtBeginPCDSDTupleCache", f:parsenoop },
+	/*::[*/0x00E4/*::]*/: { n:"BrtEndPCDSDTupleCache", f:parsenoop },
+	/*::[*/0x00E5/*::]*/: { n:"BrtBeginPCDSDTCEntries", f:parsenoop },
+	/*::[*/0x00E6/*::]*/: { n:"BrtEndPCDSDTCEntries", f:parsenoop },
+	/*::[*/0x00E7/*::]*/: { n:"BrtBeginPCDSDTCEMembers", f:parsenoop },
+	/*::[*/0x00E8/*::]*/: { n:"BrtEndPCDSDTCEMembers", f:parsenoop },
+	/*::[*/0x00E9/*::]*/: { n:"BrtBeginPCDSDTCEMember", f:parsenoop },
+	/*::[*/0x00EA/*::]*/: { n:"BrtEndPCDSDTCEMember", f:parsenoop },
+	/*::[*/0x00EB/*::]*/: { n:"BrtBeginPCDSDTCQueries", f:parsenoop },
+	/*::[*/0x00EC/*::]*/: { n:"BrtEndPCDSDTCQueries", f:parsenoop },
+	/*::[*/0x00ED/*::]*/: { n:"BrtBeginPCDSDTCQuery", f:parsenoop },
+	/*::[*/0x00EE/*::]*/: { n:"BrtEndPCDSDTCQuery", f:parsenoop },
+	/*::[*/0x00EF/*::]*/: { n:"BrtBeginPCDSDTCSets", f:parsenoop },
+	/*::[*/0x00F0/*::]*/: { n:"BrtEndPCDSDTCSets", f:parsenoop },
+	/*::[*/0x00F1/*::]*/: { n:"BrtBeginPCDSDTCSet", f:parsenoop },
+	/*::[*/0x00F2/*::]*/: { n:"BrtEndPCDSDTCSet", f:parsenoop },
+	/*::[*/0x00F3/*::]*/: { n:"BrtBeginPCDCalcItems", f:parsenoop },
+	/*::[*/0x00F4/*::]*/: { n:"BrtEndPCDCalcItems", f:parsenoop },
+	/*::[*/0x00F5/*::]*/: { n:"BrtBeginPCDCalcItem", f:parsenoop },
+	/*::[*/0x00F6/*::]*/: { n:"BrtEndPCDCalcItem", f:parsenoop },
+	/*::[*/0x00F7/*::]*/: { n:"BrtBeginPRule", f:parsenoop },
+	/*::[*/0x00F8/*::]*/: { n:"BrtEndPRule", f:parsenoop },
+	/*::[*/0x00F9/*::]*/: { n:"BrtBeginPRFilters", f:parsenoop },
+	/*::[*/0x00FA/*::]*/: { n:"BrtEndPRFilters", f:parsenoop },
+	/*::[*/0x00FB/*::]*/: { n:"BrtBeginPRFilter", f:parsenoop },
+	/*::[*/0x00FC/*::]*/: { n:"BrtEndPRFilter", f:parsenoop },
+	/*::[*/0x00FD/*::]*/: { n:"BrtBeginPNames", f:parsenoop },
+	/*::[*/0x00FE/*::]*/: { n:"BrtEndPNames", f:parsenoop },
+	/*::[*/0x00FF/*::]*/: { n:"BrtBeginPName", f:parsenoop },
+	/*::[*/0x0100/*::]*/: { n:"BrtEndPName", f:parsenoop },
+	/*::[*/0x0101/*::]*/: { n:"BrtBeginPNPairs", f:parsenoop },
+	/*::[*/0x0102/*::]*/: { n:"BrtEndPNPairs", f:parsenoop },
+	/*::[*/0x0103/*::]*/: { n:"BrtBeginPNPair", f:parsenoop },
+	/*::[*/0x0104/*::]*/: { n:"BrtEndPNPair", f:parsenoop },
+	/*::[*/0x0105/*::]*/: { n:"BrtBeginECWebProps", f:parsenoop },
+	/*::[*/0x0106/*::]*/: { n:"BrtEndECWebProps", f:parsenoop },
+	/*::[*/0x0107/*::]*/: { n:"BrtBeginEcWpTables", f:parsenoop },
+	/*::[*/0x0108/*::]*/: { n:"BrtEndECWPTables", f:parsenoop },
+	/*::[*/0x0109/*::]*/: { n:"BrtBeginECParams", f:parsenoop },
+	/*::[*/0x010A/*::]*/: { n:"BrtEndECParams", f:parsenoop },
+	/*::[*/0x010B/*::]*/: { n:"BrtBeginECParam", f:parsenoop },
+	/*::[*/0x010C/*::]*/: { n:"BrtEndECParam", f:parsenoop },
+	/*::[*/0x010D/*::]*/: { n:"BrtBeginPCDKPIs", f:parsenoop },
+	/*::[*/0x010E/*::]*/: { n:"BrtEndPCDKPIs", f:parsenoop },
+	/*::[*/0x010F/*::]*/: { n:"BrtBeginPCDKPI", f:parsenoop },
+	/*::[*/0x0110/*::]*/: { n:"BrtEndPCDKPI", f:parsenoop },
+	/*::[*/0x0111/*::]*/: { n:"BrtBeginDims", f:parsenoop },
+	/*::[*/0x0112/*::]*/: { n:"BrtEndDims", f:parsenoop },
+	/*::[*/0x0113/*::]*/: { n:"BrtBeginDim", f:parsenoop },
+	/*::[*/0x0114/*::]*/: { n:"BrtEndDim", f:parsenoop },
+	/*::[*/0x0115/*::]*/: { n:"BrtIndexPartEnd", f:parsenoop },
+	/*::[*/0x0116/*::]*/: { n:"BrtBeginStyleSheet", f:parsenoop },
+	/*::[*/0x0117/*::]*/: { n:"BrtEndStyleSheet", f:parsenoop },
+	/*::[*/0x0118/*::]*/: { n:"BrtBeginSXView", f:parsenoop },
+	/*::[*/0x0119/*::]*/: { n:"BrtEndSXVI", f:parsenoop },
+	/*::[*/0x011A/*::]*/: { n:"BrtBeginSXVI", f:parsenoop },
+	/*::[*/0x011B/*::]*/: { n:"BrtBeginSXVIs", f:parsenoop },
+	/*::[*/0x011C/*::]*/: { n:"BrtEndSXVIs", f:parsenoop },
+	/*::[*/0x011D/*::]*/: { n:"BrtBeginSXVD", f:parsenoop },
+	/*::[*/0x011E/*::]*/: { n:"BrtEndSXVD", f:parsenoop },
+	/*::[*/0x011F/*::]*/: { n:"BrtBeginSXVDs", f:parsenoop },
+	/*::[*/0x0120/*::]*/: { n:"BrtEndSXVDs", f:parsenoop },
+	/*::[*/0x0121/*::]*/: { n:"BrtBeginSXPI", f:parsenoop },
+	/*::[*/0x0122/*::]*/: { n:"BrtEndSXPI", f:parsenoop },
+	/*::[*/0x0123/*::]*/: { n:"BrtBeginSXPIs", f:parsenoop },
+	/*::[*/0x0124/*::]*/: { n:"BrtEndSXPIs", f:parsenoop },
+	/*::[*/0x0125/*::]*/: { n:"BrtBeginSXDI", f:parsenoop },
+	/*::[*/0x0126/*::]*/: { n:"BrtEndSXDI", f:parsenoop },
+	/*::[*/0x0127/*::]*/: { n:"BrtBeginSXDIs", f:parsenoop },
+	/*::[*/0x0128/*::]*/: { n:"BrtEndSXDIs", f:parsenoop },
+	/*::[*/0x0129/*::]*/: { n:"BrtBeginSXLI", f:parsenoop },
+	/*::[*/0x012A/*::]*/: { n:"BrtEndSXLI", f:parsenoop },
+	/*::[*/0x012B/*::]*/: { n:"BrtBeginSXLIRws", f:parsenoop },
+	/*::[*/0x012C/*::]*/: { n:"BrtEndSXLIRws", f:parsenoop },
+	/*::[*/0x012D/*::]*/: { n:"BrtBeginSXLICols", f:parsenoop },
+	/*::[*/0x012E/*::]*/: { n:"BrtEndSXLICols", f:parsenoop },
+	/*::[*/0x012F/*::]*/: { n:"BrtBeginSXFormat", f:parsenoop },
+	/*::[*/0x0130/*::]*/: { n:"BrtEndSXFormat", f:parsenoop },
+	/*::[*/0x0131/*::]*/: { n:"BrtBeginSXFormats", f:parsenoop },
+	/*::[*/0x0132/*::]*/: { n:"BrtEndSxFormats", f:parsenoop },
+	/*::[*/0x0133/*::]*/: { n:"BrtBeginSxSelect", f:parsenoop },
+	/*::[*/0x0134/*::]*/: { n:"BrtEndSxSelect", f:parsenoop },
+	/*::[*/0x0135/*::]*/: { n:"BrtBeginISXVDRws", f:parsenoop },
+	/*::[*/0x0136/*::]*/: { n:"BrtEndISXVDRws", f:parsenoop },
+	/*::[*/0x0137/*::]*/: { n:"BrtBeginISXVDCols", f:parsenoop },
+	/*::[*/0x0138/*::]*/: { n:"BrtEndISXVDCols", f:parsenoop },
+	/*::[*/0x0139/*::]*/: { n:"BrtEndSXLocation", f:parsenoop },
+	/*::[*/0x013A/*::]*/: { n:"BrtBeginSXLocation", f:parsenoop },
+	/*::[*/0x013B/*::]*/: { n:"BrtEndSXView", f:parsenoop },
+	/*::[*/0x013C/*::]*/: { n:"BrtBeginSXTHs", f:parsenoop },
+	/*::[*/0x013D/*::]*/: { n:"BrtEndSXTHs", f:parsenoop },
+	/*::[*/0x013E/*::]*/: { n:"BrtBeginSXTH", f:parsenoop },
+	/*::[*/0x013F/*::]*/: { n:"BrtEndSXTH", f:parsenoop },
+	/*::[*/0x0140/*::]*/: { n:"BrtBeginISXTHRws", f:parsenoop },
+	/*::[*/0x0141/*::]*/: { n:"BrtEndISXTHRws", f:parsenoop },
+	/*::[*/0x0142/*::]*/: { n:"BrtBeginISXTHCols", f:parsenoop },
+	/*::[*/0x0143/*::]*/: { n:"BrtEndISXTHCols", f:parsenoop },
+	/*::[*/0x0144/*::]*/: { n:"BrtBeginSXTDMPS", f:parsenoop },
+	/*::[*/0x0145/*::]*/: { n:"BrtEndSXTDMPs", f:parsenoop },
+	/*::[*/0x0146/*::]*/: { n:"BrtBeginSXTDMP", f:parsenoop },
+	/*::[*/0x0147/*::]*/: { n:"BrtEndSXTDMP", f:parsenoop },
+	/*::[*/0x0148/*::]*/: { n:"BrtBeginSXTHItems", f:parsenoop },
+	/*::[*/0x0149/*::]*/: { n:"BrtEndSXTHItems", f:parsenoop },
+	/*::[*/0x014A/*::]*/: { n:"BrtBeginSXTHItem", f:parsenoop },
+	/*::[*/0x014B/*::]*/: { n:"BrtEndSXTHItem", f:parsenoop },
+	/*::[*/0x014C/*::]*/: { n:"BrtBeginMetadata", f:parsenoop },
+	/*::[*/0x014D/*::]*/: { n:"BrtEndMetadata", f:parsenoop },
+	/*::[*/0x014E/*::]*/: { n:"BrtBeginEsmdtinfo", f:parsenoop },
+	/*::[*/0x014F/*::]*/: { n:"BrtMdtinfo", f:parsenoop },
+	/*::[*/0x0150/*::]*/: { n:"BrtEndEsmdtinfo", f:parsenoop },
+	/*::[*/0x0151/*::]*/: { n:"BrtBeginEsmdb", f:parsenoop },
+	/*::[*/0x0152/*::]*/: { n:"BrtEndEsmdb", f:parsenoop },
+	/*::[*/0x0153/*::]*/: { n:"BrtBeginEsfmd", f:parsenoop },
+	/*::[*/0x0154/*::]*/: { n:"BrtEndEsfmd", f:parsenoop },
+	/*::[*/0x0155/*::]*/: { n:"BrtBeginSingleCells", f:parsenoop },
+	/*::[*/0x0156/*::]*/: { n:"BrtEndSingleCells", f:parsenoop },
+	/*::[*/0x0157/*::]*/: { n:"BrtBeginList", f:parsenoop },
+	/*::[*/0x0158/*::]*/: { n:"BrtEndList", f:parsenoop },
+	/*::[*/0x0159/*::]*/: { n:"BrtBeginListCols", f:parsenoop },
+	/*::[*/0x015A/*::]*/: { n:"BrtEndListCols", f:parsenoop },
+	/*::[*/0x015B/*::]*/: { n:"BrtBeginListCol", f:parsenoop },
+	/*::[*/0x015C/*::]*/: { n:"BrtEndListCol", f:parsenoop },
+	/*::[*/0x015D/*::]*/: { n:"BrtBeginListXmlCPr", f:parsenoop },
+	/*::[*/0x015E/*::]*/: { n:"BrtEndListXmlCPr", f:parsenoop },
+	/*::[*/0x015F/*::]*/: { n:"BrtListCCFmla", f:parsenoop },
+	/*::[*/0x0160/*::]*/: { n:"BrtListTrFmla", f:parsenoop },
+	/*::[*/0x0161/*::]*/: { n:"BrtBeginExternals", f:parsenoop },
+	/*::[*/0x0162/*::]*/: { n:"BrtEndExternals", f:parsenoop },
+	/*::[*/0x0163/*::]*/: { n:"BrtSupBookSrc", f:parsenoop },
+	/*::[*/0x0165/*::]*/: { n:"BrtSupSelf", f:parsenoop },
+	/*::[*/0x0166/*::]*/: { n:"BrtSupSame", f:parsenoop },
+	/*::[*/0x0167/*::]*/: { n:"BrtSupTabs", f:parsenoop },
+	/*::[*/0x0168/*::]*/: { n:"BrtBeginSupBook", f:parsenoop },
+	/*::[*/0x0169/*::]*/: { n:"BrtPlaceholderName", f:parsenoop },
+	/*::[*/0x016A/*::]*/: { n:"BrtExternSheet", f:parsenoop },
+	/*::[*/0x016B/*::]*/: { n:"BrtExternTableStart", f:parsenoop },
+	/*::[*/0x016C/*::]*/: { n:"BrtExternTableEnd", f:parsenoop },
+	/*::[*/0x016E/*::]*/: { n:"BrtExternRowHdr", f:parsenoop },
+	/*::[*/0x016F/*::]*/: { n:"BrtExternCellBlank", f:parsenoop },
+	/*::[*/0x0170/*::]*/: { n:"BrtExternCellReal", f:parsenoop },
+	/*::[*/0x0171/*::]*/: { n:"BrtExternCellBool", f:parsenoop },
+	/*::[*/0x0172/*::]*/: { n:"BrtExternCellError", f:parsenoop },
+	/*::[*/0x0173/*::]*/: { n:"BrtExternCellString", f:parsenoop },
+	/*::[*/0x0174/*::]*/: { n:"BrtBeginEsmdx", f:parsenoop },
+	/*::[*/0x0175/*::]*/: { n:"BrtEndEsmdx", f:parsenoop },
+	/*::[*/0x0176/*::]*/: { n:"BrtBeginMdxSet", f:parsenoop },
+	/*::[*/0x0177/*::]*/: { n:"BrtEndMdxSet", f:parsenoop },
+	/*::[*/0x0178/*::]*/: { n:"BrtBeginMdxMbrProp", f:parsenoop },
+	/*::[*/0x0179/*::]*/: { n:"BrtEndMdxMbrProp", f:parsenoop },
+	/*::[*/0x017A/*::]*/: { n:"BrtBeginMdxKPI", f:parsenoop },
+	/*::[*/0x017B/*::]*/: { n:"BrtEndMdxKPI", f:parsenoop },
+	/*::[*/0x017C/*::]*/: { n:"BrtBeginEsstr", f:parsenoop },
+	/*::[*/0x017D/*::]*/: { n:"BrtEndEsstr", f:parsenoop },
+	/*::[*/0x017E/*::]*/: { n:"BrtBeginPRFItem", f:parsenoop },
+	/*::[*/0x017F/*::]*/: { n:"BrtEndPRFItem", f:parsenoop },
+	/*::[*/0x0180/*::]*/: { n:"BrtBeginPivotCacheIDs", f:parsenoop },
+	/*::[*/0x0181/*::]*/: { n:"BrtEndPivotCacheIDs", f:parsenoop },
+	/*::[*/0x0182/*::]*/: { n:"BrtBeginPivotCacheID", f:parsenoop },
+	/*::[*/0x0183/*::]*/: { n:"BrtEndPivotCacheID", f:parsenoop },
+	/*::[*/0x0184/*::]*/: { n:"BrtBeginISXVIs", f:parsenoop },
+	/*::[*/0x0185/*::]*/: { n:"BrtEndISXVIs", f:parsenoop },
+	/*::[*/0x0186/*::]*/: { n:"BrtBeginColInfos", f:parsenoop },
+	/*::[*/0x0187/*::]*/: { n:"BrtEndColInfos", f:parsenoop },
+	/*::[*/0x0188/*::]*/: { n:"BrtBeginRwBrk", f:parsenoop },
+	/*::[*/0x0189/*::]*/: { n:"BrtEndRwBrk", f:parsenoop },
+	/*::[*/0x018A/*::]*/: { n:"BrtBeginColBrk", f:parsenoop },
+	/*::[*/0x018B/*::]*/: { n:"BrtEndColBrk", f:parsenoop },
+	/*::[*/0x018C/*::]*/: { n:"BrtBrk", f:parsenoop },
+	/*::[*/0x018D/*::]*/: { n:"BrtUserBookView", f:parsenoop },
+	/*::[*/0x018E/*::]*/: { n:"BrtInfo", f:parsenoop },
+	/*::[*/0x018F/*::]*/: { n:"BrtCUsr", f:parsenoop },
+	/*::[*/0x0190/*::]*/: { n:"BrtUsr", f:parsenoop },
+	/*::[*/0x0191/*::]*/: { n:"BrtBeginUsers", f:parsenoop },
+	/*::[*/0x0193/*::]*/: { n:"BrtEOF", f:parsenoop },
+	/*::[*/0x0194/*::]*/: { n:"BrtUCR", f:parsenoop },
+	/*::[*/0x0195/*::]*/: { n:"BrtRRInsDel", f:parsenoop },
+	/*::[*/0x0196/*::]*/: { n:"BrtRREndInsDel", f:parsenoop },
+	/*::[*/0x0197/*::]*/: { n:"BrtRRMove", f:parsenoop },
+	/*::[*/0x0198/*::]*/: { n:"BrtRREndMove", f:parsenoop },
+	/*::[*/0x0199/*::]*/: { n:"BrtRRChgCell", f:parsenoop },
+	/*::[*/0x019A/*::]*/: { n:"BrtRREndChgCell", f:parsenoop },
+	/*::[*/0x019B/*::]*/: { n:"BrtRRHeader", f:parsenoop },
+	/*::[*/0x019C/*::]*/: { n:"BrtRRUserView", f:parsenoop },
+	/*::[*/0x019D/*::]*/: { n:"BrtRRRenSheet", f:parsenoop },
+	/*::[*/0x019E/*::]*/: { n:"BrtRRInsertSh", f:parsenoop },
+	/*::[*/0x019F/*::]*/: { n:"BrtRRDefName", f:parsenoop },
+	/*::[*/0x01A0/*::]*/: { n:"BrtRRNote", f:parsenoop },
+	/*::[*/0x01A1/*::]*/: { n:"BrtRRConflict", f:parsenoop },
+	/*::[*/0x01A2/*::]*/: { n:"BrtRRTQSIF", f:parsenoop },
+	/*::[*/0x01A3/*::]*/: { n:"BrtRRFormat", f:parsenoop },
+	/*::[*/0x01A4/*::]*/: { n:"BrtRREndFormat", f:parsenoop },
+	/*::[*/0x01A5/*::]*/: { n:"BrtRRAutoFmt", f:parsenoop },
+	/*::[*/0x01A6/*::]*/: { n:"BrtBeginUserShViews", f:parsenoop },
+	/*::[*/0x01A7/*::]*/: { n:"BrtBeginUserShView", f:parsenoop },
+	/*::[*/0x01A8/*::]*/: { n:"BrtEndUserShView", f:parsenoop },
+	/*::[*/0x01A9/*::]*/: { n:"BrtEndUserShViews", f:parsenoop },
+	/*::[*/0x01AA/*::]*/: { n:"BrtArrFmla", f:parse_BrtArrFmla },
+	/*::[*/0x01AB/*::]*/: { n:"BrtShrFmla", f:parse_BrtShrFmla },
+	/*::[*/0x01AC/*::]*/: { n:"BrtTable", f:parsenoop },
+	/*::[*/0x01AD/*::]*/: { n:"BrtBeginExtConnections", f:parsenoop },
+	/*::[*/0x01AE/*::]*/: { n:"BrtEndExtConnections", f:parsenoop },
+	/*::[*/0x01AF/*::]*/: { n:"BrtBeginPCDCalcMems", f:parsenoop },
+	/*::[*/0x01B0/*::]*/: { n:"BrtEndPCDCalcMems", f:parsenoop },
+	/*::[*/0x01B1/*::]*/: { n:"BrtBeginPCDCalcMem", f:parsenoop },
+	/*::[*/0x01B2/*::]*/: { n:"BrtEndPCDCalcMem", f:parsenoop },
+	/*::[*/0x01B3/*::]*/: { n:"BrtBeginPCDHGLevels", f:parsenoop },
+	/*::[*/0x01B4/*::]*/: { n:"BrtEndPCDHGLevels", f:parsenoop },
+	/*::[*/0x01B5/*::]*/: { n:"BrtBeginPCDHGLevel", f:parsenoop },
+	/*::[*/0x01B6/*::]*/: { n:"BrtEndPCDHGLevel", f:parsenoop },
+	/*::[*/0x01B7/*::]*/: { n:"BrtBeginPCDHGLGroups", f:parsenoop },
+	/*::[*/0x01B8/*::]*/: { n:"BrtEndPCDHGLGroups", f:parsenoop },
+	/*::[*/0x01B9/*::]*/: { n:"BrtBeginPCDHGLGroup", f:parsenoop },
+	/*::[*/0x01BA/*::]*/: { n:"BrtEndPCDHGLGroup", f:parsenoop },
+	/*::[*/0x01BB/*::]*/: { n:"BrtBeginPCDHGLGMembers", f:parsenoop },
+	/*::[*/0x01BC/*::]*/: { n:"BrtEndPCDHGLGMembers", f:parsenoop },
+	/*::[*/0x01BD/*::]*/: { n:"BrtBeginPCDHGLGMember", f:parsenoop },
+	/*::[*/0x01BE/*::]*/: { n:"BrtEndPCDHGLGMember", f:parsenoop },
+	/*::[*/0x01BF/*::]*/: { n:"BrtBeginQSI", f:parsenoop },
+	/*::[*/0x01C0/*::]*/: { n:"BrtEndQSI", f:parsenoop },
+	/*::[*/0x01C1/*::]*/: { n:"BrtBeginQSIR", f:parsenoop },
+	/*::[*/0x01C2/*::]*/: { n:"BrtEndQSIR", f:parsenoop },
+	/*::[*/0x01C3/*::]*/: { n:"BrtBeginDeletedNames", f:parsenoop },
+	/*::[*/0x01C4/*::]*/: { n:"BrtEndDeletedNames", f:parsenoop },
+	/*::[*/0x01C5/*::]*/: { n:"BrtBeginDeletedName", f:parsenoop },
+	/*::[*/0x01C6/*::]*/: { n:"BrtEndDeletedName", f:parsenoop },
+	/*::[*/0x01C7/*::]*/: { n:"BrtBeginQSIFs", f:parsenoop },
+	/*::[*/0x01C8/*::]*/: { n:"BrtEndQSIFs", f:parsenoop },
+	/*::[*/0x01C9/*::]*/: { n:"BrtBeginQSIF", f:parsenoop },
+	/*::[*/0x01CA/*::]*/: { n:"BrtEndQSIF", f:parsenoop },
+	/*::[*/0x01CB/*::]*/: { n:"BrtBeginAutoSortScope", f:parsenoop },
+	/*::[*/0x01CC/*::]*/: { n:"BrtEndAutoSortScope", f:parsenoop },
+	/*::[*/0x01CD/*::]*/: { n:"BrtBeginConditionalFormatting", f:parsenoop },
+	/*::[*/0x01CE/*::]*/: { n:"BrtEndConditionalFormatting", f:parsenoop },
+	/*::[*/0x01CF/*::]*/: { n:"BrtBeginCFRule", f:parsenoop },
+	/*::[*/0x01D0/*::]*/: { n:"BrtEndCFRule", f:parsenoop },
+	/*::[*/0x01D1/*::]*/: { n:"BrtBeginIconSet", f:parsenoop },
+	/*::[*/0x01D2/*::]*/: { n:"BrtEndIconSet", f:parsenoop },
+	/*::[*/0x01D3/*::]*/: { n:"BrtBeginDatabar", f:parsenoop },
+	/*::[*/0x01D4/*::]*/: { n:"BrtEndDatabar", f:parsenoop },
+	/*::[*/0x01D5/*::]*/: { n:"BrtBeginColorScale", f:parsenoop },
+	/*::[*/0x01D6/*::]*/: { n:"BrtEndColorScale", f:parsenoop },
+	/*::[*/0x01D7/*::]*/: { n:"BrtCFVO", f:parsenoop },
+	/*::[*/0x01D8/*::]*/: { n:"BrtExternValueMeta", f:parsenoop },
+	/*::[*/0x01D9/*::]*/: { n:"BrtBeginColorPalette", f:parsenoop },
+	/*::[*/0x01DA/*::]*/: { n:"BrtEndColorPalette", f:parsenoop },
+	/*::[*/0x01DB/*::]*/: { n:"BrtIndexedColor", f:parsenoop },
+	/*::[*/0x01DC/*::]*/: { n:"BrtMargins", f:parsenoop },
+	/*::[*/0x01DD/*::]*/: { n:"BrtPrintOptions", f:parsenoop },
+	/*::[*/0x01DE/*::]*/: { n:"BrtPageSetup", f:parsenoop },
+	/*::[*/0x01DF/*::]*/: { n:"BrtBeginHeaderFooter", f:parsenoop },
+	/*::[*/0x01E0/*::]*/: { n:"BrtEndHeaderFooter", f:parsenoop },
+	/*::[*/0x01E1/*::]*/: { n:"BrtBeginSXCrtFormat", f:parsenoop },
+	/*::[*/0x01E2/*::]*/: { n:"BrtEndSXCrtFormat", f:parsenoop },
+	/*::[*/0x01E3/*::]*/: { n:"BrtBeginSXCrtFormats", f:parsenoop },
+	/*::[*/0x01E4/*::]*/: { n:"BrtEndSXCrtFormats", f:parsenoop },
+	/*::[*/0x01E5/*::]*/: { n:"BrtWsFmtInfo", f:parsenoop },
+	/*::[*/0x01E6/*::]*/: { n:"BrtBeginMgs", f:parsenoop },
+	/*::[*/0x01E7/*::]*/: { n:"BrtEndMGs", f:parsenoop },
+	/*::[*/0x01E8/*::]*/: { n:"BrtBeginMGMaps", f:parsenoop },
+	/*::[*/0x01E9/*::]*/: { n:"BrtEndMGMaps", f:parsenoop },
+	/*::[*/0x01EA/*::]*/: { n:"BrtBeginMG", f:parsenoop },
+	/*::[*/0x01EB/*::]*/: { n:"BrtEndMG", f:parsenoop },
+	/*::[*/0x01EC/*::]*/: { n:"BrtBeginMap", f:parsenoop },
+	/*::[*/0x01ED/*::]*/: { n:"BrtEndMap", f:parsenoop },
+	/*::[*/0x01EE/*::]*/: { n:"BrtHLink", f:parse_BrtHLink },
+	/*::[*/0x01EF/*::]*/: { n:"BrtBeginDCon", f:parsenoop },
+	/*::[*/0x01F0/*::]*/: { n:"BrtEndDCon", f:parsenoop },
+	/*::[*/0x01F1/*::]*/: { n:"BrtBeginDRefs", f:parsenoop },
+	/*::[*/0x01F2/*::]*/: { n:"BrtEndDRefs", f:parsenoop },
+	/*::[*/0x01F3/*::]*/: { n:"BrtDRef", f:parsenoop },
+	/*::[*/0x01F4/*::]*/: { n:"BrtBeginScenMan", f:parsenoop },
+	/*::[*/0x01F5/*::]*/: { n:"BrtEndScenMan", f:parsenoop },
+	/*::[*/0x01F6/*::]*/: { n:"BrtBeginSct", f:parsenoop },
+	/*::[*/0x01F7/*::]*/: { n:"BrtEndSct", f:parsenoop },
+	/*::[*/0x01F8/*::]*/: { n:"BrtSlc", f:parsenoop },
+	/*::[*/0x01F9/*::]*/: { n:"BrtBeginDXFs", f:parsenoop },
+	/*::[*/0x01FA/*::]*/: { n:"BrtEndDXFs", f:parsenoop },
+	/*::[*/0x01FB/*::]*/: { n:"BrtDXF", f:parsenoop },
+	/*::[*/0x01FC/*::]*/: { n:"BrtBeginTableStyles", f:parsenoop },
+	/*::[*/0x01FD/*::]*/: { n:"BrtEndTableStyles", f:parsenoop },
+	/*::[*/0x01FE/*::]*/: { n:"BrtBeginTableStyle", f:parsenoop },
+	/*::[*/0x01FF/*::]*/: { n:"BrtEndTableStyle", f:parsenoop },
+	/*::[*/0x0200/*::]*/: { n:"BrtTableStyleElement", f:parsenoop },
+	/*::[*/0x0201/*::]*/: { n:"BrtTableStyleClient", f:parsenoop },
+	/*::[*/0x0202/*::]*/: { n:"BrtBeginVolDeps", f:parsenoop },
+	/*::[*/0x0203/*::]*/: { n:"BrtEndVolDeps", f:parsenoop },
+	/*::[*/0x0204/*::]*/: { n:"BrtBeginVolType", f:parsenoop },
+	/*::[*/0x0205/*::]*/: { n:"BrtEndVolType", f:parsenoop },
+	/*::[*/0x0206/*::]*/: { n:"BrtBeginVolMain", f:parsenoop },
+	/*::[*/0x0207/*::]*/: { n:"BrtEndVolMain", f:parsenoop },
+	/*::[*/0x0208/*::]*/: { n:"BrtBeginVolTopic", f:parsenoop },
+	/*::[*/0x0209/*::]*/: { n:"BrtEndVolTopic", f:parsenoop },
+	/*::[*/0x020A/*::]*/: { n:"BrtVolSubtopic", f:parsenoop },
+	/*::[*/0x020B/*::]*/: { n:"BrtVolRef", f:parsenoop },
+	/*::[*/0x020C/*::]*/: { n:"BrtVolNum", f:parsenoop },
+	/*::[*/0x020D/*::]*/: { n:"BrtVolErr", f:parsenoop },
+	/*::[*/0x020E/*::]*/: { n:"BrtVolStr", f:parsenoop },
+	/*::[*/0x020F/*::]*/: { n:"BrtVolBool", f:parsenoop },
+	/*::[*/0x0210/*::]*/: { n:"BrtBeginCalcChain$", f:parsenoop },
+	/*::[*/0x0211/*::]*/: { n:"BrtEndCalcChain$", f:parsenoop },
+	/*::[*/0x0212/*::]*/: { n:"BrtBeginSortState", f:parsenoop },
+	/*::[*/0x0213/*::]*/: { n:"BrtEndSortState", f:parsenoop },
+	/*::[*/0x0214/*::]*/: { n:"BrtBeginSortCond", f:parsenoop },
+	/*::[*/0x0215/*::]*/: { n:"BrtEndSortCond", f:parsenoop },
+	/*::[*/0x0216/*::]*/: { n:"BrtBookProtection", f:parsenoop },
+	/*::[*/0x0217/*::]*/: { n:"BrtSheetProtection", f:parsenoop },
+	/*::[*/0x0218/*::]*/: { n:"BrtRangeProtection", f:parsenoop },
+	/*::[*/0x0219/*::]*/: { n:"BrtPhoneticInfo", f:parsenoop },
+	/*::[*/0x021A/*::]*/: { n:"BrtBeginECTxtWiz", f:parsenoop },
+	/*::[*/0x021B/*::]*/: { n:"BrtEndECTxtWiz", f:parsenoop },
+	/*::[*/0x021C/*::]*/: { n:"BrtBeginECTWFldInfoLst", f:parsenoop },
+	/*::[*/0x021D/*::]*/: { n:"BrtEndECTWFldInfoLst", f:parsenoop },
+	/*::[*/0x021E/*::]*/: { n:"BrtBeginECTwFldInfo", f:parsenoop },
+	/*::[*/0x0224/*::]*/: { n:"BrtFileSharing", f:parsenoop },
+	/*::[*/0x0225/*::]*/: { n:"BrtOleSize", f:parsenoop },
+	/*::[*/0x0226/*::]*/: { n:"BrtDrawing", f:parsenoop },
+	/*::[*/0x0227/*::]*/: { n:"BrtLegacyDrawing", f:parsenoop },
+	/*::[*/0x0228/*::]*/: { n:"BrtLegacyDrawingHF", f:parsenoop },
+	/*::[*/0x0229/*::]*/: { n:"BrtWebOpt", f:parsenoop },
+	/*::[*/0x022A/*::]*/: { n:"BrtBeginWebPubItems", f:parsenoop },
+	/*::[*/0x022B/*::]*/: { n:"BrtEndWebPubItems", f:parsenoop },
+	/*::[*/0x022C/*::]*/: { n:"BrtBeginWebPubItem", f:parsenoop },
+	/*::[*/0x022D/*::]*/: { n:"BrtEndWebPubItem", f:parsenoop },
+	/*::[*/0x022E/*::]*/: { n:"BrtBeginSXCondFmt", f:parsenoop },
+	/*::[*/0x022F/*::]*/: { n:"BrtEndSXCondFmt", f:parsenoop },
+	/*::[*/0x0230/*::]*/: { n:"BrtBeginSXCondFmts", f:parsenoop },
+	/*::[*/0x0231/*::]*/: { n:"BrtEndSXCondFmts", f:parsenoop },
+	/*::[*/0x0232/*::]*/: { n:"BrtBkHim", f:parsenoop },
+	/*::[*/0x0234/*::]*/: { n:"BrtColor", f:parsenoop },
+	/*::[*/0x0235/*::]*/: { n:"BrtBeginIndexedColors", f:parsenoop },
+	/*::[*/0x0236/*::]*/: { n:"BrtEndIndexedColors", f:parsenoop },
+	/*::[*/0x0239/*::]*/: { n:"BrtBeginMRUColors", f:parsenoop },
+	/*::[*/0x023A/*::]*/: { n:"BrtEndMRUColors", f:parsenoop },
+	/*::[*/0x023C/*::]*/: { n:"BrtMRUColor", f:parsenoop },
+	/*::[*/0x023D/*::]*/: { n:"BrtBeginDVals", f:parsenoop },
+	/*::[*/0x023E/*::]*/: { n:"BrtEndDVals", f:parsenoop },
+	/*::[*/0x0241/*::]*/: { n:"BrtSupNameStart", f:parsenoop },
+	/*::[*/0x0242/*::]*/: { n:"BrtSupNameValueStart", f:parsenoop },
+	/*::[*/0x0243/*::]*/: { n:"BrtSupNameValueEnd", f:parsenoop },
+	/*::[*/0x0244/*::]*/: { n:"BrtSupNameNum", f:parsenoop },
+	/*::[*/0x0245/*::]*/: { n:"BrtSupNameErr", f:parsenoop },
+	/*::[*/0x0246/*::]*/: { n:"BrtSupNameSt", f:parsenoop },
+	/*::[*/0x0247/*::]*/: { n:"BrtSupNameNil", f:parsenoop },
+	/*::[*/0x0248/*::]*/: { n:"BrtSupNameBool", f:parsenoop },
+	/*::[*/0x0249/*::]*/: { n:"BrtSupNameFmla", f:parsenoop },
+	/*::[*/0x024A/*::]*/: { n:"BrtSupNameBits", f:parsenoop },
+	/*::[*/0x024B/*::]*/: { n:"BrtSupNameEnd", f:parsenoop },
+	/*::[*/0x024C/*::]*/: { n:"BrtEndSupBook", f:parsenoop },
+	/*::[*/0x024D/*::]*/: { n:"BrtCellSmartTagProperty", f:parsenoop },
+	/*::[*/0x024E/*::]*/: { n:"BrtBeginCellSmartTag", f:parsenoop },
+	/*::[*/0x024F/*::]*/: { n:"BrtEndCellSmartTag", f:parsenoop },
+	/*::[*/0x0250/*::]*/: { n:"BrtBeginCellSmartTags", f:parsenoop },
+	/*::[*/0x0251/*::]*/: { n:"BrtEndCellSmartTags", f:parsenoop },
+	/*::[*/0x0252/*::]*/: { n:"BrtBeginSmartTags", f:parsenoop },
+	/*::[*/0x0253/*::]*/: { n:"BrtEndSmartTags", f:parsenoop },
+	/*::[*/0x0254/*::]*/: { n:"BrtSmartTagType", f:parsenoop },
+	/*::[*/0x0255/*::]*/: { n:"BrtBeginSmartTagTypes", f:parsenoop },
+	/*::[*/0x0256/*::]*/: { n:"BrtEndSmartTagTypes", f:parsenoop },
+	/*::[*/0x0257/*::]*/: { n:"BrtBeginSXFilters", f:parsenoop },
+	/*::[*/0x0258/*::]*/: { n:"BrtEndSXFilters", f:parsenoop },
+	/*::[*/0x0259/*::]*/: { n:"BrtBeginSXFILTER", f:parsenoop },
+	/*::[*/0x025A/*::]*/: { n:"BrtEndSXFilter", f:parsenoop },
+	/*::[*/0x025B/*::]*/: { n:"BrtBeginFills", f:parsenoop },
+	/*::[*/0x025C/*::]*/: { n:"BrtEndFills", f:parsenoop },
+	/*::[*/0x025D/*::]*/: { n:"BrtBeginCellWatches", f:parsenoop },
+	/*::[*/0x025E/*::]*/: { n:"BrtEndCellWatches", f:parsenoop },
+	/*::[*/0x025F/*::]*/: { n:"BrtCellWatch", f:parsenoop },
+	/*::[*/0x0260/*::]*/: { n:"BrtBeginCRErrs", f:parsenoop },
+	/*::[*/0x0261/*::]*/: { n:"BrtEndCRErrs", f:parsenoop },
+	/*::[*/0x0262/*::]*/: { n:"BrtCrashRecErr", f:parsenoop },
+	/*::[*/0x0263/*::]*/: { n:"BrtBeginFonts", f:parsenoop },
+	/*::[*/0x0264/*::]*/: { n:"BrtEndFonts", f:parsenoop },
+	/*::[*/0x0265/*::]*/: { n:"BrtBeginBorders", f:parsenoop },
+	/*::[*/0x0266/*::]*/: { n:"BrtEndBorders", f:parsenoop },
+	/*::[*/0x0267/*::]*/: { n:"BrtBeginFmts", f:parsenoop },
+	/*::[*/0x0268/*::]*/: { n:"BrtEndFmts", f:parsenoop },
+	/*::[*/0x0269/*::]*/: { n:"BrtBeginCellXFs", f:parsenoop },
+	/*::[*/0x026A/*::]*/: { n:"BrtEndCellXFs", f:parsenoop },
+	/*::[*/0x026B/*::]*/: { n:"BrtBeginStyles", f:parsenoop },
+	/*::[*/0x026C/*::]*/: { n:"BrtEndStyles", f:parsenoop },
+	/*::[*/0x0271/*::]*/: { n:"BrtBigName", f:parsenoop },
+	/*::[*/0x0272/*::]*/: { n:"BrtBeginCellStyleXFs", f:parsenoop },
+	/*::[*/0x0273/*::]*/: { n:"BrtEndCellStyleXFs", f:parsenoop },
+	/*::[*/0x0274/*::]*/: { n:"BrtBeginComments", f:parsenoop },
+	/*::[*/0x0275/*::]*/: { n:"BrtEndComments", f:parsenoop },
+	/*::[*/0x0276/*::]*/: { n:"BrtBeginCommentAuthors", f:parsenoop },
+	/*::[*/0x0277/*::]*/: { n:"BrtEndCommentAuthors", f:parsenoop },
+	/*::[*/0x0278/*::]*/: { n:"BrtCommentAuthor", f:parse_BrtCommentAuthor },
+	/*::[*/0x0279/*::]*/: { n:"BrtBeginCommentList", f:parsenoop },
+	/*::[*/0x027A/*::]*/: { n:"BrtEndCommentList", f:parsenoop },
+	/*::[*/0x027B/*::]*/: { n:"BrtBeginComment", f:parse_BrtBeginComment},
+	/*::[*/0x027C/*::]*/: { n:"BrtEndComment", f:parsenoop },
+	/*::[*/0x027D/*::]*/: { n:"BrtCommentText", f:parse_BrtCommentText },
+	/*::[*/0x027E/*::]*/: { n:"BrtBeginOleObjects", f:parsenoop },
+	/*::[*/0x027F/*::]*/: { n:"BrtOleObject", f:parsenoop },
+	/*::[*/0x0280/*::]*/: { n:"BrtEndOleObjects", f:parsenoop },
+	/*::[*/0x0281/*::]*/: { n:"BrtBeginSxrules", f:parsenoop },
+	/*::[*/0x0282/*::]*/: { n:"BrtEndSxRules", f:parsenoop },
+	/*::[*/0x0283/*::]*/: { n:"BrtBeginActiveXControls", f:parsenoop },
+	/*::[*/0x0284/*::]*/: { n:"BrtActiveX", f:parsenoop },
+	/*::[*/0x0285/*::]*/: { n:"BrtEndActiveXControls", f:parsenoop },
+	/*::[*/0x0286/*::]*/: { n:"BrtBeginPCDSDTCEMembersSortBy", f:parsenoop },
+	/*::[*/0x0288/*::]*/: { n:"BrtBeginCellIgnoreECs", f:parsenoop },
+	/*::[*/0x0289/*::]*/: { n:"BrtCellIgnoreEC", f:parsenoop },
+	/*::[*/0x028A/*::]*/: { n:"BrtEndCellIgnoreECs", f:parsenoop },
+	/*::[*/0x028B/*::]*/: { n:"BrtCsProp", f:parsenoop },
+	/*::[*/0x028C/*::]*/: { n:"BrtCsPageSetup", f:parsenoop },
+	/*::[*/0x028D/*::]*/: { n:"BrtBeginUserCsViews", f:parsenoop },
+	/*::[*/0x028E/*::]*/: { n:"BrtEndUserCsViews", f:parsenoop },
+	/*::[*/0x028F/*::]*/: { n:"BrtBeginUserCsView", f:parsenoop },
+	/*::[*/0x0290/*::]*/: { n:"BrtEndUserCsView", f:parsenoop },
+	/*::[*/0x0291/*::]*/: { n:"BrtBeginPcdSFCIEntries", f:parsenoop },
+	/*::[*/0x0292/*::]*/: { n:"BrtEndPCDSFCIEntries", f:parsenoop },
+	/*::[*/0x0293/*::]*/: { n:"BrtPCDSFCIEntry", f:parsenoop },
+	/*::[*/0x0294/*::]*/: { n:"BrtBeginListParts", f:parsenoop },
+	/*::[*/0x0295/*::]*/: { n:"BrtListPart", f:parsenoop },
+	/*::[*/0x0296/*::]*/: { n:"BrtEndListParts", f:parsenoop },
+	/*::[*/0x0297/*::]*/: { n:"BrtSheetCalcProp", f:parsenoop },
+	/*::[*/0x0298/*::]*/: { n:"BrtBeginFnGroup", f:parsenoop },
+	/*::[*/0x0299/*::]*/: { n:"BrtFnGroup", f:parsenoop },
+	/*::[*/0x029A/*::]*/: { n:"BrtEndFnGroup", f:parsenoop },
+	/*::[*/0x029B/*::]*/: { n:"BrtSupAddin", f:parsenoop },
+	/*::[*/0x029C/*::]*/: { n:"BrtSXTDMPOrder", f:parsenoop },
+	/*::[*/0x029D/*::]*/: { n:"BrtCsProtection", f:parsenoop },
+	/*::[*/0x029F/*::]*/: { n:"BrtBeginWsSortMap", f:parsenoop },
+	/*::[*/0x02A0/*::]*/: { n:"BrtEndWsSortMap", f:parsenoop },
+	/*::[*/0x02A1/*::]*/: { n:"BrtBeginRRSort", f:parsenoop },
+	/*::[*/0x02A2/*::]*/: { n:"BrtEndRRSort", f:parsenoop },
+	/*::[*/0x02A3/*::]*/: { n:"BrtRRSortItem", f:parsenoop },
+	/*::[*/0x02A4/*::]*/: { n:"BrtFileSharingIso", f:parsenoop },
+	/*::[*/0x02A5/*::]*/: { n:"BrtBookProtectionIso", f:parsenoop },
+	/*::[*/0x02A6/*::]*/: { n:"BrtSheetProtectionIso", f:parsenoop },
+	/*::[*/0x02A7/*::]*/: { n:"BrtCsProtectionIso", f:parsenoop },
+	/*::[*/0x02A8/*::]*/: { n:"BrtRangeProtectionIso", f:parsenoop },
+	/*::[*/0x0400/*::]*/: { n:"BrtRwDescent", f:parsenoop },
+	/*::[*/0x0401/*::]*/: { n:"BrtKnownFonts", f:parsenoop },
+	/*::[*/0x0402/*::]*/: { n:"BrtBeginSXTupleSet", f:parsenoop },
+	/*::[*/0x0403/*::]*/: { n:"BrtEndSXTupleSet", f:parsenoop },
+	/*::[*/0x0404/*::]*/: { n:"BrtBeginSXTupleSetHeader", f:parsenoop },
+	/*::[*/0x0405/*::]*/: { n:"BrtEndSXTupleSetHeader", f:parsenoop },
+	/*::[*/0x0406/*::]*/: { n:"BrtSXTupleSetHeaderItem", f:parsenoop },
+	/*::[*/0x0407/*::]*/: { n:"BrtBeginSXTupleSetData", f:parsenoop },
+	/*::[*/0x0408/*::]*/: { n:"BrtEndSXTupleSetData", f:parsenoop },
+	/*::[*/0x0409/*::]*/: { n:"BrtBeginSXTupleSetRow", f:parsenoop },
+	/*::[*/0x040A/*::]*/: { n:"BrtEndSXTupleSetRow", f:parsenoop },
+	/*::[*/0x040B/*::]*/: { n:"BrtSXTupleSetRowItem", f:parsenoop },
+	/*::[*/0x040C/*::]*/: { n:"BrtNameExt", f:parsenoop },
+	/*::[*/0x040D/*::]*/: { n:"BrtPCDH14", f:parsenoop },
+	/*::[*/0x040E/*::]*/: { n:"BrtBeginPCDCalcMem14", f:parsenoop },
+	/*::[*/0x040F/*::]*/: { n:"BrtEndPCDCalcMem14", f:parsenoop },
+	/*::[*/0x0410/*::]*/: { n:"BrtSXTH14", f:parsenoop },
+	/*::[*/0x0411/*::]*/: { n:"BrtBeginSparklineGroup", f:parsenoop },
+	/*::[*/0x0412/*::]*/: { n:"BrtEndSparklineGroup", f:parsenoop },
+	/*::[*/0x0413/*::]*/: { n:"BrtSparkline", f:parsenoop },
+	/*::[*/0x0414/*::]*/: { n:"BrtSXDI14", f:parsenoop },
+	/*::[*/0x0415/*::]*/: { n:"BrtWsFmtInfoEx14", f:parsenoop },
+	/*::[*/0x0416/*::]*/: { n:"BrtBeginConditionalFormatting14", f:parsenoop },
+	/*::[*/0x0417/*::]*/: { n:"BrtEndConditionalFormatting14", f:parsenoop },
+	/*::[*/0x0418/*::]*/: { n:"BrtBeginCFRule14", f:parsenoop },
+	/*::[*/0x0419/*::]*/: { n:"BrtEndCFRule14", f:parsenoop },
+	/*::[*/0x041A/*::]*/: { n:"BrtCFVO14", f:parsenoop },
+	/*::[*/0x041B/*::]*/: { n:"BrtBeginDatabar14", f:parsenoop },
+	/*::[*/0x041C/*::]*/: { n:"BrtBeginIconSet14", f:parsenoop },
+	/*::[*/0x041D/*::]*/: { n:"BrtDVal14", f:parsenoop },
+	/*::[*/0x041E/*::]*/: { n:"BrtBeginDVals14", f:parsenoop },
+	/*::[*/0x041F/*::]*/: { n:"BrtColor14", f:parsenoop },
+	/*::[*/0x0420/*::]*/: { n:"BrtBeginSparklines", f:parsenoop },
+	/*::[*/0x0421/*::]*/: { n:"BrtEndSparklines", f:parsenoop },
+	/*::[*/0x0422/*::]*/: { n:"BrtBeginSparklineGroups", f:parsenoop },
+	/*::[*/0x0423/*::]*/: { n:"BrtEndSparklineGroups", f:parsenoop },
+	/*::[*/0x0425/*::]*/: { n:"BrtSXVD14", f:parsenoop },
+	/*::[*/0x0426/*::]*/: { n:"BrtBeginSxview14", f:parsenoop },
+	/*::[*/0x0427/*::]*/: { n:"BrtEndSxview14", f:parsenoop },
+	/*::[*/0x042A/*::]*/: { n:"BrtBeginPCD14", f:parsenoop },
+	/*::[*/0x042B/*::]*/: { n:"BrtEndPCD14", f:parsenoop },
+	/*::[*/0x042C/*::]*/: { n:"BrtBeginExtConn14", f:parsenoop },
+	/*::[*/0x042D/*::]*/: { n:"BrtEndExtConn14", f:parsenoop },
+	/*::[*/0x042E/*::]*/: { n:"BrtBeginSlicerCacheIDs", f:parsenoop },
+	/*::[*/0x042F/*::]*/: { n:"BrtEndSlicerCacheIDs", f:parsenoop },
+	/*::[*/0x0430/*::]*/: { n:"BrtBeginSlicerCacheID", f:parsenoop },
+	/*::[*/0x0431/*::]*/: { n:"BrtEndSlicerCacheID", f:parsenoop },
+	/*::[*/0x0433/*::]*/: { n:"BrtBeginSlicerCache", f:parsenoop },
+	/*::[*/0x0434/*::]*/: { n:"BrtEndSlicerCache", f:parsenoop },
+	/*::[*/0x0435/*::]*/: { n:"BrtBeginSlicerCacheDef", f:parsenoop },
+	/*::[*/0x0436/*::]*/: { n:"BrtEndSlicerCacheDef", f:parsenoop },
+	/*::[*/0x0437/*::]*/: { n:"BrtBeginSlicersEx", f:parsenoop },
+	/*::[*/0x0438/*::]*/: { n:"BrtEndSlicersEx", f:parsenoop },
+	/*::[*/0x0439/*::]*/: { n:"BrtBeginSlicerEx", f:parsenoop },
+	/*::[*/0x043A/*::]*/: { n:"BrtEndSlicerEx", f:parsenoop },
+	/*::[*/0x043B/*::]*/: { n:"BrtBeginSlicer", f:parsenoop },
+	/*::[*/0x043C/*::]*/: { n:"BrtEndSlicer", f:parsenoop },
+	/*::[*/0x043D/*::]*/: { n:"BrtSlicerCachePivotTables", f:parsenoop },
+	/*::[*/0x043E/*::]*/: { n:"BrtBeginSlicerCacheOlapImpl", f:parsenoop },
+	/*::[*/0x043F/*::]*/: { n:"BrtEndSlicerCacheOlapImpl", f:parsenoop },
+	/*::[*/0x0440/*::]*/: { n:"BrtBeginSlicerCacheLevelsData", f:parsenoop },
+	/*::[*/0x0441/*::]*/: { n:"BrtEndSlicerCacheLevelsData", f:parsenoop },
+	/*::[*/0x0442/*::]*/: { n:"BrtBeginSlicerCacheLevelData", f:parsenoop },
+	/*::[*/0x0443/*::]*/: { n:"BrtEndSlicerCacheLevelData", f:parsenoop },
+	/*::[*/0x0444/*::]*/: { n:"BrtBeginSlicerCacheSiRanges", f:parsenoop },
+	/*::[*/0x0445/*::]*/: { n:"BrtEndSlicerCacheSiRanges", f:parsenoop },
+	/*::[*/0x0446/*::]*/: { n:"BrtBeginSlicerCacheSiRange", f:parsenoop },
+	/*::[*/0x0447/*::]*/: { n:"BrtEndSlicerCacheSiRange", f:parsenoop },
+	/*::[*/0x0448/*::]*/: { n:"BrtSlicerCacheOlapItem", f:parsenoop },
+	/*::[*/0x0449/*::]*/: { n:"BrtBeginSlicerCacheSelections", f:parsenoop },
+	/*::[*/0x044A/*::]*/: { n:"BrtSlicerCacheSelection", f:parsenoop },
+	/*::[*/0x044B/*::]*/: { n:"BrtEndSlicerCacheSelections", f:parsenoop },
+	/*::[*/0x044C/*::]*/: { n:"BrtBeginSlicerCacheNative", f:parsenoop },
+	/*::[*/0x044D/*::]*/: { n:"BrtEndSlicerCacheNative", f:parsenoop },
+	/*::[*/0x044E/*::]*/: { n:"BrtSlicerCacheNativeItem", f:parsenoop },
+	/*::[*/0x044F/*::]*/: { n:"BrtRangeProtection14", f:parsenoop },
+	/*::[*/0x0450/*::]*/: { n:"BrtRangeProtectionIso14", f:parsenoop },
+	/*::[*/0x0451/*::]*/: { n:"BrtCellIgnoreEC14", f:parsenoop },
+	/*::[*/0x0457/*::]*/: { n:"BrtList14", f:parsenoop },
+	/*::[*/0x0458/*::]*/: { n:"BrtCFIcon", f:parsenoop },
+	/*::[*/0x0459/*::]*/: { n:"BrtBeginSlicerCachesPivotCacheIDs", f:parsenoop },
+	/*::[*/0x045A/*::]*/: { n:"BrtEndSlicerCachesPivotCacheIDs", f:parsenoop },
+	/*::[*/0x045B/*::]*/: { n:"BrtBeginSlicers", f:parsenoop },
+	/*::[*/0x045C/*::]*/: { n:"BrtEndSlicers", f:parsenoop },
+	/*::[*/0x045D/*::]*/: { n:"BrtWbProp14", f:parsenoop },
+	/*::[*/0x045E/*::]*/: { n:"BrtBeginSXEdit", f:parsenoop },
+	/*::[*/0x045F/*::]*/: { n:"BrtEndSXEdit", f:parsenoop },
+	/*::[*/0x0460/*::]*/: { n:"BrtBeginSXEdits", f:parsenoop },
+	/*::[*/0x0461/*::]*/: { n:"BrtEndSXEdits", f:parsenoop },
+	/*::[*/0x0462/*::]*/: { n:"BrtBeginSXChange", f:parsenoop },
+	/*::[*/0x0463/*::]*/: { n:"BrtEndSXChange", f:parsenoop },
+	/*::[*/0x0464/*::]*/: { n:"BrtBeginSXChanges", f:parsenoop },
+	/*::[*/0x0465/*::]*/: { n:"BrtEndSXChanges", f:parsenoop },
+	/*::[*/0x0466/*::]*/: { n:"BrtSXTupleItems", f:parsenoop },
+	/*::[*/0x0468/*::]*/: { n:"BrtBeginSlicerStyle", f:parsenoop },
+	/*::[*/0x0469/*::]*/: { n:"BrtEndSlicerStyle", f:parsenoop },
+	/*::[*/0x046A/*::]*/: { n:"BrtSlicerStyleElement", f:parsenoop },
+	/*::[*/0x046B/*::]*/: { n:"BrtBeginStyleSheetExt14", f:parsenoop },
+	/*::[*/0x046C/*::]*/: { n:"BrtEndStyleSheetExt14", f:parsenoop },
+	/*::[*/0x046D/*::]*/: { n:"BrtBeginSlicerCachesPivotCacheID", f:parsenoop },
+	/*::[*/0x046E/*::]*/: { n:"BrtEndSlicerCachesPivotCacheID", f:parsenoop },
+	/*::[*/0x046F/*::]*/: { n:"BrtBeginConditionalFormattings", f:parsenoop },
+	/*::[*/0x0470/*::]*/: { n:"BrtEndConditionalFormattings", f:parsenoop },
+	/*::[*/0x0471/*::]*/: { n:"BrtBeginPCDCalcMemExt", f:parsenoop },
+	/*::[*/0x0472/*::]*/: { n:"BrtEndPCDCalcMemExt", f:parsenoop },
+	/*::[*/0x0473/*::]*/: { n:"BrtBeginPCDCalcMemsExt", f:parsenoop },
+	/*::[*/0x0474/*::]*/: { n:"BrtEndPCDCalcMemsExt", f:parsenoop },
+	/*::[*/0x0475/*::]*/: { n:"BrtPCDField14", f:parsenoop },
+	/*::[*/0x0476/*::]*/: { n:"BrtBeginSlicerStyles", f:parsenoop },
+	/*::[*/0x0477/*::]*/: { n:"BrtEndSlicerStyles", f:parsenoop },
+	/*::[*/0x0478/*::]*/: { n:"BrtBeginSlicerStyleElements", f:parsenoop },
+	/*::[*/0x0479/*::]*/: { n:"BrtEndSlicerStyleElements", f:parsenoop },
+	/*::[*/0x047A/*::]*/: { n:"BrtCFRuleExt", f:parsenoop },
+	/*::[*/0x047B/*::]*/: { n:"BrtBeginSXCondFmt14", f:parsenoop },
+	/*::[*/0x047C/*::]*/: { n:"BrtEndSXCondFmt14", f:parsenoop },
+	/*::[*/0x047D/*::]*/: { n:"BrtBeginSXCondFmts14", f:parsenoop },
+	/*::[*/0x047E/*::]*/: { n:"BrtEndSXCondFmts14", f:parsenoop },
+	/*::[*/0x0480/*::]*/: { n:"BrtBeginSortCond14", f:parsenoop },
+	/*::[*/0x0481/*::]*/: { n:"BrtEndSortCond14", f:parsenoop },
+	/*::[*/0x0482/*::]*/: { n:"BrtEndDVals14", f:parsenoop },
+	/*::[*/0x0483/*::]*/: { n:"BrtEndIconSet14", f:parsenoop },
+	/*::[*/0x0484/*::]*/: { n:"BrtEndDatabar14", f:parsenoop },
+	/*::[*/0x0485/*::]*/: { n:"BrtBeginColorScale14", f:parsenoop },
+	/*::[*/0x0486/*::]*/: { n:"BrtEndColorScale14", f:parsenoop },
+	/*::[*/0x0487/*::]*/: { n:"BrtBeginSxrules14", f:parsenoop },
+	/*::[*/0x0488/*::]*/: { n:"BrtEndSxrules14", f:parsenoop },
+	/*::[*/0x0489/*::]*/: { n:"BrtBeginPRule14", f:parsenoop },
+	/*::[*/0x048A/*::]*/: { n:"BrtEndPRule14", f:parsenoop },
+	/*::[*/0x048B/*::]*/: { n:"BrtBeginPRFilters14", f:parsenoop },
+	/*::[*/0x048C/*::]*/: { n:"BrtEndPRFilters14", f:parsenoop },
+	/*::[*/0x048D/*::]*/: { n:"BrtBeginPRFilter14", f:parsenoop },
+	/*::[*/0x048E/*::]*/: { n:"BrtEndPRFilter14", f:parsenoop },
+	/*::[*/0x048F/*::]*/: { n:"BrtBeginPRFItem14", f:parsenoop },
+	/*::[*/0x0490/*::]*/: { n:"BrtEndPRFItem14", f:parsenoop },
+	/*::[*/0x0491/*::]*/: { n:"BrtBeginCellIgnoreECs14", f:parsenoop },
+	/*::[*/0x0492/*::]*/: { n:"BrtEndCellIgnoreECs14", f:parsenoop },
+	/*::[*/0x0493/*::]*/: { n:"BrtDxf14", f:parsenoop },
+	/*::[*/0x0494/*::]*/: { n:"BrtBeginDxF14s", f:parsenoop },
+	/*::[*/0x0495/*::]*/: { n:"BrtEndDxf14s", f:parsenoop },
+	/*::[*/0x0499/*::]*/: { n:"BrtFilter14", f:parsenoop },
+	/*::[*/0x049A/*::]*/: { n:"BrtBeginCustomFilters14", f:parsenoop },
+	/*::[*/0x049C/*::]*/: { n:"BrtCustomFilter14", f:parsenoop },
+	/*::[*/0x049D/*::]*/: { n:"BrtIconFilter14", f:parsenoop },
+	/*::[*/0x049E/*::]*/: { n:"BrtPivotCacheConnectionName", f:parsenoop },
+	/*::[*/0x0800/*::]*/: { n:"BrtBeginDecoupledPivotCacheIDs", f:parsenoop },
+	/*::[*/0x0801/*::]*/: { n:"BrtEndDecoupledPivotCacheIDs", f:parsenoop },
+	/*::[*/0x0802/*::]*/: { n:"BrtDecoupledPivotCacheID", f:parsenoop },
+	/*::[*/0x0803/*::]*/: { n:"BrtBeginPivotTableRefs", f:parsenoop },
+	/*::[*/0x0804/*::]*/: { n:"BrtEndPivotTableRefs", f:parsenoop },
+	/*::[*/0x0805/*::]*/: { n:"BrtPivotTableRef", f:parsenoop },
+	/*::[*/0x0806/*::]*/: { n:"BrtSlicerCacheBookPivotTables", f:parsenoop },
+	/*::[*/0x0807/*::]*/: { n:"BrtBeginSxvcells", f:parsenoop },
+	/*::[*/0x0808/*::]*/: { n:"BrtEndSxvcells", f:parsenoop },
+	/*::[*/0x0809/*::]*/: { n:"BrtBeginSxRow", f:parsenoop },
+	/*::[*/0x080A/*::]*/: { n:"BrtEndSxRow", f:parsenoop },
+	/*::[*/0x080C/*::]*/: { n:"BrtPcdCalcMem15", f:parsenoop },
+	/*::[*/0x0813/*::]*/: { n:"BrtQsi15", f:parsenoop },
+	/*::[*/0x0814/*::]*/: { n:"BrtBeginWebExtensions", f:parsenoop },
+	/*::[*/0x0815/*::]*/: { n:"BrtEndWebExtensions", f:parsenoop },
+	/*::[*/0x0816/*::]*/: { n:"BrtWebExtension", f:parsenoop },
+	/*::[*/0x0817/*::]*/: { n:"BrtAbsPath15", f:parsenoop },
+	/*::[*/0x0818/*::]*/: { n:"BrtBeginPivotTableUISettings", f:parsenoop },
+	/*::[*/0x0819/*::]*/: { n:"BrtEndPivotTableUISettings", f:parsenoop },
+	/*::[*/0x081B/*::]*/: { n:"BrtTableSlicerCacheIDs", f:parsenoop },
+	/*::[*/0x081C/*::]*/: { n:"BrtTableSlicerCacheID", f:parsenoop },
+	/*::[*/0x081D/*::]*/: { n:"BrtBeginTableSlicerCache", f:parsenoop },
+	/*::[*/0x081E/*::]*/: { n:"BrtEndTableSlicerCache", f:parsenoop },
+	/*::[*/0x081F/*::]*/: { n:"BrtSxFilter15", f:parsenoop },
+	/*::[*/0x0820/*::]*/: { n:"BrtBeginTimelineCachePivotCacheIDs", f:parsenoop },
+	/*::[*/0x0821/*::]*/: { n:"BrtEndTimelineCachePivotCacheIDs", f:parsenoop },
+	/*::[*/0x0822/*::]*/: { n:"BrtTimelineCachePivotCacheID", f:parsenoop },
+	/*::[*/0x0823/*::]*/: { n:"BrtBeginTimelineCacheIDs", f:parsenoop },
+	/*::[*/0x0824/*::]*/: { n:"BrtEndTimelineCacheIDs", f:parsenoop },
+	/*::[*/0x0825/*::]*/: { n:"BrtBeginTimelineCacheID", f:parsenoop },
+	/*::[*/0x0826/*::]*/: { n:"BrtEndTimelineCacheID", f:parsenoop },
+	/*::[*/0x0827/*::]*/: { n:"BrtBeginTimelinesEx", f:parsenoop },
+	/*::[*/0x0828/*::]*/: { n:"BrtEndTimelinesEx", f:parsenoop },
+	/*::[*/0x0829/*::]*/: { n:"BrtBeginTimelineEx", f:parsenoop },
+	/*::[*/0x082A/*::]*/: { n:"BrtEndTimelineEx", f:parsenoop },
+	/*::[*/0x082B/*::]*/: { n:"BrtWorkBookPr15", f:parsenoop },
+	/*::[*/0x082C/*::]*/: { n:"BrtPCDH15", f:parsenoop },
+	/*::[*/0x082D/*::]*/: { n:"BrtBeginTimelineStyle", f:parsenoop },
+	/*::[*/0x082E/*::]*/: { n:"BrtEndTimelineStyle", f:parsenoop },
+	/*::[*/0x082F/*::]*/: { n:"BrtTimelineStyleElement", f:parsenoop },
+	/*::[*/0x0830/*::]*/: { n:"BrtBeginTimelineStylesheetExt15", f:parsenoop },
+	/*::[*/0x0831/*::]*/: { n:"BrtEndTimelineStylesheetExt15", f:parsenoop },
+	/*::[*/0x0832/*::]*/: { n:"BrtBeginTimelineStyles", f:parsenoop },
+	/*::[*/0x0833/*::]*/: { n:"BrtEndTimelineStyles", f:parsenoop },
+	/*::[*/0x0834/*::]*/: { n:"BrtBeginTimelineStyleElements", f:parsenoop },
+	/*::[*/0x0835/*::]*/: { n:"BrtEndTimelineStyleElements", f:parsenoop },
+	/*::[*/0x0836/*::]*/: { n:"BrtDxf15", f:parsenoop },
+	/*::[*/0x0837/*::]*/: { n:"BrtBeginDxfs15", f:parsenoop },
+	/*::[*/0x0838/*::]*/: { n:"brtEndDxfs15", f:parsenoop },
+	/*::[*/0x0839/*::]*/: { n:"BrtSlicerCacheHideItemsWithNoData", f:parsenoop },
+	/*::[*/0x083A/*::]*/: { n:"BrtBeginItemUniqueNames", f:parsenoop },
+	/*::[*/0x083B/*::]*/: { n:"BrtEndItemUniqueNames", f:parsenoop },
+	/*::[*/0x083C/*::]*/: { n:"BrtItemUniqueName", f:parsenoop },
+	/*::[*/0x083D/*::]*/: { n:"BrtBeginExtConn15", f:parsenoop },
+	/*::[*/0x083E/*::]*/: { n:"BrtEndExtConn15", f:parsenoop },
+	/*::[*/0x083F/*::]*/: { n:"BrtBeginOledbPr15", f:parsenoop },
+	/*::[*/0x0840/*::]*/: { n:"BrtEndOledbPr15", f:parsenoop },
+	/*::[*/0x0841/*::]*/: { n:"BrtBeginDataFeedPr15", f:parsenoop },
+	/*::[*/0x0842/*::]*/: { n:"BrtEndDataFeedPr15", f:parsenoop },
+	/*::[*/0x0843/*::]*/: { n:"BrtTextPr15", f:parsenoop },
+	/*::[*/0x0844/*::]*/: { n:"BrtRangePr15", f:parsenoop },
+	/*::[*/0x0845/*::]*/: { n:"BrtDbCommand15", f:parsenoop },
+	/*::[*/0x0846/*::]*/: { n:"BrtBeginDbTables15", f:parsenoop },
+	/*::[*/0x0847/*::]*/: { n:"BrtEndDbTables15", f:parsenoop },
+	/*::[*/0x0848/*::]*/: { n:"BrtDbTable15", f:parsenoop },
+	/*::[*/0x0849/*::]*/: { n:"BrtBeginDataModel", f:parsenoop },
+	/*::[*/0x084A/*::]*/: { n:"BrtEndDataModel", f:parsenoop },
+	/*::[*/0x084B/*::]*/: { n:"BrtBeginModelTables", f:parsenoop },
+	/*::[*/0x084C/*::]*/: { n:"BrtEndModelTables", f:parsenoop },
+	/*::[*/0x084D/*::]*/: { n:"BrtModelTable", f:parsenoop },
+	/*::[*/0x084E/*::]*/: { n:"BrtBeginModelRelationships", f:parsenoop },
+	/*::[*/0x084F/*::]*/: { n:"BrtEndModelRelationships", f:parsenoop },
+	/*::[*/0x0850/*::]*/: { n:"BrtModelRelationship", f:parsenoop },
+	/*::[*/0x0851/*::]*/: { n:"BrtBeginECTxtWiz15", f:parsenoop },
+	/*::[*/0x0852/*::]*/: { n:"BrtEndECTxtWiz15", f:parsenoop },
+	/*::[*/0x0853/*::]*/: { n:"BrtBeginECTWFldInfoLst15", f:parsenoop },
+	/*::[*/0x0854/*::]*/: { n:"BrtEndECTWFldInfoLst15", f:parsenoop },
+	/*::[*/0x0855/*::]*/: { n:"BrtBeginECTWFldInfo15", f:parsenoop },
+	/*::[*/0x0856/*::]*/: { n:"BrtFieldListActiveItem", f:parsenoop },
+	/*::[*/0x0857/*::]*/: { n:"BrtPivotCacheIdVersion", f:parsenoop },
+	/*::[*/0x0858/*::]*/: { n:"BrtSXDI15", f:parsenoop },
+	/*::[*/0xFFFF/*::]*/: { n:"", f:parsenoop }
 };
 
 var evert_RE = evert_key(XLSBRecordEnum, 'n');
 
 /* [MS-XLS] 2.3 Record Enumeration */
 var XLSRecordEnum = {
-0x0003: { n:"BIFF2NUM", f:parse_BIFF2NUM },
-0x0004: { n:"BIFF2STR", f:parse_BIFF2STR },
-0x0006: { n:"Formula", f:parse_Formula },
-0x0009: { n:'BOF', f:parse_BOF },
-0x000a: { n:'EOF', f:parse_EOF },
-0x000c: { n:"CalcCount", f:parse_CalcCount },
-0x000d: { n:"CalcMode", f:parse_CalcMode },
-0x000e: { n:"CalcPrecision", f:parse_CalcPrecision },
-0x000f: { n:"CalcRefMode", f:parse_CalcRefMode },
-0x0010: { n:"CalcDelta", f:parse_CalcDelta },
-0x0011: { n:"CalcIter", f:parse_CalcIter },
-0x0012: { n:"Protect", f:parse_Protect },
-0x0013: { n:"Password", f:parse_Password },
-0x0014: { n:"Header", f:parse_Header },
-0x0015: { n:"Footer", f:parse_Footer },
-0x0017: { n:"ExternSheet", f:parse_ExternSheet },
-0x0018: { n:"Lbl", f:parse_Lbl },
-0x0019: { n:"WinProtect", f:parse_WinProtect },
-0x001a: { n:"VerticalPageBreaks", f:parse_VerticalPageBreaks },
-0x001b: { n:"HorizontalPageBreaks", f:parse_HorizontalPageBreaks },
-0x001c: { n:"Note", f:parse_Note },
-0x001d: { n:"Selection", f:parse_Selection },
-0x0022: { n:"Date1904", f:parse_Date1904 },
-0x0023: { n:"ExternName", f:parse_ExternName },
-0x0026: { n:"LeftMargin", f:parse_LeftMargin },
-0x0027: { n:"RightMargin", f:parse_RightMargin },
-0x0028: { n:"TopMargin", f:parse_TopMargin },
-0x0029: { n:"BottomMargin", f:parse_BottomMargin },
-0x002a: { n:"PrintRowCol", f:parse_PrintRowCol },
-0x002b: { n:"PrintGrid", f:parse_PrintGrid },
-0x002f: { n:"FilePass", f:parse_FilePass },
-0x0031: { n:"Font", f:parse_Font },
-0x0033: { n:"PrintSize", f:parse_PrintSize },
-0x003c: { n:"Continue", f:parse_Continue },
-0x003d: { n:"Window1", f:parse_Window1 },
-0x0040: { n:"Backup", f:parse_Backup },
-0x0041: { n:"Pane", f:parse_Pane },
-0x0042: { n:'CodePage', f:parse_CodePage },
-0x004d: { n:"Pls", f:parse_Pls },
-0x0050: { n:"DCon", f:parse_DCon },
-0x0051: { n:"DConRef", f:parse_DConRef },
-0x0052: { n:"DConName", f:parse_DConName },
-0x0055: { n:"DefColWidth", f:parse_DefColWidth },
-0x0059: { n:"XCT", f:parse_XCT },
-0x005a: { n:"CRN", f:parse_CRN },
-0x005b: { n:"FileSharing", f:parse_FileSharing },
-0x005c: { n:'WriteAccess', f:parse_WriteAccess },
-0x005d: { n:"Obj", f:parse_Obj },
-0x005e: { n:"Uncalced", f:parse_Uncalced },
-0x005f: { n:"CalcSaveRecalc", f:parse_CalcSaveRecalc },
-0x0060: { n:"Template", f:parse_Template },
-0x0061: { n:"Intl", f:parse_Intl },
-0x0063: { n:"ObjProtect", f:parse_ObjProtect },
-0x007d: { n:"ColInfo", f:parse_ColInfo },
-0x0080: { n:"Guts", f:parse_Guts },
-0x0081: { n:"WsBool", f:parse_WsBool },
-0x0082: { n:"GridSet", f:parse_GridSet },
-0x0083: { n:"HCenter", f:parse_HCenter },
-0x0084: { n:"VCenter", f:parse_VCenter },
-0x0085: { n:'BoundSheet8', f:parse_BoundSheet8 },
-0x0086: { n:"WriteProtect", f:parse_WriteProtect },
-0x008c: { n:"Country", f:parse_Country },
-0x008d: { n:"HideObj", f:parse_HideObj },
-0x0090: { n:"Sort", f:parse_Sort },
-0x0092: { n:"Palette", f:parse_Palette },
-0x0097: { n:"Sync", f:parse_Sync },
-0x0098: { n:"LPr", f:parse_LPr },
-0x0099: { n:"DxGCol", f:parse_DxGCol },
-0x009a: { n:"FnGroupName", f:parse_FnGroupName },
-0x009b: { n:"FilterMode", f:parse_FilterMode },
-0x009c: { n:"BuiltInFnGroupCount", f:parse_BuiltInFnGroupCount },
-0x009d: { n:"AutoFilterInfo", f:parse_AutoFilterInfo },
-0x009e: { n:"AutoFilter", f:parse_AutoFilter },
-0x00a0: { n:"Scl", f:parse_Scl },
-0x00a1: { n:"Setup", f:parse_Setup },
-0x00ae: { n:"ScenMan", f:parse_ScenMan },
-0x00af: { n:"SCENARIO", f:parse_SCENARIO },
-0x00b0: { n:"SxView", f:parse_SxView },
-0x00b1: { n:"Sxvd", f:parse_Sxvd },
-0x00b2: { n:"SXVI", f:parse_SXVI },
-0x00b4: { n:"SxIvd", f:parse_SxIvd },
-0x00b5: { n:"SXLI", f:parse_SXLI },
-0x00b6: { n:"SXPI", f:parse_SXPI },
-0x00b8: { n:"DocRoute", f:parse_DocRoute },
-0x00b9: { n:"RecipName", f:parse_RecipName },
-0x00bd: { n:"MulRk", f:parse_MulRk },
-0x00be: { n:"MulBlank", f:parse_MulBlank },
-0x00c1: { n:'Mms', f:parse_Mms },
-0x00c5: { n:"SXDI", f:parse_SXDI },
-0x00c6: { n:"SXDB", f:parse_SXDB },
-0x00c7: { n:"SXFDB", f:parse_SXFDB },
-0x00c8: { n:"SXDBB", f:parse_SXDBB },
-0x00c9: { n:"SXNum", f:parse_SXNum },
-0x00ca: { n:"SxBool", f:parse_SxBool },
-0x00cb: { n:"SxErr", f:parse_SxErr },
-0x00cc: { n:"SXInt", f:parse_SXInt },
-0x00cd: { n:"SXString", f:parse_SXString },
-0x00ce: { n:"SXDtr", f:parse_SXDtr },
-0x00cf: { n:"SxNil", f:parse_SxNil },
-0x00d0: { n:"SXTbl", f:parse_SXTbl },
-0x00d1: { n:"SXTBRGIITM", f:parse_SXTBRGIITM },
-0x00d2: { n:"SxTbpg", f:parse_SxTbpg },
-0x00d3: { n:"ObProj", f:parse_ObProj },
-0x00d5: { n:"SXStreamID", f:parse_SXStreamID },
-0x00d7: { n:"DBCell", f:parse_DBCell },
-0x00d8: { n:"SXRng", f:parse_SXRng },
-0x00d9: { n:"SxIsxoper", f:parse_SxIsxoper },
-0x00da: { n:"BookBool", f:parse_BookBool },
-0x00dc: { n:"DbOrParamQry", f:parse_DbOrParamQry },
-0x00dd: { n:"ScenarioProtect", f:parse_ScenarioProtect },
-0x00de: { n:"OleObjectSize", f:parse_OleObjectSize },
-0x00e0: { n:"XF", f:parse_XF },
-0x00e1: { n:'InterfaceHdr', f:parse_InterfaceHdr },
-0x00e2: { n:'InterfaceEnd', f:parse_InterfaceEnd },
-0x00e3: { n:"SXVS", f:parse_SXVS },
-0x00e5: { n:"MergeCells", f:parse_MergeCells },
-0x00e9: { n:"BkHim", f:parse_BkHim },
-0x00eb: { n:"MsoDrawingGroup", f:parse_MsoDrawingGroup },
-0x00ec: { n:"MsoDrawing", f:parse_MsoDrawing },
-0x00ed: { n:"MsoDrawingSelection", f:parse_MsoDrawingSelection },
-0x00ef: { n:"PhoneticInfo", f:parse_PhoneticInfo },
-0x00f0: { n:"SxRule", f:parse_SxRule },
-0x00f1: { n:"SXEx", f:parse_SXEx },
-0x00f2: { n:"SxFilt", f:parse_SxFilt },
-0x00f4: { n:"SxDXF", f:parse_SxDXF },
-0x00f5: { n:"SxItm", f:parse_SxItm },
-0x00f6: { n:"SxName", f:parse_SxName },
-0x00f7: { n:"SxSelect", f:parse_SxSelect },
-0x00f8: { n:"SXPair", f:parse_SXPair },
-0x00f9: { n:"SxFmla", f:parse_SxFmla },
-0x00fb: { n:"SxFormat", f:parse_SxFormat },
-0x00fc: { n:"SST", f:parse_SST },
-0x00fd: { n:"LabelSst", f:parse_LabelSst },
-0x00ff: { n:"ExtSST", f:parse_ExtSST },
-0x0100: { n:"SXVDEx", f:parse_SXVDEx },
-0x0103: { n:"SXFormula", f:parse_SXFormula },
-0x0122: { n:"SXDBEx", f:parse_SXDBEx },
-0x0137: { n:"RRDInsDel", f:parse_RRDInsDel },
-0x0138: { n:"RRDHead", f:parse_RRDHead },
-0x013b: { n:"RRDChgCell", f:parse_RRDChgCell },
-0x013d: { n:"RRTabId", f:parse_RRTabId },
-0x013e: { n:"RRDRenSheet", f:parse_RRDRenSheet },
-0x013f: { n:"RRSort", f:parse_RRSort },
-0x0140: { n:"RRDMove", f:parse_RRDMove },
-0x014a: { n:"RRFormat", f:parse_RRFormat },
-0x014b: { n:"RRAutoFmt", f:parse_RRAutoFmt },
-0x014d: { n:"RRInsertSh", f:parse_RRInsertSh },
-0x014e: { n:"RRDMoveBegin", f:parse_RRDMoveBegin },
-0x014f: { n:"RRDMoveEnd", f:parse_RRDMoveEnd },
-0x0150: { n:"RRDInsDelBegin", f:parse_RRDInsDelBegin },
-0x0151: { n:"RRDInsDelEnd", f:parse_RRDInsDelEnd },
-0x0152: { n:"RRDConflict", f:parse_RRDConflict },
-0x0153: { n:"RRDDefName", f:parse_RRDDefName },
-0x0154: { n:"RRDRstEtxp", f:parse_RRDRstEtxp },
-0x015f: { n:"LRng", f:parse_LRng },
-0x0160: { n:"UsesELFs", f:parse_UsesELFs },
-0x0161: { n:"DSF", f:parse_DSF },
-0x0191: { n:"CUsr", f:parse_CUsr },
-0x0192: { n:"CbUsr", f:parse_CbUsr },
-0x0193: { n:"UsrInfo", f:parse_UsrInfo },
-0x0194: { n:"UsrExcl", f:parse_UsrExcl },
-0x0195: { n:"FileLock", f:parse_FileLock },
-0x0196: { n:"RRDInfo", f:parse_RRDInfo },
-0x0197: { n:"BCUsrs", f:parse_BCUsrs },
-0x0198: { n:"UsrChk", f:parse_UsrChk },
-0x01a9: { n:"UserBView", f:parse_UserBView },
-0x01aa: { n:"UserSViewBegin", f:parse_UserSViewBegin },
-0x01ab: { n:"UserSViewEnd", f:parse_UserSViewEnd },
-0x01ac: { n:"RRDUserView", f:parse_RRDUserView },
-0x01ad: { n:"Qsi", f:parse_Qsi },
-0x01ae: { n:"SupBook", f:parse_SupBook },
-0x01af: { n:"Prot4Rev", f:parse_Prot4Rev },
-0x01b0: { n:"CondFmt", f:parse_CondFmt },
-0x01b1: { n:"CF", f:parse_CF },
-0x01b2: { n:"DVal", f:parse_DVal },
-0x01b5: { n:"DConBin", f:parse_DConBin },
-0x01b6: { n:"TxO", f:parse_TxO },
-0x01b7: { n:"RefreshAll", f:parse_RefreshAll },
-0x01b8: { n:"HLink", f:parse_HLink },
-0x01b9: { n:"Lel", f:parse_Lel },
-0x01ba: { n:"CodeName", f:parse_XLSCodeName },
-0x01bb: { n:"SXFDBType", f:parse_SXFDBType },
-0x01bc: { n:"Prot4RevPass", f:parse_Prot4RevPass },
-0x01bd: { n:"ObNoMacros", f:parse_ObNoMacros },
-0x01be: { n:"Dv", f:parse_Dv },
-0x01c0: { n:"Excel9File", f:parse_Excel9File },
-0x01c1: { n:"RecalcId", f:parse_RecalcId, r:2},
-0x01c2: { n:"EntExU2", f:parse_EntExU2 },
-0x0200: { n:"Dimensions", f:parse_Dimensions },
-0x0201: { n:"Blank", f:parse_Blank },
-0x0203: { n:"Number", f:parse_Number },
-0x0204: { n:"Label", f:parse_Label },
-0x0205: { n:"BoolErr", f:parse_BoolErr },
-0x0206: { n:"Formula", f:parse_Formula },
-0x0207: { n:"String", f:parse_String },
-0x0208: { n:'Row', f:parse_Row },
-0x020b: { n:"Index", f:parse_Index },
-0x0221: { n:"Array", f:parse_Array },
-0x0225: { n:"DefaultRowHeight", f:parse_DefaultRowHeight },
-0x0236: { n:"Table", f:parse_Table },
-0x023e: { n:"Window2", f:parse_Window2 },
-0x027e: { n:"RK", f:parse_RK },
-0x0293: { n:"Style", f:parse_Style },
-0x0406: { n:"Formula", f:parse_Formula },
-0x0418: { n:"BigName", f:parse_BigName },
-0x041e: { n:"Format", f:parse_Format },
-0x043c: { n:"ContinueBigName", f:parse_ContinueBigName },
-0x04bc: { n:"ShrFmla", f:parse_ShrFmla },
-0x0800: { n:"HLinkTooltip", f:parse_HLinkTooltip },
-0x0801: { n:"WebPub", f:parse_WebPub },
-0x0802: { n:"QsiSXTag", f:parse_QsiSXTag },
-0x0803: { n:"DBQueryExt", f:parse_DBQueryExt },
-0x0804: { n:"ExtString", f:parse_ExtString },
-0x0805: { n:"TxtQry", f:parse_TxtQry },
-0x0806: { n:"Qsir", f:parse_Qsir },
-0x0807: { n:"Qsif", f:parse_Qsif },
-0x0808: { n:"RRDTQSIF", f:parse_RRDTQSIF },
-0x0809: { n:'BOF', f:parse_BOF },
-0x080a: { n:"OleDbConn", f:parse_OleDbConn },
-0x080b: { n:"WOpt", f:parse_WOpt },
-0x080c: { n:"SXViewEx", f:parse_SXViewEx },
-0x080d: { n:"SXTH", f:parse_SXTH },
-0x080e: { n:"SXPIEx", f:parse_SXPIEx },
-0x080f: { n:"SXVDTEx", f:parse_SXVDTEx },
-0x0810: { n:"SXViewEx9", f:parse_SXViewEx9 },
-0x0812: { n:"ContinueFrt", f:parse_ContinueFrt },
-0x0813: { n:"RealTimeData", f:parse_RealTimeData },
-0x0850: { n:"ChartFrtInfo", f:parse_ChartFrtInfo },
-0x0851: { n:"FrtWrapper", f:parse_FrtWrapper },
-0x0852: { n:"StartBlock", f:parse_StartBlock },
-0x0853: { n:"EndBlock", f:parse_EndBlock },
-0x0854: { n:"StartObject", f:parse_StartObject },
-0x0855: { n:"EndObject", f:parse_EndObject },
-0x0856: { n:"CatLab", f:parse_CatLab },
-0x0857: { n:"YMult", f:parse_YMult },
-0x0858: { n:"SXViewLink", f:parse_SXViewLink },
-0x0859: { n:"PivotChartBits", f:parse_PivotChartBits },
-0x085a: { n:"FrtFontList", f:parse_FrtFontList },
-0x0862: { n:"SheetExt", f:parse_SheetExt },
-0x0863: { n:"BookExt", f:parse_BookExt, r:12},
-0x0864: { n:"SXAddl", f:parse_SXAddl },
-0x0865: { n:"CrErr", f:parse_CrErr },
-0x0866: { n:"HFPicture", f:parse_HFPicture },
-0x0867: { n:'FeatHdr', f:parse_FeatHdr },
-0x0868: { n:"Feat", f:parse_Feat },
-0x086a: { n:"DataLabExt", f:parse_DataLabExt },
-0x086b: { n:"DataLabExtContents", f:parse_DataLabExtContents },
-0x086c: { n:"CellWatch", f:parse_CellWatch },
-0x0871: { n:"FeatHdr11", f:parse_FeatHdr11 },
-0x0872: { n:"Feature11", f:parse_Feature11 },
-0x0874: { n:"DropDownObjIds", f:parse_DropDownObjIds },
-0x0875: { n:"ContinueFrt11", f:parse_ContinueFrt11 },
-0x0876: { n:"DConn", f:parse_DConn },
-0x0877: { n:"List12", f:parse_List12 },
-0x0878: { n:"Feature12", f:parse_Feature12 },
-0x0879: { n:"CondFmt12", f:parse_CondFmt12 },
-0x087a: { n:"CF12", f:parse_CF12 },
-0x087b: { n:"CFEx", f:parse_CFEx },
-0x087c: { n:"XFCRC", f:parse_XFCRC, r:12 },
-0x087d: { n:"XFExt", f:parse_XFExt, r:12 },
-0x087e: { n:"AutoFilter12", f:parse_AutoFilter12 },
-0x087f: { n:"ContinueFrt12", f:parse_ContinueFrt12 },
-0x0884: { n:"MDTInfo", f:parse_MDTInfo },
-0x0885: { n:"MDXStr", f:parse_MDXStr },
-0x0886: { n:"MDXTuple", f:parse_MDXTuple },
-0x0887: { n:"MDXSet", f:parse_MDXSet },
-0x0888: { n:"MDXProp", f:parse_MDXProp },
-0x0889: { n:"MDXKPI", f:parse_MDXKPI },
-0x088a: { n:"MDB", f:parse_MDB },
-0x088b: { n:"PLV", f:parse_PLV },
-0x088c: { n:"Compat12", f:parse_Compat12, r:12 },
-0x088d: { n:"DXF", f:parse_DXF },
-0x088e: { n:"TableStyles", f:parse_TableStyles, r:12 },
-0x088f: { n:"TableStyle", f:parse_TableStyle },
-0x0890: { n:"TableStyleElement", f:parse_TableStyleElement },
-0x0892: { n:"StyleExt", f:parse_StyleExt },
-0x0893: { n:"NamePublish", f:parse_NamePublish },
-0x0894: { n:"NameCmt", f:parse_NameCmt },
-0x0895: { n:"SortData", f:parse_SortData },
-0x0896: { n:"Theme", f:parse_Theme, r:12 },
-0x0897: { n:"GUIDTypeLib", f:parse_GUIDTypeLib },
-0x0898: { n:"FnGrp12", f:parse_FnGrp12 },
-0x0899: { n:"NameFnGrp12", f:parse_NameFnGrp12 },
-0x089a: { n:"MTRSettings", f:parse_MTRSettings, r:12 },
-0x089b: { n:"CompressPictures", f:parse_CompressPictures },
-0x089c: { n:"HeaderFooter", f:parse_HeaderFooter },
-0x089d: { n:"CrtLayout12", f:parse_CrtLayout12 },
-0x089e: { n:"CrtMlFrt", f:parse_CrtMlFrt },
-0x089f: { n:"CrtMlFrtContinue", f:parse_CrtMlFrtContinue },
-0x08a3: { n:"ForceFullCalculation", f:parse_ForceFullCalculation },
-0x08a4: { n:"ShapePropsStream", f:parse_ShapePropsStream },
-0x08a5: { n:"TextPropsStream", f:parse_TextPropsStream },
-0x08a6: { n:"RichTextStream", f:parse_RichTextStream },
-0x08a7: { n:"CrtLayout12A", f:parse_CrtLayout12A },
-0x1001: { n:"Units", f:parse_Units },
-0x1002: { n:"Chart", f:parse_Chart },
-0x1003: { n:"Series", f:parse_Series },
-0x1006: { n:"DataFormat", f:parse_DataFormat },
-0x1007: { n:"LineFormat", f:parse_LineFormat },
-0x1009: { n:"MarkerFormat", f:parse_MarkerFormat },
-0x100a: { n:"AreaFormat", f:parse_AreaFormat },
-0x100b: { n:"PieFormat", f:parse_PieFormat },
-0x100c: { n:"AttachedLabel", f:parse_AttachedLabel },
-0x100d: { n:"SeriesText", f:parse_SeriesText },
-0x1014: { n:"ChartFormat", f:parse_ChartFormat },
-0x1015: { n:"Legend", f:parse_Legend },
-0x1016: { n:"SeriesList", f:parse_SeriesList },
-0x1017: { n:"Bar", f:parse_Bar },
-0x1018: { n:"Line", f:parse_Line },
-0x1019: { n:"Pie", f:parse_Pie },
-0x101a: { n:"Area", f:parse_Area },
-0x101b: { n:"Scatter", f:parse_Scatter },
-0x101c: { n:"CrtLine", f:parse_CrtLine },
-0x101d: { n:"Axis", f:parse_Axis },
-0x101e: { n:"Tick", f:parse_Tick },
-0x101f: { n:"ValueRange", f:parse_ValueRange },
-0x1020: { n:"CatSerRange", f:parse_CatSerRange },
-0x1021: { n:"AxisLine", f:parse_AxisLine },
-0x1022: { n:"CrtLink", f:parse_CrtLink },
-0x1024: { n:"DefaultText", f:parse_DefaultText },
-0x1025: { n:"Text", f:parse_Text },
-0x1026: { n:"FontX", f:parse_FontX },
-0x1027: { n:"ObjectLink", f:parse_ObjectLink },
-0x1032: { n:"Frame", f:parse_Frame },
-0x1033: { n:"Begin", f:parse_Begin },
-0x1034: { n:"End", f:parse_End },
-0x1035: { n:"PlotArea", f:parse_PlotArea },
-0x103a: { n:"Chart3d", f:parse_Chart3d },
-0x103c: { n:"PicF", f:parse_PicF },
-0x103d: { n:"DropBar", f:parse_DropBar },
-0x103e: { n:"Radar", f:parse_Radar },
-0x103f: { n:"Surf", f:parse_Surf },
-0x1040: { n:"RadarArea", f:parse_RadarArea },
-0x1041: { n:"AxisParent", f:parse_AxisParent },
-0x1043: { n:"LegendException", f:parse_LegendException },
-0x1044: { n:"ShtProps", f:parse_ShtProps },
-0x1045: { n:"SerToCrt", f:parse_SerToCrt },
-0x1046: { n:"AxesUsed", f:parse_AxesUsed },
-0x1048: { n:"SBaseRef", f:parse_SBaseRef },
-0x104a: { n:"SerParent", f:parse_SerParent },
-0x104b: { n:"SerAuxTrend", f:parse_SerAuxTrend },
-0x104e: { n:"IFmtRecord", f:parse_IFmtRecord },
-0x104f: { n:"Pos", f:parse_Pos },
-0x1050: { n:"AlRuns", f:parse_AlRuns },
-0x1051: { n:"BRAI", f:parse_BRAI },
-0x105b: { n:"SerAuxErrBar", f:parse_SerAuxErrBar },
-0x105c: { n:"ClrtClient", f:parse_ClrtClient },
-0x105d: { n:"SerFmt", f:parse_SerFmt },
-0x105f: { n:"Chart3DBarShape", f:parse_Chart3DBarShape },
-0x1060: { n:"Fbi", f:parse_Fbi },
-0x1061: { n:"BopPop", f:parse_BopPop },
-0x1062: { n:"AxcExt", f:parse_AxcExt },
-0x1063: { n:"Dat", f:parse_Dat },
-0x1064: { n:"PlotGrowth", f:parse_PlotGrowth },
-0x1065: { n:"SIIndex", f:parse_SIIndex },
-0x1066: { n:"GelFrame", f:parse_GelFrame },
-0x1067: { n:"BopPopCustom", f:parse_BopPopCustom },
-0x1068: { n:"Fbi2", f:parse_Fbi2 },
+	/*::[*/0x0003/*::]*/: { n:"BIFF2NUM", f:parse_BIFF2NUM },
+	/*::[*/0x0004/*::]*/: { n:"BIFF2STR", f:parse_BIFF2STR },
+	/*::[*/0x0006/*::]*/: { n:"Formula", f:parse_Formula },
+	/*::[*/0x0009/*::]*/: { n:'BOF', f:parse_BOF },
+	/*::[*/0x000a/*::]*/: { n:'EOF', f:parse_EOF },
+	/*::[*/0x000c/*::]*/: { n:"CalcCount", f:parse_CalcCount },
+	/*::[*/0x000d/*::]*/: { n:"CalcMode", f:parse_CalcMode },
+	/*::[*/0x000e/*::]*/: { n:"CalcPrecision", f:parse_CalcPrecision },
+	/*::[*/0x000f/*::]*/: { n:"CalcRefMode", f:parse_CalcRefMode },
+	/*::[*/0x0010/*::]*/: { n:"CalcDelta", f:parse_CalcDelta },
+	/*::[*/0x0011/*::]*/: { n:"CalcIter", f:parse_CalcIter },
+	/*::[*/0x0012/*::]*/: { n:"Protect", f:parse_Protect },
+	/*::[*/0x0013/*::]*/: { n:"Password", f:parse_Password },
+	/*::[*/0x0014/*::]*/: { n:"Header", f:parse_Header },
+	/*::[*/0x0015/*::]*/: { n:"Footer", f:parse_Footer },
+	/*::[*/0x0017/*::]*/: { n:"ExternSheet", f:parse_ExternSheet },
+	/*::[*/0x0018/*::]*/: { n:"Lbl", f:parse_Lbl },
+	/*::[*/0x0019/*::]*/: { n:"WinProtect", f:parse_WinProtect },
+	/*::[*/0x001a/*::]*/: { n:"VerticalPageBreaks", f:parse_VerticalPageBreaks },
+	/*::[*/0x001b/*::]*/: { n:"HorizontalPageBreaks", f:parse_HorizontalPageBreaks },
+	/*::[*/0x001c/*::]*/: { n:"Note", f:parse_Note },
+	/*::[*/0x001d/*::]*/: { n:"Selection", f:parse_Selection },
+	/*::[*/0x0022/*::]*/: { n:"Date1904", f:parse_Date1904 },
+	/*::[*/0x0023/*::]*/: { n:"ExternName", f:parse_ExternName },
+	/*::[*/0x0026/*::]*/: { n:"LeftMargin", f:parse_LeftMargin },
+	/*::[*/0x0027/*::]*/: { n:"RightMargin", f:parse_RightMargin },
+	/*::[*/0x0028/*::]*/: { n:"TopMargin", f:parse_TopMargin },
+	/*::[*/0x0029/*::]*/: { n:"BottomMargin", f:parse_BottomMargin },
+	/*::[*/0x002a/*::]*/: { n:"PrintRowCol", f:parse_PrintRowCol },
+	/*::[*/0x002b/*::]*/: { n:"PrintGrid", f:parse_PrintGrid },
+	/*::[*/0x002f/*::]*/: { n:"FilePass", f:parse_FilePass },
+	/*::[*/0x0031/*::]*/: { n:"Font", f:parse_Font },
+	/*::[*/0x0033/*::]*/: { n:"PrintSize", f:parse_PrintSize },
+	/*::[*/0x003c/*::]*/: { n:"Continue", f:parse_Continue },
+	/*::[*/0x003d/*::]*/: { n:"Window1", f:parse_Window1 },
+	/*::[*/0x0040/*::]*/: { n:"Backup", f:parse_Backup },
+	/*::[*/0x0041/*::]*/: { n:"Pane", f:parse_Pane },
+	/*::[*/0x0042/*::]*/: { n:'CodePage', f:parse_CodePage },
+	/*::[*/0x004d/*::]*/: { n:"Pls", f:parse_Pls },
+	/*::[*/0x0050/*::]*/: { n:"DCon", f:parse_DCon },
+	/*::[*/0x0051/*::]*/: { n:"DConRef", f:parse_DConRef },
+	/*::[*/0x0052/*::]*/: { n:"DConName", f:parse_DConName },
+	/*::[*/0x0055/*::]*/: { n:"DefColWidth", f:parse_DefColWidth },
+	/*::[*/0x0059/*::]*/: { n:"XCT", f:parse_XCT },
+	/*::[*/0x005a/*::]*/: { n:"CRN", f:parse_CRN },
+	/*::[*/0x005b/*::]*/: { n:"FileSharing", f:parse_FileSharing },
+	/*::[*/0x005c/*::]*/: { n:'WriteAccess', f:parse_WriteAccess },
+	/*::[*/0x005d/*::]*/: { n:"Obj", f:parse_Obj },
+	/*::[*/0x005e/*::]*/: { n:"Uncalced", f:parse_Uncalced },
+	/*::[*/0x005f/*::]*/: { n:"CalcSaveRecalc", f:parse_CalcSaveRecalc },
+	/*::[*/0x0060/*::]*/: { n:"Template", f:parse_Template },
+	/*::[*/0x0061/*::]*/: { n:"Intl", f:parse_Intl },
+	/*::[*/0x0063/*::]*/: { n:"ObjProtect", f:parse_ObjProtect },
+	/*::[*/0x007d/*::]*/: { n:"ColInfo", f:parse_ColInfo },
+	/*::[*/0x0080/*::]*/: { n:"Guts", f:parse_Guts },
+	/*::[*/0x0081/*::]*/: { n:"WsBool", f:parse_WsBool },
+	/*::[*/0x0082/*::]*/: { n:"GridSet", f:parse_GridSet },
+	/*::[*/0x0083/*::]*/: { n:"HCenter", f:parse_HCenter },
+	/*::[*/0x0084/*::]*/: { n:"VCenter", f:parse_VCenter },
+	/*::[*/0x0085/*::]*/: { n:'BoundSheet8', f:parse_BoundSheet8 },
+	/*::[*/0x0086/*::]*/: { n:"WriteProtect", f:parse_WriteProtect },
+	/*::[*/0x008c/*::]*/: { n:"Country", f:parse_Country },
+	/*::[*/0x008d/*::]*/: { n:"HideObj", f:parse_HideObj },
+	/*::[*/0x0090/*::]*/: { n:"Sort", f:parse_Sort },
+	/*::[*/0x0092/*::]*/: { n:"Palette", f:parse_Palette },
+	/*::[*/0x0097/*::]*/: { n:"Sync", f:parse_Sync },
+	/*::[*/0x0098/*::]*/: { n:"LPr", f:parse_LPr },
+	/*::[*/0x0099/*::]*/: { n:"DxGCol", f:parse_DxGCol },
+	/*::[*/0x009a/*::]*/: { n:"FnGroupName", f:parse_FnGroupName },
+	/*::[*/0x009b/*::]*/: { n:"FilterMode", f:parse_FilterMode },
+	/*::[*/0x009c/*::]*/: { n:"BuiltInFnGroupCount", f:parse_BuiltInFnGroupCount },
+	/*::[*/0x009d/*::]*/: { n:"AutoFilterInfo", f:parse_AutoFilterInfo },
+	/*::[*/0x009e/*::]*/: { n:"AutoFilter", f:parse_AutoFilter },
+	/*::[*/0x00a0/*::]*/: { n:"Scl", f:parse_Scl },
+	/*::[*/0x00a1/*::]*/: { n:"Setup", f:parse_Setup },
+	/*::[*/0x00ae/*::]*/: { n:"ScenMan", f:parse_ScenMan },
+	/*::[*/0x00af/*::]*/: { n:"SCENARIO", f:parse_SCENARIO },
+	/*::[*/0x00b0/*::]*/: { n:"SxView", f:parse_SxView },
+	/*::[*/0x00b1/*::]*/: { n:"Sxvd", f:parse_Sxvd },
+	/*::[*/0x00b2/*::]*/: { n:"SXVI", f:parse_SXVI },
+	/*::[*/0x00b4/*::]*/: { n:"SxIvd", f:parse_SxIvd },
+	/*::[*/0x00b5/*::]*/: { n:"SXLI", f:parse_SXLI },
+	/*::[*/0x00b6/*::]*/: { n:"SXPI", f:parse_SXPI },
+	/*::[*/0x00b8/*::]*/: { n:"DocRoute", f:parse_DocRoute },
+	/*::[*/0x00b9/*::]*/: { n:"RecipName", f:parse_RecipName },
+	/*::[*/0x00bd/*::]*/: { n:"MulRk", f:parse_MulRk },
+	/*::[*/0x00be/*::]*/: { n:"MulBlank", f:parse_MulBlank },
+	/*::[*/0x00c1/*::]*/: { n:'Mms', f:parse_Mms },
+	/*::[*/0x00c5/*::]*/: { n:"SXDI", f:parse_SXDI },
+	/*::[*/0x00c6/*::]*/: { n:"SXDB", f:parse_SXDB },
+	/*::[*/0x00c7/*::]*/: { n:"SXFDB", f:parse_SXFDB },
+	/*::[*/0x00c8/*::]*/: { n:"SXDBB", f:parse_SXDBB },
+	/*::[*/0x00c9/*::]*/: { n:"SXNum", f:parse_SXNum },
+	/*::[*/0x00ca/*::]*/: { n:"SxBool", f:parse_SxBool },
+	/*::[*/0x00cb/*::]*/: { n:"SxErr", f:parse_SxErr },
+	/*::[*/0x00cc/*::]*/: { n:"SXInt", f:parse_SXInt },
+	/*::[*/0x00cd/*::]*/: { n:"SXString", f:parse_SXString },
+	/*::[*/0x00ce/*::]*/: { n:"SXDtr", f:parse_SXDtr },
+	/*::[*/0x00cf/*::]*/: { n:"SxNil", f:parse_SxNil },
+	/*::[*/0x00d0/*::]*/: { n:"SXTbl", f:parse_SXTbl },
+	/*::[*/0x00d1/*::]*/: { n:"SXTBRGIITM", f:parse_SXTBRGIITM },
+	/*::[*/0x00d2/*::]*/: { n:"SxTbpg", f:parse_SxTbpg },
+	/*::[*/0x00d3/*::]*/: { n:"ObProj", f:parse_ObProj },
+	/*::[*/0x00d5/*::]*/: { n:"SXStreamID", f:parse_SXStreamID },
+	/*::[*/0x00d7/*::]*/: { n:"DBCell", f:parse_DBCell },
+	/*::[*/0x00d8/*::]*/: { n:"SXRng", f:parse_SXRng },
+	/*::[*/0x00d9/*::]*/: { n:"SxIsxoper", f:parse_SxIsxoper },
+	/*::[*/0x00da/*::]*/: { n:"BookBool", f:parse_BookBool },
+	/*::[*/0x00dc/*::]*/: { n:"DbOrParamQry", f:parse_DbOrParamQry },
+	/*::[*/0x00dd/*::]*/: { n:"ScenarioProtect", f:parse_ScenarioProtect },
+	/*::[*/0x00de/*::]*/: { n:"OleObjectSize", f:parse_OleObjectSize },
+	/*::[*/0x00e0/*::]*/: { n:"XF", f:parse_XF },
+	/*::[*/0x00e1/*::]*/: { n:'InterfaceHdr', f:parse_InterfaceHdr },
+	/*::[*/0x00e2/*::]*/: { n:'InterfaceEnd', f:parse_InterfaceEnd },
+	/*::[*/0x00e3/*::]*/: { n:"SXVS", f:parse_SXVS },
+	/*::[*/0x00e5/*::]*/: { n:"MergeCells", f:parse_MergeCells },
+	/*::[*/0x00e9/*::]*/: { n:"BkHim", f:parse_BkHim },
+	/*::[*/0x00eb/*::]*/: { n:"MsoDrawingGroup", f:parse_MsoDrawingGroup },
+	/*::[*/0x00ec/*::]*/: { n:"MsoDrawing", f:parse_MsoDrawing },
+	/*::[*/0x00ed/*::]*/: { n:"MsoDrawingSelection", f:parse_MsoDrawingSelection },
+	/*::[*/0x00ef/*::]*/: { n:"PhoneticInfo", f:parse_PhoneticInfo },
+	/*::[*/0x00f0/*::]*/: { n:"SxRule", f:parse_SxRule },
+	/*::[*/0x00f1/*::]*/: { n:"SXEx", f:parse_SXEx },
+	/*::[*/0x00f2/*::]*/: { n:"SxFilt", f:parse_SxFilt },
+	/*::[*/0x00f4/*::]*/: { n:"SxDXF", f:parse_SxDXF },
+	/*::[*/0x00f5/*::]*/: { n:"SxItm", f:parse_SxItm },
+	/*::[*/0x00f6/*::]*/: { n:"SxName", f:parse_SxName },
+	/*::[*/0x00f7/*::]*/: { n:"SxSelect", f:parse_SxSelect },
+	/*::[*/0x00f8/*::]*/: { n:"SXPair", f:parse_SXPair },
+	/*::[*/0x00f9/*::]*/: { n:"SxFmla", f:parse_SxFmla },
+	/*::[*/0x00fb/*::]*/: { n:"SxFormat", f:parse_SxFormat },
+	/*::[*/0x00fc/*::]*/: { n:"SST", f:parse_SST },
+	/*::[*/0x00fd/*::]*/: { n:"LabelSst", f:parse_LabelSst },
+	/*::[*/0x00ff/*::]*/: { n:"ExtSST", f:parse_ExtSST },
+	/*::[*/0x0100/*::]*/: { n:"SXVDEx", f:parse_SXVDEx },
+	/*::[*/0x0103/*::]*/: { n:"SXFormula", f:parse_SXFormula },
+	/*::[*/0x0122/*::]*/: { n:"SXDBEx", f:parse_SXDBEx },
+	/*::[*/0x0137/*::]*/: { n:"RRDInsDel", f:parse_RRDInsDel },
+	/*::[*/0x0138/*::]*/: { n:"RRDHead", f:parse_RRDHead },
+	/*::[*/0x013b/*::]*/: { n:"RRDChgCell", f:parse_RRDChgCell },
+	/*::[*/0x013d/*::]*/: { n:"RRTabId", f:parse_RRTabId },
+	/*::[*/0x013e/*::]*/: { n:"RRDRenSheet", f:parse_RRDRenSheet },
+	/*::[*/0x013f/*::]*/: { n:"RRSort", f:parse_RRSort },
+	/*::[*/0x0140/*::]*/: { n:"RRDMove", f:parse_RRDMove },
+	/*::[*/0x014a/*::]*/: { n:"RRFormat", f:parse_RRFormat },
+	/*::[*/0x014b/*::]*/: { n:"RRAutoFmt", f:parse_RRAutoFmt },
+	/*::[*/0x014d/*::]*/: { n:"RRInsertSh", f:parse_RRInsertSh },
+	/*::[*/0x014e/*::]*/: { n:"RRDMoveBegin", f:parse_RRDMoveBegin },
+	/*::[*/0x014f/*::]*/: { n:"RRDMoveEnd", f:parse_RRDMoveEnd },
+	/*::[*/0x0150/*::]*/: { n:"RRDInsDelBegin", f:parse_RRDInsDelBegin },
+	/*::[*/0x0151/*::]*/: { n:"RRDInsDelEnd", f:parse_RRDInsDelEnd },
+	/*::[*/0x0152/*::]*/: { n:"RRDConflict", f:parse_RRDConflict },
+	/*::[*/0x0153/*::]*/: { n:"RRDDefName", f:parse_RRDDefName },
+	/*::[*/0x0154/*::]*/: { n:"RRDRstEtxp", f:parse_RRDRstEtxp },
+	/*::[*/0x015f/*::]*/: { n:"LRng", f:parse_LRng },
+	/*::[*/0x0160/*::]*/: { n:"UsesELFs", f:parse_UsesELFs },
+	/*::[*/0x0161/*::]*/: { n:"DSF", f:parse_DSF },
+	/*::[*/0x0191/*::]*/: { n:"CUsr", f:parse_CUsr },
+	/*::[*/0x0192/*::]*/: { n:"CbUsr", f:parse_CbUsr },
+	/*::[*/0x0193/*::]*/: { n:"UsrInfo", f:parse_UsrInfo },
+	/*::[*/0x0194/*::]*/: { n:"UsrExcl", f:parse_UsrExcl },
+	/*::[*/0x0195/*::]*/: { n:"FileLock", f:parse_FileLock },
+	/*::[*/0x0196/*::]*/: { n:"RRDInfo", f:parse_RRDInfo },
+	/*::[*/0x0197/*::]*/: { n:"BCUsrs", f:parse_BCUsrs },
+	/*::[*/0x0198/*::]*/: { n:"UsrChk", f:parse_UsrChk },
+	/*::[*/0x01a9/*::]*/: { n:"UserBView", f:parse_UserBView },
+	/*::[*/0x01aa/*::]*/: { n:"UserSViewBegin", f:parse_UserSViewBegin },
+	/*::[*/0x01ab/*::]*/: { n:"UserSViewEnd", f:parse_UserSViewEnd },
+	/*::[*/0x01ac/*::]*/: { n:"RRDUserView", f:parse_RRDUserView },
+	/*::[*/0x01ad/*::]*/: { n:"Qsi", f:parse_Qsi },
+	/*::[*/0x01ae/*::]*/: { n:"SupBook", f:parse_SupBook },
+	/*::[*/0x01af/*::]*/: { n:"Prot4Rev", f:parse_Prot4Rev },
+	/*::[*/0x01b0/*::]*/: { n:"CondFmt", f:parse_CondFmt },
+	/*::[*/0x01b1/*::]*/: { n:"CF", f:parse_CF },
+	/*::[*/0x01b2/*::]*/: { n:"DVal", f:parse_DVal },
+	/*::[*/0x01b5/*::]*/: { n:"DConBin", f:parse_DConBin },
+	/*::[*/0x01b6/*::]*/: { n:"TxO", f:parse_TxO },
+	/*::[*/0x01b7/*::]*/: { n:"RefreshAll", f:parse_RefreshAll },
+	/*::[*/0x01b8/*::]*/: { n:"HLink", f:parse_HLink },
+	/*::[*/0x01b9/*::]*/: { n:"Lel", f:parse_Lel },
+	/*::[*/0x01ba/*::]*/: { n:"CodeName", f:parse_XLSCodeName },
+	/*::[*/0x01bb/*::]*/: { n:"SXFDBType", f:parse_SXFDBType },
+	/*::[*/0x01bc/*::]*/: { n:"Prot4RevPass", f:parse_Prot4RevPass },
+	/*::[*/0x01bd/*::]*/: { n:"ObNoMacros", f:parse_ObNoMacros },
+	/*::[*/0x01be/*::]*/: { n:"Dv", f:parse_Dv },
+	/*::[*/0x01c0/*::]*/: { n:"Excel9File", f:parse_Excel9File },
+	/*::[*/0x01c1/*::]*/: { n:"RecalcId", f:parse_RecalcId, r:2},
+	/*::[*/0x01c2/*::]*/: { n:"EntExU2", f:parse_EntExU2 },
+	/*::[*/0x0200/*::]*/: { n:"Dimensions", f:parse_Dimensions },
+	/*::[*/0x0201/*::]*/: { n:"Blank", f:parse_Blank },
+	/*::[*/0x0203/*::]*/: { n:"Number", f:parse_Number },
+	/*::[*/0x0204/*::]*/: { n:"Label", f:parse_Label },
+	/*::[*/0x0205/*::]*/: { n:"BoolErr", f:parse_BoolErr },
+	/*::[*/0x0206/*::]*/: { n:"Formula", f:parse_Formula },
+	/*::[*/0x0207/*::]*/: { n:"String", f:parse_String },
+	/*::[*/0x0208/*::]*/: { n:'Row', f:parse_Row },
+	/*::[*/0x020b/*::]*/: { n:"Index", f:parse_Index },
+	/*::[*/0x0221/*::]*/: { n:"Array", f:parse_Array },
+	/*::[*/0x0225/*::]*/: { n:"DefaultRowHeight", f:parse_DefaultRowHeight },
+	/*::[*/0x0236/*::]*/: { n:"Table", f:parse_Table },
+	/*::[*/0x023e/*::]*/: { n:"Window2", f:parse_Window2 },
+	/*::[*/0x027e/*::]*/: { n:"RK", f:parse_RK },
+	/*::[*/0x0293/*::]*/: { n:"Style", f:parse_Style },
+	/*::[*/0x0406/*::]*/: { n:"Formula", f:parse_Formula },
+	/*::[*/0x0418/*::]*/: { n:"BigName", f:parse_BigName },
+	/*::[*/0x041e/*::]*/: { n:"Format", f:parse_Format },
+	/*::[*/0x043c/*::]*/: { n:"ContinueBigName", f:parse_ContinueBigName },
+	/*::[*/0x04bc/*::]*/: { n:"ShrFmla", f:parse_ShrFmla },
+	/*::[*/0x0800/*::]*/: { n:"HLinkTooltip", f:parse_HLinkTooltip },
+	/*::[*/0x0801/*::]*/: { n:"WebPub", f:parse_WebPub },
+	/*::[*/0x0802/*::]*/: { n:"QsiSXTag", f:parse_QsiSXTag },
+	/*::[*/0x0803/*::]*/: { n:"DBQueryExt", f:parse_DBQueryExt },
+	/*::[*/0x0804/*::]*/: { n:"ExtString", f:parse_ExtString },
+	/*::[*/0x0805/*::]*/: { n:"TxtQry", f:parse_TxtQry },
+	/*::[*/0x0806/*::]*/: { n:"Qsir", f:parse_Qsir },
+	/*::[*/0x0807/*::]*/: { n:"Qsif", f:parse_Qsif },
+	/*::[*/0x0808/*::]*/: { n:"RRDTQSIF", f:parse_RRDTQSIF },
+	/*::[*/0x0809/*::]*/: { n:'BOF', f:parse_BOF },
+	/*::[*/0x080a/*::]*/: { n:"OleDbConn", f:parse_OleDbConn },
+	/*::[*/0x080b/*::]*/: { n:"WOpt", f:parse_WOpt },
+	/*::[*/0x080c/*::]*/: { n:"SXViewEx", f:parse_SXViewEx },
+	/*::[*/0x080d/*::]*/: { n:"SXTH", f:parse_SXTH },
+	/*::[*/0x080e/*::]*/: { n:"SXPIEx", f:parse_SXPIEx },
+	/*::[*/0x080f/*::]*/: { n:"SXVDTEx", f:parse_SXVDTEx },
+	/*::[*/0x0810/*::]*/: { n:"SXViewEx9", f:parse_SXViewEx9 },
+	/*::[*/0x0812/*::]*/: { n:"ContinueFrt", f:parse_ContinueFrt },
+	/*::[*/0x0813/*::]*/: { n:"RealTimeData", f:parse_RealTimeData },
+	/*::[*/0x0850/*::]*/: { n:"ChartFrtInfo", f:parse_ChartFrtInfo },
+	/*::[*/0x0851/*::]*/: { n:"FrtWrapper", f:parse_FrtWrapper },
+	/*::[*/0x0852/*::]*/: { n:"StartBlock", f:parse_StartBlock },
+	/*::[*/0x0853/*::]*/: { n:"EndBlock", f:parse_EndBlock },
+	/*::[*/0x0854/*::]*/: { n:"StartObject", f:parse_StartObject },
+	/*::[*/0x0855/*::]*/: { n:"EndObject", f:parse_EndObject },
+	/*::[*/0x0856/*::]*/: { n:"CatLab", f:parse_CatLab },
+	/*::[*/0x0857/*::]*/: { n:"YMult", f:parse_YMult },
+	/*::[*/0x0858/*::]*/: { n:"SXViewLink", f:parse_SXViewLink },
+	/*::[*/0x0859/*::]*/: { n:"PivotChartBits", f:parse_PivotChartBits },
+	/*::[*/0x085a/*::]*/: { n:"FrtFontList", f:parse_FrtFontList },
+	/*::[*/0x0862/*::]*/: { n:"SheetExt", f:parse_SheetExt },
+	/*::[*/0x0863/*::]*/: { n:"BookExt", f:parse_BookExt, r:12},
+	/*::[*/0x0864/*::]*/: { n:"SXAddl", f:parse_SXAddl },
+	/*::[*/0x0865/*::]*/: { n:"CrErr", f:parse_CrErr },
+	/*::[*/0x0866/*::]*/: { n:"HFPicture", f:parse_HFPicture },
+	/*::[*/0x0867/*::]*/: { n:'FeatHdr', f:parse_FeatHdr },
+	/*::[*/0x0868/*::]*/: { n:"Feat", f:parse_Feat },
+	/*::[*/0x086a/*::]*/: { n:"DataLabExt", f:parse_DataLabExt },
+	/*::[*/0x086b/*::]*/: { n:"DataLabExtContents", f:parse_DataLabExtContents },
+	/*::[*/0x086c/*::]*/: { n:"CellWatch", f:parse_CellWatch },
+	/*::[*/0x0871/*::]*/: { n:"FeatHdr11", f:parse_FeatHdr11 },
+	/*::[*/0x0872/*::]*/: { n:"Feature11", f:parse_Feature11 },
+	/*::[*/0x0874/*::]*/: { n:"DropDownObjIds", f:parse_DropDownObjIds },
+	/*::[*/0x0875/*::]*/: { n:"ContinueFrt11", f:parse_ContinueFrt11 },
+	/*::[*/0x0876/*::]*/: { n:"DConn", f:parse_DConn },
+	/*::[*/0x0877/*::]*/: { n:"List12", f:parse_List12 },
+	/*::[*/0x0878/*::]*/: { n:"Feature12", f:parse_Feature12 },
+	/*::[*/0x0879/*::]*/: { n:"CondFmt12", f:parse_CondFmt12 },
+	/*::[*/0x087a/*::]*/: { n:"CF12", f:parse_CF12 },
+	/*::[*/0x087b/*::]*/: { n:"CFEx", f:parse_CFEx },
+	/*::[*/0x087c/*::]*/: { n:"XFCRC", f:parse_XFCRC, r:12 },
+	/*::[*/0x087d/*::]*/: { n:"XFExt", f:parse_XFExt, r:12 },
+	/*::[*/0x087e/*::]*/: { n:"AutoFilter12", f:parse_AutoFilter12 },
+	/*::[*/0x087f/*::]*/: { n:"ContinueFrt12", f:parse_ContinueFrt12 },
+	/*::[*/0x0884/*::]*/: { n:"MDTInfo", f:parse_MDTInfo },
+	/*::[*/0x0885/*::]*/: { n:"MDXStr", f:parse_MDXStr },
+	/*::[*/0x0886/*::]*/: { n:"MDXTuple", f:parse_MDXTuple },
+	/*::[*/0x0887/*::]*/: { n:"MDXSet", f:parse_MDXSet },
+	/*::[*/0x0888/*::]*/: { n:"MDXProp", f:parse_MDXProp },
+	/*::[*/0x0889/*::]*/: { n:"MDXKPI", f:parse_MDXKPI },
+	/*::[*/0x088a/*::]*/: { n:"MDB", f:parse_MDB },
+	/*::[*/0x088b/*::]*/: { n:"PLV", f:parse_PLV },
+	/*::[*/0x088c/*::]*/: { n:"Compat12", f:parse_Compat12, r:12 },
+	/*::[*/0x088d/*::]*/: { n:"DXF", f:parse_DXF },
+	/*::[*/0x088e/*::]*/: { n:"TableStyles", f:parse_TableStyles, r:12 },
+	/*::[*/0x088f/*::]*/: { n:"TableStyle", f:parse_TableStyle },
+	/*::[*/0x0890/*::]*/: { n:"TableStyleElement", f:parse_TableStyleElement },
+	/*::[*/0x0892/*::]*/: { n:"StyleExt", f:parse_StyleExt },
+	/*::[*/0x0893/*::]*/: { n:"NamePublish", f:parse_NamePublish },
+	/*::[*/0x0894/*::]*/: { n:"NameCmt", f:parse_NameCmt },
+	/*::[*/0x0895/*::]*/: { n:"SortData", f:parse_SortData },
+	/*::[*/0x0896/*::]*/: { n:"Theme", f:parse_Theme, r:12 },
+	/*::[*/0x0897/*::]*/: { n:"GUIDTypeLib", f:parse_GUIDTypeLib },
+	/*::[*/0x0898/*::]*/: { n:"FnGrp12", f:parse_FnGrp12 },
+	/*::[*/0x0899/*::]*/: { n:"NameFnGrp12", f:parse_NameFnGrp12 },
+	/*::[*/0x089a/*::]*/: { n:"MTRSettings", f:parse_MTRSettings, r:12 },
+	/*::[*/0x089b/*::]*/: { n:"CompressPictures", f:parse_CompressPictures },
+	/*::[*/0x089c/*::]*/: { n:"HeaderFooter", f:parse_HeaderFooter },
+	/*::[*/0x089d/*::]*/: { n:"CrtLayout12", f:parse_CrtLayout12 },
+	/*::[*/0x089e/*::]*/: { n:"CrtMlFrt", f:parse_CrtMlFrt },
+	/*::[*/0x089f/*::]*/: { n:"CrtMlFrtContinue", f:parse_CrtMlFrtContinue },
+	/*::[*/0x08a3/*::]*/: { n:"ForceFullCalculation", f:parse_ForceFullCalculation },
+	/*::[*/0x08a4/*::]*/: { n:"ShapePropsStream", f:parse_ShapePropsStream },
+	/*::[*/0x08a5/*::]*/: { n:"TextPropsStream", f:parse_TextPropsStream },
+	/*::[*/0x08a6/*::]*/: { n:"RichTextStream", f:parse_RichTextStream },
+	/*::[*/0x08a7/*::]*/: { n:"CrtLayout12A", f:parse_CrtLayout12A },
+	/*::[*/0x1001/*::]*/: { n:"Units", f:parse_Units },
+	/*::[*/0x1002/*::]*/: { n:"Chart", f:parse_Chart },
+	/*::[*/0x1003/*::]*/: { n:"Series", f:parse_Series },
+	/*::[*/0x1006/*::]*/: { n:"DataFormat", f:parse_DataFormat },
+	/*::[*/0x1007/*::]*/: { n:"LineFormat", f:parse_LineFormat },
+	/*::[*/0x1009/*::]*/: { n:"MarkerFormat", f:parse_MarkerFormat },
+	/*::[*/0x100a/*::]*/: { n:"AreaFormat", f:parse_AreaFormat },
+	/*::[*/0x100b/*::]*/: { n:"PieFormat", f:parse_PieFormat },
+	/*::[*/0x100c/*::]*/: { n:"AttachedLabel", f:parse_AttachedLabel },
+	/*::[*/0x100d/*::]*/: { n:"SeriesText", f:parse_SeriesText },
+	/*::[*/0x1014/*::]*/: { n:"ChartFormat", f:parse_ChartFormat },
+	/*::[*/0x1015/*::]*/: { n:"Legend", f:parse_Legend },
+	/*::[*/0x1016/*::]*/: { n:"SeriesList", f:parse_SeriesList },
+	/*::[*/0x1017/*::]*/: { n:"Bar", f:parse_Bar },
+	/*::[*/0x1018/*::]*/: { n:"Line", f:parse_Line },
+	/*::[*/0x1019/*::]*/: { n:"Pie", f:parse_Pie },
+	/*::[*/0x101a/*::]*/: { n:"Area", f:parse_Area },
+	/*::[*/0x101b/*::]*/: { n:"Scatter", f:parse_Scatter },
+	/*::[*/0x101c/*::]*/: { n:"CrtLine", f:parse_CrtLine },
+	/*::[*/0x101d/*::]*/: { n:"Axis", f:parse_Axis },
+	/*::[*/0x101e/*::]*/: { n:"Tick", f:parse_Tick },
+	/*::[*/0x101f/*::]*/: { n:"ValueRange", f:parse_ValueRange },
+	/*::[*/0x1020/*::]*/: { n:"CatSerRange", f:parse_CatSerRange },
+	/*::[*/0x1021/*::]*/: { n:"AxisLine", f:parse_AxisLine },
+	/*::[*/0x1022/*::]*/: { n:"CrtLink", f:parse_CrtLink },
+	/*::[*/0x1024/*::]*/: { n:"DefaultText", f:parse_DefaultText },
+	/*::[*/0x1025/*::]*/: { n:"Text", f:parse_Text },
+	/*::[*/0x1026/*::]*/: { n:"FontX", f:parse_FontX },
+	/*::[*/0x1027/*::]*/: { n:"ObjectLink", f:parse_ObjectLink },
+	/*::[*/0x1032/*::]*/: { n:"Frame", f:parse_Frame },
+	/*::[*/0x1033/*::]*/: { n:"Begin", f:parse_Begin },
+	/*::[*/0x1034/*::]*/: { n:"End", f:parse_End },
+	/*::[*/0x1035/*::]*/: { n:"PlotArea", f:parse_PlotArea },
+	/*::[*/0x103a/*::]*/: { n:"Chart3d", f:parse_Chart3d },
+	/*::[*/0x103c/*::]*/: { n:"PicF", f:parse_PicF },
+	/*::[*/0x103d/*::]*/: { n:"DropBar", f:parse_DropBar },
+	/*::[*/0x103e/*::]*/: { n:"Radar", f:parse_Radar },
+	/*::[*/0x103f/*::]*/: { n:"Surf", f:parse_Surf },
+	/*::[*/0x1040/*::]*/: { n:"RadarArea", f:parse_RadarArea },
+	/*::[*/0x1041/*::]*/: { n:"AxisParent", f:parse_AxisParent },
+	/*::[*/0x1043/*::]*/: { n:"LegendException", f:parse_LegendException },
+	/*::[*/0x1044/*::]*/: { n:"ShtProps", f:parse_ShtProps },
+	/*::[*/0x1045/*::]*/: { n:"SerToCrt", f:parse_SerToCrt },
+	/*::[*/0x1046/*::]*/: { n:"AxesUsed", f:parse_AxesUsed },
+	/*::[*/0x1048/*::]*/: { n:"SBaseRef", f:parse_SBaseRef },
+	/*::[*/0x104a/*::]*/: { n:"SerParent", f:parse_SerParent },
+	/*::[*/0x104b/*::]*/: { n:"SerAuxTrend", f:parse_SerAuxTrend },
+	/*::[*/0x104e/*::]*/: { n:"IFmtRecord", f:parse_IFmtRecord },
+	/*::[*/0x104f/*::]*/: { n:"Pos", f:parse_Pos },
+	/*::[*/0x1050/*::]*/: { n:"AlRuns", f:parse_AlRuns },
+	/*::[*/0x1051/*::]*/: { n:"BRAI", f:parse_BRAI },
+	/*::[*/0x105b/*::]*/: { n:"SerAuxErrBar", f:parse_SerAuxErrBar },
+	/*::[*/0x105c/*::]*/: { n:"ClrtClient", f:parse_ClrtClient },
+	/*::[*/0x105d/*::]*/: { n:"SerFmt", f:parse_SerFmt },
+	/*::[*/0x105f/*::]*/: { n:"Chart3DBarShape", f:parse_Chart3DBarShape },
+	/*::[*/0x1060/*::]*/: { n:"Fbi", f:parse_Fbi },
+	/*::[*/0x1061/*::]*/: { n:"BopPop", f:parse_BopPop },
+	/*::[*/0x1062/*::]*/: { n:"AxcExt", f:parse_AxcExt },
+	/*::[*/0x1063/*::]*/: { n:"Dat", f:parse_Dat },
+	/*::[*/0x1064/*::]*/: { n:"PlotGrowth", f:parse_PlotGrowth },
+	/*::[*/0x1065/*::]*/: { n:"SIIndex", f:parse_SIIndex },
+	/*::[*/0x1066/*::]*/: { n:"GelFrame", f:parse_GelFrame },
+	/*::[*/0x1067/*::]*/: { n:"BopPopCustom", f:parse_BopPopCustom },
+	/*::[*/0x1068/*::]*/: { n:"Fbi2", f:parse_Fbi2 },
 
 	/* These are specified in an older version of the spec */
-0x0000: { n:"Dimensions", f:parse_Dimensions },
-0x0002: { n:"BIFF2INT", f:parse_BIFF2INT },
-0x0005: { n:"BoolErr", f:parse_BoolErr },
-0x0007: { n:"String", f:parse_BIFF2STRING },
-0x0008: { n:"BIFF2ROW", f:parsenoop },
-0x000b: { n:"Index", f:parse_Index },
-0x001e: { n:"BIFF2FORMAT", f:parse_BIFF2Format },
-0x001f: { n:"BIFF2FMTCNT", f:parsenoop }, /* 16-bit cnt of BIFF2FORMAT records */
-0x0016: { n:"ExternCount", f:parsenoop },
-0x0021: { n:"Array", f:parse_Array },
-0x0025: { n:"DefaultRowHeight", f:parse_DefaultRowHeight },
-0x0032: { n:"BIFF2FONTXTRA", f:parse_BIFF2FONTXTRA },
-0x003e: { n:"BIFF2WINDOW2", f:parsenoop },
-0x0045: { n:"BIFF2FONTCLR", f:parsenoop },
-0x0056: { n:"BIFF4FMTCNT", f:parsenoop }, /* 16-bit cnt, similar to BIFF2 */
-0x007e: { n:"RK", f:parsenoop }, /* Not necessarily same as 0x027e */
-0x007f: { n:"ImData", f:parsenoop },
-0x0087: { n:"Addin", f:parsenoop },
-0x0088: { n:"Edg", f:parsenoop },
-0x0089: { n:"Pub", f:parsenoop },
-0x0091: { n:"Sub", f:parsenoop },
-0x0094: { n:"LHRecord", f:parsenoop },
-0x0095: { n:"LHNGraph", f:parsenoop },
-0x0096: { n:"Sound", f:parsenoop },
-0x00a9: { n:"CoordList", f:parsenoop },
-0x00ab: { n:"GCW", f:parsenoop },
-0x00bc: { n:"ShrFmla", f:parsenoop }, /* Not necessarily same as 0x04bc */
-0x00c2: { n:"AddMenu", f:parsenoop },
-0x00c3: { n:"DelMenu", f:parsenoop },
-0x00d6: { n:"RString", f:parse_RString },
-0x00df: { n:"UDDesc", f:parsenoop },
-0x00ea: { n:"TabIdConf", f:parsenoop },
-0x0162: { n:"XL5Modify", f:parsenoop },
-0x01a5: { n:"FileSharing2", f:parsenoop },
-0x0209: { n:'BOF', f:parse_BOF },
-0x0218: { n:"Lbl", f:parse_Lbl },
-0x0223: { n:"ExternName", f:parse_ExternName },
-0x0231: { n:"Font", f:parsenoop },
-0x0409: { n:'BOF', f:parse_BOF },
-0x086d: { n:"FeatInfo", f:parsenoop },
-0x0873: { n:"FeatInfo11", f:parsenoop },
-0x0881: { n:"SXAddl12", f:parsenoop },
-0x08c0: { n:"AutoWebPub", f:parsenoop },
-0x08c1: { n:"ListObj", f:parsenoop },
-0x08c2: { n:"ListField", f:parsenoop },
-0x08c3: { n:"ListDV", f:parsenoop },
-0x08c4: { n:"ListCondFmt", f:parsenoop },
-0x08c5: { n:"ListCF", f:parsenoop },
-0x08c6: { n:"FMQry", f:parsenoop },
-0x08c7: { n:"FMSQry", f:parsenoop },
-0x08c8: { n:"PLV", f:parsenoop }, /* supposedly PLV for Excel 11 */
-0x08c9: { n:"LnExt", f:parsenoop },
-0x08ca: { n:"MkrExt", f:parsenoop },
-0x08cb: { n:"CrtCoopt", f:parsenoop },
+	/*::[*/0x0000/*::]*/: { n:"Dimensions", f:parse_Dimensions },
+	/*::[*/0x0002/*::]*/: { n:"BIFF2INT", f:parse_BIFF2INT },
+	/*::[*/0x0005/*::]*/: { n:"BoolErr", f:parse_BoolErr },
+	/*::[*/0x0007/*::]*/: { n:"String", f:parse_BIFF2STRING },
+	/*::[*/0x0008/*::]*/: { n:"BIFF2ROW", f:parsenoop },
+	/*::[*/0x000b/*::]*/: { n:"Index", f:parse_Index },
+	/*::[*/0x001e/*::]*/: { n:"BIFF2FORMAT", f:parse_BIFF2Format },
+	/*::[*/0x001f/*::]*/: { n:"BIFF2FMTCNT", f:parsenoop }, /* 16-bit cnt of BIFF2FORMAT records */
+	/*::[*/0x0016/*::]*/: { n:"ExternCount", f:parsenoop },
+	/*::[*/0x0021/*::]*/: { n:"Array", f:parse_Array },
+	/*::[*/0x0025/*::]*/: { n:"DefaultRowHeight", f:parse_DefaultRowHeight },
+	/*::[*/0x0032/*::]*/: { n:"BIFF2FONTXTRA", f:parse_BIFF2FONTXTRA },
+	/*::[*/0x003e/*::]*/: { n:"BIFF2WINDOW2", f:parsenoop },
+	/*::[*/0x0045/*::]*/: { n:"BIFF2FONTCLR", f:parsenoop },
+	/*::[*/0x0056/*::]*/: { n:"BIFF4FMTCNT", f:parsenoop }, /* 16-bit cnt, similar to BIFF2 */
+	/*::[*/0x007e/*::]*/: { n:"RK", f:parsenoop }, /* Not necessarily same as 0x027e */
+	/*::[*/0x007f/*::]*/: { n:"ImData", f:parsenoop },
+	/*::[*/0x0087/*::]*/: { n:"Addin", f:parsenoop },
+	/*::[*/0x0088/*::]*/: { n:"Edg", f:parsenoop },
+	/*::[*/0x0089/*::]*/: { n:"Pub", f:parsenoop },
+	/*::[*/0x0091/*::]*/: { n:"Sub", f:parsenoop },
+	/*::[*/0x0094/*::]*/: { n:"LHRecord", f:parsenoop },
+	/*::[*/0x0095/*::]*/: { n:"LHNGraph", f:parsenoop },
+	/*::[*/0x0096/*::]*/: { n:"Sound", f:parsenoop },
+	/*::[*/0x00a9/*::]*/: { n:"CoordList", f:parsenoop },
+	/*::[*/0x00ab/*::]*/: { n:"GCW", f:parsenoop },
+	/*::[*/0x00bc/*::]*/: { n:"ShrFmla", f:parsenoop }, /* Not necessarily same as 0x04bc */
+	/*::[*/0x00c2/*::]*/: { n:"AddMenu", f:parsenoop },
+	/*::[*/0x00c3/*::]*/: { n:"DelMenu", f:parsenoop },
+	/*::[*/0x00d6/*::]*/: { n:"RString", f:parse_RString },
+	/*::[*/0x00df/*::]*/: { n:"UDDesc", f:parsenoop },
+	/*::[*/0x00ea/*::]*/: { n:"TabIdConf", f:parsenoop },
+	/*::[*/0x0162/*::]*/: { n:"XL5Modify", f:parsenoop },
+	/*::[*/0x01a5/*::]*/: { n:"FileSharing2", f:parsenoop },
+	/*::[*/0x0209/*::]*/: { n:'BOF', f:parse_BOF },
+	/*::[*/0x0218/*::]*/: { n:"Lbl", f:parse_Lbl },
+	/*::[*/0x0223/*::]*/: { n:"ExternName", f:parse_ExternName },
+	/*::[*/0x0231/*::]*/: { n:"Font", f:parsenoop },
+	/*::[*/0x0409/*::]*/: { n:'BOF', f:parse_BOF },
+	/*::[*/0x086d/*::]*/: { n:"FeatInfo", f:parsenoop },
+	/*::[*/0x0873/*::]*/: { n:"FeatInfo11", f:parsenoop },
+	/*::[*/0x0881/*::]*/: { n:"SXAddl12", f:parsenoop },
+	/*::[*/0x08c0/*::]*/: { n:"AutoWebPub", f:parsenoop },
+	/*::[*/0x08c1/*::]*/: { n:"ListObj", f:parsenoop },
+	/*::[*/0x08c2/*::]*/: { n:"ListField", f:parsenoop },
+	/*::[*/0x08c3/*::]*/: { n:"ListDV", f:parsenoop },
+	/*::[*/0x08c4/*::]*/: { n:"ListCondFmt", f:parsenoop },
+	/*::[*/0x08c5/*::]*/: { n:"ListCF", f:parsenoop },
+	/*::[*/0x08c6/*::]*/: { n:"FMQry", f:parsenoop },
+	/*::[*/0x08c7/*::]*/: { n:"FMSQry", f:parsenoop },
+	/*::[*/0x08c8/*::]*/: { n:"PLV", f:parsenoop }, /* supposedly PLV for Excel 11 */
+	/*::[*/0x08c9/*::]*/: { n:"LnExt", f:parsenoop },
+	/*::[*/0x08ca/*::]*/: { n:"MkrExt", f:parsenoop },
+	/*::[*/0x08cb/*::]*/: { n:"CrtCoopt", f:parsenoop },
 
-0x0043: { n:"BIFF2XF", f:parsenoop },
-0x0243: { n:"BIFF3XF", f:parsenoop },
-0x0443: { n:"BIFF4XF", f:parsenoop },
+	/*::[*/0x0043/*::]*/: { n:"BIFF2XF", f:parsenoop },
+	/*::[*/0x0243/*::]*/: { n:"BIFF3XF", f:parsenoop },
+	/*::[*/0x0443/*::]*/: { n:"BIFF4XF", f:parsenoop },
 
-0x7262: {}
+	/*::[*/0x7262/*::]*/: {}
 };
 
 
 /* BIFF2-4 single-sheet workbooks */
-function write_biff_rec(ba, t, payload, length) {
+function write_biff_rec(ba/*:BufArray*/, t/*:number*/, payload, length/*:?number*/) {
 	var len = (length || (payload||[]).length);
 	var o = ba.next(4 + len);
 	o.write_shift(2, t);
 	o.write_shift(2, len);
-	if(len > 0 && is_buf(payload)) ba.push(payload);
+	if(/*:: len != null &&*/len > 0 && is_buf(payload)) ba.push(payload);
 }
 
-function write_BOF(wb, o) {
+function write_BOF(wb/*:Workbook*/, o) {
 	if(o.bookType != 'biff2') throw "unsupported BIFF version";
 	var out = new_buf(4);
 	out.write_shift(2, 0x0002); // "unused"
@@ -12219,7 +12263,7 @@ function write_BOF(wb, o) {
 	return out;
 }
 
-function write_BIFF2Cell(out, r, c) {
+function write_BIFF2Cell(out, r/*:number*/, c/*:number*/) {
 	if(!out) out = new_buf(7);
 	out.write_shift(2, r);
 	out.write_shift(2, c);
@@ -12229,7 +12273,7 @@ function write_BIFF2Cell(out, r, c) {
 	return out;
 }
 
-function write_BIFF2INT(r, c, val) {
+function write_BIFF2INT(r/*:number*/, c/*:number*/, val) {
 	var out = new_buf(9);
 	write_BIFF2Cell(out, r, c);
 	out.write_shift(2, val);
@@ -12260,7 +12304,7 @@ function write_BIFF2LABEL(r, c, val) {
 	return out.l < out.length ? out.slice(0, out.l) : out;
 }
 
-function write_ws_biff_cell(ba, cell, R, C, opts) {
+function write_ws_biff_cell(ba/*:BufArray*/, cell/*:Cell*/, R/*:number*/, C/*:number*/, opts) {
 	switch(cell.t) {
 		case 'n':
 			if((cell.v == (cell.v|0)) && (cell.v >= 0) && (cell.v < 65536))
@@ -12277,7 +12321,7 @@ function write_ws_biff_cell(ba, cell, R, C, opts) {
 	}
 }
 
-function write_biff_ws(ba, ws, idx, opts, wb) {
+function write_biff_ws(ba/*:BufArray*/, ws/*:Worksheet*/, idx/*:number*/, opts, wb/*:Workbook*/) {
 	var range = safe_decode_range(ws['!ref'] || "A1"), ref, rr = "", cols = [];
 	for(var R = range.s.r; R <= range.e.r; ++R) {
 		rr = encode_row(R);
@@ -12292,7 +12336,7 @@ function write_biff_ws(ba, ws, idx, opts, wb) {
 }
 
 /* Based on test files */
-function write_biff_buf(wb, o) {
+function write_biff_buf(wb/*:Workbook*/, o/*:WriteOpts*/) {
 	var ba = buf_array();
 	var idx = 0;
 	for(var i=0;i<wb.SheetNames.length;++i) if(wb.SheetNames[i] == o.sheet) idx=i;
@@ -12306,9 +12350,9 @@ function write_biff_buf(wb, o) {
 	return ba.end();
 }
 /* TODO: in browser attach to DOM; in node use an html parser */
-function parse_html(str, opts) {
-	var ws = ({});
-	var o = { SheetNames: ["Sheet1"], Sheets: {Sheet1:ws} };
+function parse_html(str/*:string*/, opts)/*:Workbook*/ {
+	var ws/*:Worksheet*/ = ({}/*:any*/);
+	var o/*:Workbook*/ = { SheetNames: ["Sheet1"], Sheets: {Sheet1:ws} };
 	var i = str.indexOf("<table"), j = str.indexOf("</table");
 	if(i == -1 || j == -1) throw new Error("Invalid HTML: missing <table> / </table> pair");
 	var rows = str.slice(i, j).split(/<tr[^>]*>/);
@@ -12330,7 +12374,7 @@ function parse_html(str, opts) {
 			if(range.e.r < R) range.e.r = R;
 			if(range.s.c > C) range.s.c = C;
 			if(range.e.c < C) range.e.c = C;
-			var coord = encode_cell({r:R, c:C});
+			var coord/*:string*/ = encode_cell({r:R, c:C});
 			/* TODO: value parsing */
 			if(m == +m) ws[coord] = {t:'n', v:+m};
 			else ws[coord] = {t:'s', v:m};
@@ -12361,15 +12405,15 @@ var parse_content_xml = (function() {
 	return function pcx(d, _opts) {
 		var opts = _opts || {};
 		var str = xlml_normalize(d);
-		var state = [], tmp;
-		var tag;
+		var state/*:Array<any>*/ = [], tmp;
+		var tag/*:: = {}*/;
 		var NFtag = {name:""}, NF = "", pidx = 0;
-		var sheetag;
-		var rowtag;
-		var Sheets = {}, SheetNames = [], ws = {};
-		var Rn, q;
+		var sheetag/*:: = {name:"", '名称':""}*/;
+		var rowtag/*:: = {'行号':""}*/;
+		var Sheets = {}, SheetNames/*:Array<string>*/ = [], ws = {};
+		var Rn, q/*:: = ({t:"", v:null, z:null, w:""}:any)*/;
 		var ctag = {value:""};
-		var textp = "", textpidx = 0, textptag;
+		var textp = "", textpidx = 0, textptag/*:: = {}*/;
 		var R = -1, C = -1, range = {s: {r:1000000,c:10000000}, e: {r:0, c:0}};
 		var number_format_map = {};
 		var merges = [], mrange = {}, mR = 0, mC = 0;
@@ -12416,7 +12460,7 @@ var parse_content_xml = (function() {
 					if(C < range.s.c) range.s.c = C;
 					if(R < range.s.r) range.s.r = R;
 					ctag = parsexmltag(Rn[0], false);
-					q = ({t:ctag['数据类型'] || ctag['value-type'], v:null});
+					q = ({t:ctag['数据类型'] || ctag['value-type'], v:null/*:: , z:null, w:""*/}/*:any*/);
 					if(opts.cellFormula) {
 						if(ctag['number-matrix-columns-spanned'] && ctag['number-matrix-rows-spanned']) {
 							mR = parseInt(ctag['number-matrix-rows-spanned'],10) || 0;
@@ -12470,7 +12514,7 @@ var parse_content_xml = (function() {
 							if(range.e.c <= C) range.e.c = C;
 						}
 					} else { C += rept; rept = 0; }
-					q = {};
+					q = {/*:: t:"", v:null, z:null, w:""*/};
 					textp = "";
 				}
 				break; // 9.1.4 <table:table-cell>
@@ -12734,9 +12778,9 @@ var parse_content_xml = (function() {
 		return out;
 	};
 })();
-var write_content_xml = (function() {
+var write_content_xml/*:{(wb:any, opts:any):string}*/ = (function() {
 	var null_cell_xml = '          <table:table-cell />\n';
-	var write_ws = function(ws, wb, i, opts) {
+	var write_ws = function(ws, wb, i/*:number*/, opts)/*:string*/ {
 		/* Section 9 Tables */
 		var o = [];
 		o.push('      <table:table table:name="' + escapexml(wb.SheetNames[i]) + '">\n');
@@ -12778,32 +12822,33 @@ var write_content_xml = (function() {
 	};
 })();
 /* actual implementation in utils, wrappers are for read/write */
-function write_csv_str(wb, o) {
+function write_csv_str(wb/*:Workbook*/, o/*:WriteOpts*/) {
 	var idx = 0;
 	for(var i=0;i<wb.SheetNames.length;++i) if(wb.SheetNames[i] == o.sheet) idx=i;
 	if(idx == 0 && !!o.sheet && wb.SheetNames[0] != o.sheet) throw new Error("Sheet not found: " + o.sheet);
 	return sheet_to_csv(wb.Sheets[wb.SheetNames[idx]], o);
 }
 /* Part 3: Packages */
-function parse_ods(zip, opts) {
-	opts = opts || ({});
+function parse_ods(zip/*:ZIPFile*/, opts/*:?ParseOpts*/) {
+	opts = opts || ({}/*:any*/);
 	var ods = !!safegetzipfile(zip, 'objectdata');
 	if(ods) var manifest = parse_manifest(getzipdata(zip, 'META-INF/manifest.xml'), opts);
 	var content = getzipdata(zip, 'content.xml');
 	if(!content) throw new Error("Missing content.xml in " + (ods ? "ODS" : "UOF")+ " file");
 	return parse_content_xml(ods ? content : utf8read(content), opts);
 }
-function parse_fods(data, opts) {
+function parse_fods(data/*:string*/, opts/*:?ParseOpts*/) {
 	return parse_content_xml(data, opts);
 }
 
-function write_ods(wb, opts) {
+function write_ods(wb/*:any*/, opts/*:any*/) {
 	if(opts.bookType == "fods") return write_content_xml(wb, opts);
 
-var zip = new jszip();
+	/*:: if(!jszip) throw new Error("JSZip is not available"); */
+	var zip = new jszip();
 	var f = "";
 
-	var manifest = [];
+	var manifest/*:Array<Array<string> >*/ = [];
 	var rdf = [];
 
 	/* 3:3.3 and 2:2.2.4 */
@@ -12827,7 +12872,7 @@ var zip = new jszip();
 
 	return zip;
 }
-function fix_opts_func(defaults) {
+function fix_opts_func(defaults/*:Array<Array<any> >*/)/*:{(o:any):void}*/ {
 	return function fix_opts(opts) {
 		for(var i = 0; i != defaults.length; ++i) {
 			var d = defaults[i];
@@ -12877,15 +12922,15 @@ function safe_parse_wbrels(wbrels, sheets) {
 	return !wbrels || wbrels.length === 0 ? null : wbrels;
 }
 
-function safe_parse_ws(zip, path, relsPath, sheet, sheetRels, sheets, opts, wb) {
+function safe_parse_ws(zip, path/*:string*/, relsPath/*:string*/, sheet, sheetRels, sheets, opts, wb) {
 	try {
 		sheetRels[sheet]=parse_rels(getzipstr(zip, relsPath, true), path);
 		sheets[sheet]=parse_ws(getzipdata(zip, path),path,opts,sheetRels[sheet], wb);
 	} catch(e) { if(opts.WTF) throw e; }
 }
 
-var nodirs = function nodirs(x){return x.slice(-1) != '/';};
-function parse_zip(zip, opts) {
+var nodirs = function nodirs(x/*:string*/)/*:boolean*/{return x.slice(-1) != '/';};
+function parse_zip(zip/*:ZIP*/, opts/*:?ParseOpts*/)/*:Workbook*/ {
 	make_ssf(SSF);
 	opts = opts || {};
 	fix_read_opts(opts);
@@ -12897,7 +12942,7 @@ function parse_zip(zip, opts) {
 	if(safegetzipfile(zip, 'objectdata.xml')) return parse_ods(zip, opts);
 
 	var entries = keys(zip.files).filter(nodirs).sort();
-	var dir = parse_ct((getzipstr(zip, '[Content_Types].xml')), opts);
+	var dir = parse_ct((getzipstr(zip, '[Content_Types].xml')/*:?any*/), opts);
 	var xlsb = false;
 	var sheets, binname;
 	if(dir.workbooks.length === 0) {
@@ -12959,7 +13004,7 @@ function parse_zip(zip, opts) {
 	if(opts.bookDeps && dir.calcchain) deps=parse_cc(getzipdata(zip, dir.calcchain.replace(/^\//,'')),dir.calcchain,opts);
 
 	var i=0;
-	var sheetRels = ({});
+	var sheetRels = ({}/*:any*/);
 	var path, relsPath;
 	if(!props.Worksheets) {
 		var wbsheets = wb.Sheets;
@@ -13000,7 +13045,7 @@ function parse_zip(zip, opts) {
 		Styles: styles,
 		Themes: themes,
 		SSF: SSF.get_table()
-	});
+	}/*:any*/);
 	if(opts.bookFiles) {
 		out.keys = entries;
 		out.files = zip.files;
@@ -13022,7 +13067,7 @@ function add_rels(rels, rId, f, type, relobj) {
 	rels[('/' + relobj.Target).replace("//","/")] = relobj;
 }
 
-function write_zip(wb, opts) {
+function write_zip(wb/*:Workbook*/, opts/*:WriteOpts*/) {
 	if(opts.bookType == "ods") return write_ods(wb, opts);
 	if(wb && !wb.SSF) {
 		wb.SSF = SSF.get_table();
@@ -13038,7 +13083,8 @@ function write_zip(wb, opts) {
 		coreprops: [], extprops: [], custprops: [], strs:[], comments: [], vba: [],
 		TODO:[], rels:[], xmlns: "" };
 	fix_write_opts(opts = opts || {});
-var zip = new jszip();
+	/*:: if(!jszip) throw new Error("JSZip is not available"); */
+	var zip = new jszip();
 	var f = "", rId = 0;
 
 	opts.cellXfs = [];
@@ -13103,7 +13149,7 @@ var zip = new jszip();
 	zip.file('xl/_rels/workbook.' + wbext + '.rels', write_rels(opts.wbrels));
 	return zip;
 }
-function firstbyte(f,o) {
+function firstbyte(f/*:RawData*/,o/*:?TypeOpts*/)/*:number*/ {
 	switch((o||{}).type || "base64") {
 		case 'buffer': return f[0];
 		case 'base64': return Base64.decode(f.substr(0,12)).charCodeAt(0);
@@ -13113,8 +13159,9 @@ function firstbyte(f,o) {
 	}
 }
 
-function read_zip(data, opts) {
-var zip, d = data;
+function read_zip(data/*:RawData*/, opts/*:?ParseOpts*/)/*:Workbook*/ {
+	/*:: if(!jszip) throw new Error("JSZip is not available"); */
+	var zip, d = data;
 	var o = opts||{};
 	if(!o.type) o.type = (has_buf && Buffer.isBuffer(data)) ? "buffer" : "base64";
 	switch(o.type) {
@@ -13126,7 +13173,7 @@ var zip, d = data;
 	return parse_zip(zip, o);
 }
 
-function readSync(data, opts) {
+function readSync(data/*:RawData*/, opts/*:?ParseOpts*/)/*:Workbook*/ {
 	var zip, d = data, n=0;
 	var o = opts||{};
 	if(!o.type) o.type = (has_buf && Buffer.isBuffer(data)) ? "buffer" : "base64";
@@ -13141,11 +13188,11 @@ function readSync(data, opts) {
 	}
 }
 
-function readFileSync(filename, opts) {
+function readFileSync(filename/*:string*/, opts/*:?ParseOpts*/)/*:Workbook*/ {
 	var o = opts||{}; o.type = 'file';
 	return readSync(filename, o);
 }
-function write_zip_type(wb, opts) {
+function write_zip_type(wb/*:Workbook*/, opts/*:?WriteOpts*/) {
 	var o = opts||{};
 	var z = write_zip(wb, o);
 	var oopts = {};
@@ -13162,7 +13209,7 @@ function write_zip_type(wb, opts) {
 }
 
 /* TODO: test consistency */
-function write_string_type(out, opts) {
+function write_string_type(out/*:string*/, opts/*:WriteOpts*/) {
 	switch(opts.type) {
 		case "base64": return Base64.encode(out);
 		case "binary": return out;
@@ -13176,7 +13223,7 @@ function write_string_type(out, opts) {
 }
 
 /* TODO: test consistency */
-function write_binary_type(out, opts) {
+function write_binary_type(out, opts/*:WriteOpts*/) {
 	switch(opts.type) {
 		case "base64":
 		case "binary":
@@ -13189,7 +13236,7 @@ function write_binary_type(out, opts) {
 	}
 }
 
-function writeSync(wb, opts) {
+function writeSync(wb/*:Workbook*/, opts/*:?WriteOpts*/) {
 	check_wb(wb);
 	var o = opts||{};
 	switch(o.bookType || 'xlsx') {
@@ -13205,7 +13252,7 @@ function writeSync(wb, opts) {
 	}
 }
 
-function writeFileSync(wb, filename, opts) {
+function writeFileSync(wb/*:Workbook*/, filename/*:string*/, opts/*:?WriteFileOpts*/) {
 	var o = opts||{}; o.type = 'file';
 	o.file = filename;
 	if(!o.bookType) switch(o.file.slice(-5).toLowerCase()) {
@@ -13222,32 +13269,36 @@ function writeFileSync(wb, filename, opts) {
 	return writeSync(wb, o);
 }
 
-function decode_row(rowstr) { return parseInt(unfix_row(rowstr),10) - 1; }
-function encode_row(row) { return "" + (row + 1); }
-function fix_row(cstr) { return cstr.replace(/([A-Z]|^)(\d+)$/,"$1$$$2"); }
-function unfix_row(cstr) { return cstr.replace(/\$(\d+)$/,"$1"); }
+function decode_row(rowstr/*:string*/)/*:number*/ { return parseInt(unfix_row(rowstr),10) - 1; }
+function encode_row(row/*:number*/)/*:string*/ { return "" + (row + 1); }
+function fix_row(cstr/*:string*/)/*:string*/ { return cstr.replace(/([A-Z]|^)(\d+)$/,"$1$$$2"); }
+function unfix_row(cstr/*:string*/)/*:string*/ { return cstr.replace(/\$(\d+)$/,"$1"); }
 
-function decode_col(colstr) { var c = unfix_col(colstr), d = 0, i = 0; for(; i !== c.length; ++i) d = 26*d + c.charCodeAt(i) - 64; return d - 1; }
-function encode_col(col) { var s=""; for(++col; col; col=Math.floor((col-1)/26)) s = String.fromCharCode(((col-1)%26) + 65) + s; return s; }
-function fix_col(cstr) { return cstr.replace(/^([A-Z])/,"$$$1"); }
-function unfix_col(cstr) { return cstr.replace(/^\$([A-Z])/,"$1"); }
+function decode_col(colstr/*:string*/)/*:number*/ { var c = unfix_col(colstr), d = 0, i = 0; for(; i !== c.length; ++i) d = 26*d + c.charCodeAt(i) - 64; return d - 1; }
+function encode_col(col/*:number*/)/*:string*/ { var s=""; for(++col; col; col=Math.floor((col-1)/26)) s = String.fromCharCode(((col-1)%26) + 65) + s; return s; }
+function fix_col(cstr/*:string*/)/*:string*/ { return cstr.replace(/^([A-Z])/,"$$$1"); }
+function unfix_col(cstr/*:string*/)/*:string*/ { return cstr.replace(/^\$([A-Z])/,"$1"); }
 
-function split_cell(cstr) { return cstr.replace(/(\$?[A-Z]*)(\$?\d*)/,"$1,$2").split(","); }
-function decode_cell(cstr) { var splt = split_cell(cstr); return { c:decode_col(splt[0]), r:decode_row(splt[1]) }; }
-function encode_cell(cell) { return encode_col(cell.c) + encode_row(cell.r); }
-function fix_cell(cstr) { return fix_col(fix_row(cstr)); }
-function unfix_cell(cstr) { return unfix_col(unfix_row(cstr)); }
-function decode_range(range) { var x =range.split(":").map(decode_cell); return {s:x[0],e:x[x.length-1]}; }
-function encode_range(cs,ce) {
+function split_cell(cstr/*:string*/)/*:Array<string>*/ { return cstr.replace(/(\$?[A-Z]*)(\$?\d*)/,"$1,$2").split(","); }
+function decode_cell(cstr/*:string*/)/*:CellAddress*/ { var splt = split_cell(cstr); return { c:decode_col(splt[0]), r:decode_row(splt[1]) }; }
+function encode_cell(cell/*:CellAddress*/)/*:string*/ { return encode_col(cell.c) + encode_row(cell.r); }
+function fix_cell(cstr/*:string*/)/*:string*/ { return fix_col(fix_row(cstr)); }
+function unfix_cell(cstr/*:string*/)/*:string*/ { return unfix_col(unfix_row(cstr)); }
+function decode_range(range/*:string*/)/*:Range*/ { var x =range.split(":").map(decode_cell); return {s:x[0],e:x[x.length-1]}; }
+function encode_range(cs/*:any*/,ce/*:?any*/)/*:string*/ {
 	if(typeof ce === 'undefined' || typeof ce === 'number') {
-return encode_range(cs.s, cs.e);
+/*:: if(!(cs instanceof Range)) throw "unreachable"; */
+		return encode_range(cs.s, cs.e);
 	}
-if(typeof cs !== 'string') cs = encode_cell((cs));
-	if(typeof ce !== 'string') ce = encode_cell((ce));
-return cs == ce ? cs : cs + ":" + ce;
+/*:: if((cs instanceof Range)) throw "unreachable"; */
+	if(typeof cs !== 'string') cs = encode_cell((cs/*:any*/));
+	if(typeof ce !== 'string') ce = encode_cell((ce/*:any*/));
+/*:: if(typeof cs !== 'string') throw "unreachable"; */
+/*:: if(typeof ce !== 'string') throw "unreachable"; */
+	return cs == ce ? cs : cs + ":" + ce;
 }
 
-function safe_decode_range(range) {
+function safe_decode_range(range/*:string*/)/*:Range*/ {
 	var o = {s:{c:0,r:0},e:{c:0,r:0}};
 	var idx = 0, i = 0, cc = 0;
 	var len = range.length;
@@ -13279,20 +13330,20 @@ function safe_decode_range(range) {
 	return o;
 }
 
-function safe_format_cell(cell, v) {
+function safe_format_cell(cell/*:Cell*/, v/*:any*/) {
 	if(cell.z !== undefined) try { return (cell.w = SSF.format(cell.z, v)); } catch(e) { }
 	if(!cell.XF) return v;
 	try { return (cell.w = SSF.format(cell.XF.ifmt||0, v)); } catch(e) { return ''+v; }
 }
 
-function format_cell(cell, v) {
+function format_cell(cell/*:Cell*/, v/*:any*/) {
 	if(cell == null || cell.t == null) return "";
 	if(cell.w !== undefined) return cell.w;
 	if(v === undefined) return safe_format_cell(cell, cell.v);
 	return safe_format_cell(cell, v);
 }
 
-function sheet_to_json(sheet, opts){
+function sheet_to_json(sheet/*:Worksheet*/, opts/*:?Sheet2JSONOpts*/){
 	var val, row, range, header = 0, offset = 1, r, hdr = [], isempty, R, C, v, vv;
 	var o = opts != null ? opts : {};
 	var raw = o.raw;
@@ -13357,9 +13408,9 @@ function sheet_to_json(sheet, opts){
 	return out;
 }
 
-function sheet_to_row_object_array(sheet, opts) { return sheet_to_json(sheet, opts != null ? opts : {}); }
+function sheet_to_row_object_array(sheet/*:Worksheet*/, opts/*:?Sheet2JSONOpts*/) { return sheet_to_json(sheet, opts != null ? opts : {}); }
 
-function sheet_to_csv(sheet, opts) {
+function sheet_to_csv(sheet/*:Worksheet*/, opts/*:?Sheet2CSVOpts*/) {
 	var out = "", txt = "", qreg = /"/g;
 	var o = opts == null ? {} : opts;
 	if(sheet == null || sheet["!ref"] == null) return "";
@@ -13386,7 +13437,7 @@ function sheet_to_csv(sheet, opts) {
 }
 var make_csv = sheet_to_csv;
 
-function sheet_to_formulae(sheet) {
+function sheet_to_formulae(sheet/*:Worksheet*/)/*:Array<string>*/ {
 	var y = "", x, val="";
 	if(sheet == null || sheet["!ref"] == null) return [];
 	var r = safe_decode_range(sheet['!ref']), rr = "", cols = [], C;
