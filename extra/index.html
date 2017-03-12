@@ -146,8 +146,10 @@ function to_json(workbook) {
 	var result = {};
 	workbook.SheetNames.forEach(function(sheetName) {
 		var roa = X.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+		console.log(roa);
 		if(roa.length > 0){
 			result[sheetName] = roa;
+			console.log(result[sheetName]);
 		}
 	});
 	return result;
@@ -210,7 +212,10 @@ function handleDrop(e) {
 	rABS = document.getElementsByName("userabs")[0].checked;
 	use_worker = document.getElementsByName("useworker")[0].checked;
 	var files = e.dataTransfer.files;
+	console.log('Files');
+	console.log(files);
 	var f = files[0];
+	console.log(f);
 	{
 		var reader = new FileReader();
 		var name = f.name;
@@ -219,15 +224,19 @@ function handleDrop(e) {
 			var data = e.target.result;
 			if(use_worker) {
 				xw(data, process_wb);
+				console.log('Use worker');
 			} else {
 				var wb;
 				if(rABS) {
 					wb = X.read(data, {type: 'binary'});
+					console.log('Use binary');
 				} else {
 					var arr = fixdata(data);
 					wb = X.read(btoa(arr), {type: 'base64'});
+					console.log('Use base64');
 				}
 				process_wb(wb);
+				console.log('Else wb')
 			}
 		};
 		if(rABS) reader.readAsBinaryString(f);
@@ -239,6 +248,7 @@ function handleDragover(e) {
 	e.stopPropagation();
 	e.preventDefault();
 	e.dataTransfer.dropEffect = 'copy';
+	console.log('Drage and drop');
 }
 
 if(drop.addEventListener) {
