@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<!-- xlsx.js (C) 2013-present  SheetJS http://sheetjs.com -->
+<!-- vim: set ts=2: -->
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>JS-XLSX Live Demo</title>
+  <style>
+  #drop {
+    border: 2px dashed #bbb;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
+    padding: 25px;
+    text-align: center;
+    font: 20pt bold, "Vollkorn";
+    color: #bbb
+  }
+  
+  #b64data {
+    width: 100%;
+  }
+  </style>
+</head>
+
+<body>
+  <b>JS-XLSX Live Demo</b>
+  <br /> Output Format:
+  <select name="format">
+    <option value="csv"> CSV</option>
+    <option value="json" selected> JSON</option>
+    <option value="form"> FORMULAE</option>
+  </select>
+  <br />
+  <p>
+    <input type="file" name="xlfile" id="xlf" /> ... or click here to select a file</p>
+  <pre id="out"></pre>
+  <br />
+  <!-- uncomment the next line here and in xlsxworker.js for encoding support -->
+  <script src="cpexcel.js"></script>
+  <script src="shim.js"></script>
+  <script src="jszip.js"></script>
+  <script src="xlsx.js"></script>
+  <script>
+  /*jshint browser:true */
+  /*global XLSX */
+  var X = XLSX;
+  var XW = {
+    /* worker message */
+    msg: 'xlsx',
+    /* worker scripts */
+    rABS: './xlsxworker2.js',
+    norABS: './xlsxworker1.js',
+    noxfer: './xlsxworker.js'
+  };
+
+  var wtf_mode = false;
+
+  function fixdata(data) {
+    var o = "",
+      l = 0,
+      w = 10240;
+    for (; l < data.byteLength / w; ++l) o += String.fromCharCode.apply(null, new Uint8Array(data.slice(l * w, l * w + w)));
+    o += String.fromCharCode.apply(null, new Uint8Array(data.slice(l * w)));
+    return o;
+  }
+
+  function ab2str(data) {
+    var o = "",
+      l = 0,
+      w = 10240;
+    for (; l < data.byteLength / w; ++l) o += String.fromCharCode.apply(null, new Uint16Array(data.slice(l * w, l * w + w)));
+    o += String.fromCharCode.apply(null, new Uint16Array(data.slice(l * w)));
+    return o;
+  }
+
+  function s2ab(s) {
+    var b = new ArrayBuffer(s.length * 2),
+      v = new Uint16Array(b);
+    for (var i = 0; i != s.length; ++i) v[i] = s.charCodeAt(i);
+    return [v, b];
+  }
+
+  function get_radio_value(radioName) {
+    var radios = document.getElementsByName(radioName);
+    for (var i = 0; i < radios.length; i++) {
+      if (radios[i].checked || radios.length === 1) {
+        return radios[i].value;
+      }
+    }
+  }
+
+  function to_json(workbook) {
+    var result = {};
+    workbook.SheetNames.forEach(function(sheetName) {
+      var roa = X.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+      console.log(roa);
+      if (roa.length > 0) {
+        result[sheetName] = roa;
+        console.log(result[sheetName]);
+      }
+    });
+    return result;
+  }
+
+  function process_wb(wb) {
+    var output = "";
+    switch (get_radio_value("format")) {
+      case "json":
+        output = JSON.stringify(to_json(wb), 2, 2);
+        break;
+      case "form":
+        output = to_formulae(wb);
+        break;
+      default:
+        output = JSON.stringify(to_json(wb), 2, 2);
+    }
+    if (out.innerText === undefined) out.textContent = output;
+    else out.innerText = output;
+    if (typeof console !== 'undefined') console.log("output", new Date());
+  }
+
+  var xlf = document.getElementById('xlf');
+
+  function handleFile(e) {
+    console.log(e);
+    console.log(e.target);
+    console.log(e.target.files);
+    var files = 'https://mishradilip.github.io/sharda-classes/extra/Theme issues.xlsx';//e.target.files;
+    var f = files[0];
+    console.log(f);
+    console.log('File'); {
+      var reader = new FileReader();
+      var name = f.name;
+      reader.onload = function(e) {
+        var data = e.target.result;
+        var wb;
+        var arr = fixdata(data);
+        wb = X.read(btoa(arr), {
+          type: 'base64'
+        });
+        process_wb(wb);
+      };
+      reader.readAsArrayBuffer(f);
+    }
+  }
+
+  if (xlf.addEventListener) xlf.addEventListener('change', handleFile, false);
+  </script>
+</body>
+
+</html>
